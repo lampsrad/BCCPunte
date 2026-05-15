@@ -799,7 +799,6 @@ public partial class Admin
                     Size = new Size(width, height)
                 }));
                 await image.SaveAsync(destination);
-                await image.SaveAsync(destination);
             }
         }
         catch (Exception ex)
@@ -810,30 +809,35 @@ public partial class Admin
     }
     private async Task<string> ImagesProcessAsync()//START OF IMAGES PROCESS
     {
+        Messages.Clear();
+        IProgress<ProgressInfo> progress = new Progress<ProgressInfo>(value =>
+        {
+            Info = value;
+            StateHasChanged();
+        });
         try
         {
-            Messages.Clear();
-            IProgress<ProgressInfo> progress = new Progress<ProgressInfo>(value =>
-            {
-                Info = value;
-                StateHasChanged();
-            });
             Filename = await PhotosLocalUnzipAsync(progress);
+            if (Filename == null)
+                return null;
             Messages.Add(Info.CurrentStage); StateHasChanged();
             await PhotosCopyRenameAsync(progress, Filename);
             Messages.Add(Info.CurrentStage); StateHasChanged();
-            await PhotosGeneratePreviewsAsync(progress, Filename, 1365, 768, 50);
+            await PhotosGeneratePreviewsAsync(progress, Filename, 1365, 768);
             Messages.Add(Info.CurrentStage); StateHasChanged();
             await PhotosZipAsync(progress);
             Messages.Add("UPLOAD TO ABS HOST"); StateHasChanged();
             await UploadToHosting(progress, $"{gData.Downloads}ZippedExport\\BKK-{Filename}.zip");
             Messages.Add(Info.CurrentStage); StateHasChanged();
-            progressBar.IsVisible = false;
             return null;
         }
         catch (Exception ex)
         {
             return ex.Message;
+        }
+        finally
+        {
+            progressBar.IsVisible = false;
         }
     }
     private async Task<string> Login(HttpClient client)
@@ -857,31 +861,35 @@ public partial class Admin
     /// <returns></returns>
     public async Task<string> PhotosLocalUnzipAsync(IProgress<ProgressInfo> progress)
     {
-        string dest = string.Empty;
         await FileUpload();
+        if (Filename == null)
+            return null;
         var zips = Directory.GetFiles($"{gData.ImportDirectory}", "*.zip");
         int totalZips = zips.Length;
-        dest = Path.Combine(gData.photosLocal, Filename);
+        string dest = Path.Combine(gData.photosLocal, Filename);
         Directory.CreateDirectory(dest);
         progressBar.IsVisible = true;
-        Info.Message = $"Starting extraction of {zips.Length} ZIP file(s)...";
-        Info.Percentage = 0;
-        progress.Report(Info);
         progress.Report(new ProgressInfo
         {
             CurrentStage = "UNZIPPING",
             Total = totalZips,
             Current = 0,
-            Message = $"Unzipped to BKK folder {totalZips} images...",
+            Message = $"Starting extraction of {totalZips} ZIP file(s)...",
             Percentage = 0
         });
         for (int i = 0; i < zips.Length; i++)
         {
             string zipPath = zips[i];
             string zipName = Path.GetFileName(zipPath);
-            Info.Message = $"Extracting {zipName} ({i + 1}/{zips.Length})...";
-            Info.Percentage = (int)Math.Round((i + 1.0) / totalZips);
-            progress.Report(Info);
+            int percent = (int)Math.Round((i + 1.0) / totalZips * 100);
+            progress.Report(new ProgressInfo
+            {
+                CurrentStage = "UNZIPPING",
+                Total = totalZips,
+                Current = i + 1,
+                Message = $"Extracting {zipName} ({i + 1}/{zips.Length})...",
+                Percentage = percent
+            });
             await Task.Run(() => ZipFile.ExtractToDirectory(zipPath, dest, overwriteFiles: true));
         }
         return Filename;
@@ -914,6 +922,12 @@ public partial class Admin
             {
                 string originalName = Path.GetFileName(filePath);
                 Match match = Regex.Match(originalName, @"\d{7}");
+                if (!match.Success)
+                {
+                    Errors.Add($"Skipped — no 7-digit ID in filename: {originalName}");
+                    Interlocked.Increment(ref processed);
+                    return;
+                }
                 string newName = match.Value + ".jpg";
                 string destinationPath = Path.Combine(destDir, newName);
                 File.Copy(filePath, destinationPath, overwrite: true);
@@ -930,6 +944,7 @@ public partial class Admin
             }
             catch (Exception ex)
             {
+                Errors.Add($"Copy failed for {Path.GetFileName(filePath)}: {ex.Message}");
                 Interlocked.Increment(ref processed);
             }
         })).ToArray();
@@ -944,15 +959,16 @@ public partial class Admin
     /// <param name="height"></param>
     /// <param name="degreeOfParallelism"></param>
     /// <returns></returns>
-    public async Task PhotosGeneratePreviewsAsync(IProgress<ProgressInfo> progress, string fn, int width, int height, int degreeOfParallelism = 50)
+    public async Task PhotosGeneratePreviewsAsync(IProgress<ProgressInfo> progress, string fn, int width, int height, int degreeOfParallelism = 0)
     {
         string sourceDir = $"{gData.photosLocal}{fn}\\Temp\\";
         string destDir = $"{gData.photosLocal}WEB\\";
         string[] imagePaths = Directory.GetFiles(sourceDir, "*.jpg");
         int processedCount = 0;
-        int totalImages = imagePaths.Count();
+        int totalImages = imagePaths.Length;
         Directory.CreateDirectory(destDir);
-        var options = new ParallelOptions { MaxDegreeOfParallelism = degreeOfParallelism };
+        int parallelism = degreeOfParallelism > 0 ? degreeOfParallelism : Environment.ProcessorCount;
+        var options = new ParallelOptions { MaxDegreeOfParallelism = parallelism };
         progress.Report(new ProgressInfo
         {
             CurrentStage = "GENERATING PREVIEWS",
@@ -989,48 +1005,69 @@ public partial class Admin
     /// </summary>>
     public async Task<string> PhotosZipAsync(IProgress<ProgressInfo> progress)
     {
+        string sourceDir = $"{gData.photosLocal}WEB\\";
+        string rootdest = $"{gData.clubPhotos}{Filename}\\";
+        string zipDir = $"{gData.Downloads}ZippedExport\\";
+        string zipPath = $"{zipDir}BKK-{Filename}.zip";
+        string localWebDest = $"{gData.LocalWebsitePath}{rootdest}";
+        Directory.CreateDirectory(rootdest);
+        Directory.CreateDirectory(zipDir);
+        Directory.CreateDirectory(localWebDest);
+        var filesToCopy = Directory.GetFiles(sourceDir);
+        int total = filesToCopy.Length;
         progress.Report(new ProgressInfo
         {
             CurrentStage = "PHOTOS ZIP",
-            Total = 0,
+            Total = total,
             Current = 0,
-            Message = $"",
+            Message = $"Zipping {total} previews...",
             Percentage = 0
         });
-        string rootdest = $"{gData.clubPhotos}{Filename}\\";
-        Directory.CreateDirectory(rootdest);
-        string source = string.Empty, dest = string.Empty;
-        Task T = Task.Run(() =>
+        if (File.Exists(zipPath))
+            File.Delete(zipPath);
+        await Task.Run(() => ZipFile.CreateFromDirectory(sourceDir, zipPath));
+        for (int i = 0; i < filesToCopy.Length; i++)
         {
-            source = $"{gData.photosLocal}WEB\\";
-            string destDir = $"{gData.Downloads}ZippedExport\\";
-            Directory.CreateDirectory(destDir);
-            dest = $"{destDir}BKK-{Filename}.zip";
-            if (File.Exists(dest))
-                File.Delete(dest);
-            ZipFile.CreateFromDirectory(source, dest);
-            foreach (var file in Directory.GetFiles(source))
+            string file = filesToCopy[i];
+            string fn = Path.GetFileName(file);
+            string dest = Path.Combine(localWebDest, fn);
+            await Task.Run(() =>
             {
-                string fn = Path.GetFileName(file);
-                string localwebimas = $"{gData.LocalWebsitePath}{rootdest}";
-                Directory.CreateDirectory(localwebimas);
-                dest = $"{localwebimas}{fn}";
-                File.Copy(file, dest, true);
+                File.Copy(file, dest, overwrite: true);
                 File.Delete(file);
-            }
-        });
-        await T;
-        return $"Succesfully ZIPPED {Directory.GetFiles(source).Count()} Photos to {dest}";
+            });
+            int percent = (int)((i + 1) * 100.0 / total);
+            progress.Report(new ProgressInfo
+            {
+                CurrentStage = "PHOTOS ZIP",
+                Total = total,
+                Current = i + 1,
+                Message = $"Copied {i + 1}/{total} to local website",
+                Percentage = percent
+            });
+        }
+        return $"Successfully zipped {total} photos to {zipPath}";
     }
     /// <summary>
     /// Authenticates and uploads the zipped photo file to the remote hosting server via HTTP multipart POST (max 120 MB)
     /// </summary>
     private async Task<string> UploadToHosting(IProgress<ProgressInfo> progress, string filePath)
     {
-        Messages.Clear();
+        string fileName = Path.GetFileName(filePath);
+        if (!fileName.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+        {
+            Messages.Add($"❌ Unsupported file type: {fileName} (only .zip supported)");
+            return null;
+        }
         if (!File.Exists(filePath))
         {
             Messages.Add($"❌ File not found: {filePath}");
+            return null;
+        }
+        var fileInfo = new FileInfo(filePath);
+        if (fileInfo.Length > 120L * 1024 * 1024)
+        {
+            Messages.Add($"❌ File too large (max 120 MB): {fileName}");
             return null;
         }
         var handler = new HttpClientHandler();
@@ -1042,50 +1079,25 @@ public partial class Admin
             Messages.Add("❌ Failed to obtain authentication token");
             return null;
         }
-        string fileName = Path.GetFileName(filePath);
-        var fileInfo = new FileInfo(filePath);
-        if (fileInfo.Length > 120L * 1024 * 1024)//120 MB limit 
-        {
-            Messages.Add($"❌ File too large (max 120 MB): {fileName}");
-            return null;
-        }
         using var content = new MultipartFormDataContent();
         var fileContent = new StreamContent(File.OpenRead(filePath));
         content.Add(fileContent, "file", fileName);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         try
         {
-            HttpResponseMessage response = null;
-            if (fileName.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
-            {
-                response = await client.PostAsync($"{gData.Api}FU/zip", content);
-                status = await response.Content.ReadAsStringAsync();
-            }
-            else
-            {
-                Messages.Add($"❌ Unsupported file type: {fileName} (only .zip are supported)");
-                return null;
-            }
+            var response = await client.PostAsync($"{gData.Api}FU/zip", content);
+            string responseBody = await response.Content.ReadAsStringAsync();
             if (response.IsSuccessStatusCode)
-            {
-                var result = await response.Content.ReadAsStringAsync();
-                Messages.Add($"✅ {fileName} {result}");
-            }
+                Messages.Add($"✅ {fileName} {responseBody}");
             else
-            {
-                var errorBody = await response.Content.ReadAsStringAsync();
-                Messages.Add($"❌ Upload failed: {response.StatusCode} {response.ReasonPhrase}\n{errorBody}");
-            }
+                Messages.Add($"❌ Upload failed: {response.StatusCode} {response.ReasonPhrase}\n{responseBody}");
             await InvokeAsync(StateHasChanged);
         }
         catch (Exception ex)
         {
             Messages.Add($"❌ Error uploading {fileName}: {ex.Message}");
             if (ex.InnerException != null)
-            {
-                status += $"\nInner exception: {ex.InnerException.Message}";
-                Messages.Add(status);
-            }
+                Messages.Add($"  Inner: {ex.InnerException.Message}");
         }
         return null;
     }
