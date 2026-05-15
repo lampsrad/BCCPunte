@@ -1,0 +1,119 @@
+﻿@page "/info/{Data}"
+@using Microsoft.AspNetCore.Components;
+
+<style>
+    body {
+        background-color: #e7ddd2;
+    }
+
+    .ima-class {
+        width: 100%;
+        height: auto;
+    }
+    .heading2{
+        text-transform: uppercase !important;
+        color: black;
+        font-size: larger;
+        font-weight: bold;
+    }
+
+    .word-content {
+        width: 100%;
+        height: auto;
+        overflow: auto;
+        background-color: #e7ddd2;
+    }
+
+    .header {
+        text-transform: uppercase !important;
+        color: black;
+        font-weight: bold;
+        text-align: left;
+    }
+
+    .headerbackground {
+        background-color: black;
+        color: white;
+        font-size: x-large;
+    }
+
+    .d-flex {
+        color: black;
+        width: 70%;
+    }
+
+    .title {
+        text-transform: uppercase !important;
+        text-decoration: underline;
+        color: black;
+        text-align: center;
+        font-size:x-large;
+       font-weight:bold;
+    }
+
+    .headerText {
+        color: black;
+    }
+
+    .bold {
+        text-transform: uppercase !important;
+        font-weight: bold;
+        color: black;
+        text-align: left;
+    }
+
+    .imgN {
+        max-width: 100%;
+        height: auto;
+    }
+
+    .icon {
+        max-height: 150px;
+        width: 150px;
+        align-self: center;
+    }
+
+    #members {
+        background-color: transparent;
+    }
+
+    .link {
+        color: blue;
+    }
+
+    .iframe {
+        width: 100%;
+        height: auto;
+    }
+</style>
+
+
+<div>
+    <div class="d-flex flexmargins flex-column">
+        <div class="align-self-center pb-5">
+            <div>
+                @((MarkupString)HtmlContent)
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    [Parameter] public string Data { get; set; }
+    [Inject] IWebHostEnvironment _env { get; set; }
+    [Inject] State _state { get; set; }
+    private IList<LineFormat> LineFormats { get; set; }
+    private string Title { get; set; }
+    private string Filename { get; set; }
+    private string HtmlContent { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        string path = _env.WebRootPath;
+        string fn = $"{path}\\Html\\{Data}.html";
+        HtmlContent = File.ReadAllText(fn);
+    }
+
+}
+}

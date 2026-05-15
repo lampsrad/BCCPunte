@@ -1,0 +1,130 @@
+﻿@page "/pointsmember/{Data}"
+
+
+<div class="pointsMember">
+    @if (Model.Scores != null)
+    {
+        <div class="d-flex flex-column bodyText">
+            <p class="headerText">All Monthly Scores for  @Model.Name</p>
+            <p>@Message</p>
+            <table id="members">
+                <colgroup>
+                    <col />
+                    <col />
+                    <col />
+                    <col span="7" style="background-color: cadetblue" />
+                    <col span="4" style="background-color: darkseagreen" />
+                    <col span="3" style="background-color: cornflowerblue" />
+                    <col span="4" style="background-color: yellowgreen" />
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th colspan="7">For Month</th>
+                        <th colspan="4">For Group</th>
+                        <th colspan="3">For Promotion</th>
+                        <th colspan="4">For Year</th>
+                    </tr>
+                    <tr>
+                        <th>Date</th>
+                        <th>Name</th>
+                        <th>Grade</th>
+                        <th title="Set Subject for month">Set</th>
+                        <th title="Certificate of Merit for month">M</th>
+                        <th title="Gold for month">G</th>
+                        <th title="Silver for month">S</th>
+                        <th title="Bronze for month">B</th>
+                        <th title="Club Points for month">Pts</th>
+                        <th title="Salons for month">Sal</th>
+                        <th title="Certificate of Merit for group">M</th>
+                        <th title="Gold for group">G</th>
+                        <th title="Silver for group">S</th>
+                        <th title="Bronze for group">B</th>
+                        <th title="Gold or Certificate of merit for promotion">GM</th>
+                        <th title="Club Points for promotion">Pts</th>
+                        <th title="Salons for promotion">Sal</th>
+                        <th title="Gold or Certificate of mertis for year">GM</th>
+                        <th title="Club points for year">Pts</th>
+                        <th title="Set subject for year">Set</th>
+                        <th title="Salons for year">Sal</th>
+                    </tr>
+                </thead>
+                <tbody class="tdText">
+                    @{
+                        foreach (Monthly m in Model.Scores)
+                        {
+                            <tr>
+                                <td>@m.Date.toYear_MonthLowerFull()</td>
+                                <td>@m.Master.Name</td>
+                                <td>@m.Rating.Rate</td>
+                                <td>@m.VOm</td>
+                                <td>@m.Mm</td>
+                                <td>@m.Gm</td>
+                                <td>@m.Sm</td>
+                                <td>@m.Bm</td>
+                                <td>@m.Pm</td>
+                                <td class="bg-primary" title="Click to balance Salons from here" @onclick="(() => OnSalonClick(m))">@m.Salm</td>
+                                <td>@m.Mg</td>
+                                <td>@m.Gg</td>
+                                <td>@m.Sg</td>
+                                <td>@m.Bg</td>
+                                @{
+                                    switch (m.Position)
+                                    {
+                                        case 0:
+                                            <td>@m.GMp</td>
+                                            <td>@m.Pp</td>
+                                            <td>@m.Salp</td>
+                                            break;
+                                        case 1:
+                                            <td>@m.GMp</td>
+                                            <td>@m.Pp</td>
+                                            <td>@m.Salp</td>
+                                            break;
+                                        case 2:
+                                            <td>@m.GMp</td>
+                                            <td class="bg-danger">@m.Pp</td>
+                                            <td>@m.Salp</td>
+                                            break;
+                                        case 3:
+                                            <td class="bg-danger">@m.GMp</td>
+                                            <td class="bg-danger">@m.Pp</td>
+                                            <td>@m.Salp</td>
+                                            break;
+                                        case 4:
+                                            <td>@m.GMp</td>
+                                            <td>@m.Pp</td>
+                                            <td class="bg-danger">@m.Salp</td>
+                                            break;
+                                        case 5:
+                                            <td class="bg-danger">@m.GMp</td>
+                                            <td>@m.Pp</td>
+                                            <td class="bg-danger">@m.Salp</td>
+                                            break;
+                                        case 6:
+                                            <td>@m.GMp</td>
+                                            <td class="bg-danger">@m.Pp</td>
+                                            <td class="bg-danger">@m.Salp</td>
+                                            break;
+                                        case 7:
+                                            <td class="bg-danger">@m.GMp</td>
+                                            <td class="bg-danger">@m.Pp</td>
+                                            <td class="bg-danger">@m.Salp</td>
+                                            break;
+                                    }
+                                }
+                                <td>@m.GMy</td>
+                                <td>@m.Py</td>
+                                <td>@m.VOy</td>
+                                <td>@m.Saly</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+

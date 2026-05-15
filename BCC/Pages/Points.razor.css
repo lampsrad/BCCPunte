@@ -1,0 +1,14 @@
+﻿
+
+.titleText {
+    color: wheat;
+    text-align: center;
+    font-size: 190%;
+}
+
+.threeColumnHeader {
+    font-size: 140%;
+}
+.container-fluid{
+    padding-top:2em;
+}

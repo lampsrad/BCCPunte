@@ -1,0 +1,150 @@
+﻿<style>
+    .custom-modal {
+        width: 300px;
+    }
+
+    .custom-color {
+        background-color: #007bff !important;
+        color: white;
+    }
+</style>
+
+@if (IsVisibleDialogBox)
+{
+    <div class="mod">
+        <div class="modal-dialog custom-modal">
+            <div class="modal-content custom-color">
+                <div class="modal-header">
+                    <h5 class="modal-title">@state.TitleD</h5>
+                    <button type="button" class="btn-close" @onclick="Cancel"></button>
+                </div>
+                <div class="modal-body">
+                    @if (IsVisibleFileChoose)
+                    {
+                        <InputFile OnChange="LoadFiles" accept="@FileType" />
+                    }
+                    @if (IsVisibleProgress)
+                    {
+                        <div class="text-white">
+                            <progress max="100" value="@state.ProgressVal" style="accent-color: blue;"></progress>
+                            @state.ProgressVal%
+                        </div>
+                    }
+                    @if (IsVisibleSelect)
+                    {
+                        <select @bind="Files">
+                            @if (Files.Count != 0)
+                            {
+                                foreach (string f in Files)
+                                {
+                                    <option value="@f">@f</option>
+                                }
+                            }
+                        </select>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="@(btOk ? "d-block" : "d-none") btn btn-sm btn-primary" @onclick=Cancel>Ok</button>
+                    <button type="button" class="@(btYes ? "d-block" : "d-none") btn btn-sm btn-primary" @onclick=Yes>Yes</button>
+                    <button type="button" class="@(btNo ? "d-block" : "d-none") btn btn-sm btn-primary" @onclick=No>No</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    }
+
+
+@implements IDisposable
+
+@code {
+    string ReturnMethod { get; set; }
+    string ImportDirectory { get; set; }
+    string FileType { get; set; } = ".csv";
+    EventCallback<string> ecbGoBack { get; set; }
+    [Inject] State state{ get; set; }
+    public int ProgressVal { get; set; }
+    string Title { get; set; }
+    string Message { get; set; }
+    private bool IsVisible, IsVisibleFileChoose, IsVisibleSelect;
+    private bool btSubmit, btOk, btYes, btNo, IsVisibleDialogBox, IsVisibleProgress, IsVisibleDatePicker;
+    private TaskCompletionSource<string> tcs;
+    private TaskCompletionSource<DateOnly> tcsDate;
+    private IList<string> Files { get; set; } = new List<string>();
+
+
+    public void Dispose()
+    {
+        state.Progress -= Progress;
+        state.FileNameGet -= FileNameGet;
+    }
+    private Task<string> FileNameGet()
+    {
+        tcs = new TaskCompletionSource<string>();
+        IsVisibleDialogBox = true;
+        IsVisibleFileChoose = true;
+        InvokeAsync(StateHasChanged);
+        return tcs.Task;
+    }
+    private void Cancel()
+    {
+        Default();
+        tcs.SetResult(null);
+    }
+    private Task<DateOnly> DateChanged()
+    {
+        tcsDate = new TaskCompletionSource<DateOnly>();
+        IsVisibleDialogBox = true;
+        IsVisibleDatePicker = true;
+        btSubmit = true;
+        InvokeAsync(StateHasChanged);
+        return tcsDate.Task;
+    }
+    public void Default()
+    {
+        Title = string.Empty;
+        Message = string.Empty;
+        IsVisible = false;
+        btYes = false;
+        btNo = false;
+        btOk = false;
+        IsVisibleDialogBox = false;
+        IsVisibleProgress = false;
+        IsVisibleDatePicker = false;
+        IsVisibleFileChoose = false;
+        StateHasChanged();
+    }
+    private void LoadFiles(InputFileChangeEventArgs args)
+    {
+        Default();
+        InvokeAsync(StateHasChanged);
+        var file = args.File;
+        if (file != null)
+            tcs.SetResult(file.Name);
+        else
+            tcs.SetResult(null);
+    }
+    private void No()
+    {
+        Default();
+        tcs.SetResult("No");
+    }
+    private void Yes()
+    {
+        Default();
+        tcs.SetResult("Yes");
+    }
+    protected override void OnInitialized()
+    {
+        state.Progress += Progress;
+        state.FileNameGet += FileNameGet;
+    }
+    private void Progress(bool show)
+    {
+        IsVisibleDialogBox = show;
+        IsVisibleProgress = show;
+        InvokeAsync(StateHasChanged);
+    }
+
+  
+
+}

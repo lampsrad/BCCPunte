@@ -1,0 +1,22 @@
+﻿
+.titleText {
+    color:wheat;
+    text-align: center;
+    font-size: 180%;
+}
+
+.headerText {
+    justify-content: left;
+    font-size: 160%;
+}
+
+.d-flex {
+    align-items: center;
+}
+
+.container-fluid {
+    color: wheat;
+    padding-top:2em;
+}
+
+

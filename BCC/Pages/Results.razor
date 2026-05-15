@@ -1,0 +1,321 @@
+﻿@page "/results/{Data}"
+@page "/results"
+<div>
+    @if (Model == null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else
+    {
+        <div class="container-fluid">
+            <div class="d-md-flex justify-content-center">
+                <div class="d-flex flex-column bodyText">
+                    <DateChange ecbMonthChanged="MonthChanged" />
+                    <p/>
+                    <div class="titleText">@Title</div><br />
+                    <div class="table-responsive">
+                        <div class="headerText">Winners</div>
+                        <table id="members">
+                            @{
+                                Photo first = Model.Winners.FirstOrDefault();
+                            }
+                            <thead>
+                                <tr>
+                                    <th>Category</th>
+                                    <th>Name</th>
+                                    <th>Score</th>
+                                    <th>Award</th>
+                                    <th>Winner</th>
+                                    <th>Club Winner</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{
+                                    foreach (Photo p in Model.Winners)
+                                    {
+                                        <tr>
+                                            <td>@p.Category.toCategory_Rating()</td>
+                                            <td>@p.Monthly.Master.Name</td>
+                                            <td>@p.Score</td>
+                                            <td>@p.Award</td>
+                                            <td class="text-center">@(p.Winner==true ? "✔" : "")</td>
+                                            <td class="text-center">@(p.Club_Winner==true ? "✔" : "")</td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table><br /><br />
+
+
+
+                        <div class="headerText">One and Two Star Nature</div>
+                        <table id="members">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Photo</th>
+                                    <th>Score</th>
+                                    <th>Award</th>
+                                    <th>Winner</th>
+                                    <th>Club Win</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{
+                                    foreach (Photo p in Model.N1)
+                                    {
+                                        <tr>
+                                            <td>@p.Monthly.Master.Name</td>
+                                            <td>@p.Title</td>
+                                            <td>@p.Score</td>
+                                            <td>@p.Award</td>
+                                            <td class="text-center">@(p.Winner == true ? "✔" : "")</td>
+                                            <td class="text-center">@(p.Club_Winner==true ? "✔" : "")</td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table><br /><br />
+
+                        <h2 class="headerText">One and Two Star Pictorial</h2>
+                        <table id="members">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Photo</th>
+                                    <th>Score</th>
+                                    <th>Award</th>
+                                    <th>Winner</th>
+                                    <th>Club Win</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{
+                                    foreach (Photo p in Model.P1)
+                                    {
+                                        <tr>
+                                            <td>@p.Monthly.Master.Name</td>
+                                            <td>@p.Title</td>
+                                            <td>@p.Score</td>
+                                            <td>@p.Award</td>
+                                            <td class="text-center">@(p.Winner == true ? "✔" : "")</td>
+                                            <td class="text-center">@(p.Club_Winner==true ? "✔" : "")</td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table><br /><br />
+
+                        <h2 class="headerText">Three Star Nature</h2>
+                        <table id="members">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Photo</th>
+                                    <th>Score</th>
+                                    <th>Award</th>
+                                    <th>Winner</th>
+                                    <th>Club Win</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{
+                                    foreach (Photo p in Model.N2)
+                                    {
+                                        <tr>
+                                            <td>@p.Monthly.Master.Name</td>
+                                            <td>@p.Title</td>
+                                            <td>@p.Score</td>
+                                            <td>@p.Award</td>
+                                            <td class="text-center">@(p.Winner == true ? "✔" : "")</td>
+                                            <td class="text-center">@(p.Club_Winner==true ? "✔" : "")</td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table><br /><br />
+
+                        <h2 class="headerText">Three Star Pictorial</h2>
+                        <table id="members">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Photo</th>
+                                    <th>Score</th>
+                                    <th>Award</th>
+                                    <th>Winner</th>
+                                    <th>Club Win</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{
+                                    foreach (Photo p in Model.P2)
+                                    {
+                                        <tr>
+                                            <td>@p.Monthly.Master.Name</td>
+                                            <td>@p.Title</td>
+                                            <td>@p.Score</td>
+                                            <td>@p.Award</td>
+                                            <td class="text-center">@(p.Winner == true ? "✔" : "")</td>
+                                            <td class="text-center">@(p.Club_Winner==true ? "✔" : "")</td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table><br /><br />
+
+
+                        <h2 class="headerText">Four and Five Star Nature</h2>
+                        <table id="members">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Photo</th>
+                                    <th>Score</th>
+                                    <th>Award</th>
+                                    <th>Winner</th>
+                                    <th>Club Win</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{
+                                    foreach (Photo p in Model.N3)
+                                    {
+                                        <tr>
+                                            <td>@p.Monthly.Master.Name</td>
+                                            <td>@p.Title</td>
+                                            <td>@p.Score</td>
+                                            <td>@p.Award</td>
+                                            <td class="text-center">@(p.Winner == true ? "✔" : "")</td>
+                                            <td class="text-center">@(p.Club_Winner==true ? "✔" : "")</td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table><br /><br />
+
+                        <h2 class="headerText">Four and Five Star Pictorial</h2>
+                        <table id="members">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Photo</th>
+                                    <th>Score</th>
+                                    <th>Award</th>
+                                    <th>Winner</th>
+                                    <th>Club Win</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{
+                                    foreach (Photo p in Model.P3)
+                                    {
+                                        <tr>
+                                            <td>@p.Monthly.Master.Name</td>
+                                            <td>@p.Title</td>
+                                            <td>@p.Score</td>
+                                            <td>@p.Award</td>
+                                            <td class="text-center">@(p.Winner == true ? "✔" : "")</td>
+                                            <td class="text-center">@(p.Club_Winner==true ? "✔" : "")</td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table><br /><br />
+
+                        <h2 class="headerText">Honours and Galaxy Nature</h2>
+                        <table id="members">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Photo</th>
+                                    <th>Score</th>
+                                    <th>Award</th>
+                                    <th>Winner</th>
+                                    <th>Club Win</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{
+                                    foreach (Photo p in Model.N4)
+                                    {
+                                        <tr>
+                                            <td>@p.Monthly.Master.Name</td>
+                                            <td>@p.Title</td>
+                                            <td>@p.Score</td>
+                                            <td>@p.Award</td>
+                                            <td class="text-center">@(p.Winner == true ? "✔" : "")</td>
+                                            <td class="text-center">@(p.Club_Winner==true ? "✔" : "")</td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table><br /><br />
+
+                        <h2 class="headerText">Honours and Galaxy Pictorial</h2>
+                        <table id="members">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Photo</th>
+                                    <th>Score</th>
+                                    <th>Award</th>
+                                    <th>Winner</th>
+                                    <th>Club Win</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{
+                                    foreach (Photo p in Model.P4)
+                                    {
+                                        <tr>
+                                            <td>@p.Monthly.Master.Name</td>
+                                            <td>@p.Title</td>
+                                            <td>@p.Score</td>
+                                            <td>@p.Award</td>
+                                            <td class="text-center">@(p.Winner == true ? "✔" : "")</td>
+                                            <td class="text-center">@(p.Club_Winner==true ? "✔" : "")</td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table><br /><br />
+
+                        <h2 class="headerText">Set Subject</h2>
+                        <table id="members">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Photo</th>
+                                    <th>Score</th>
+                                    <th>Award</th>
+                                    <th>Winner</th>
+                                    <th>Club Win</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{
+                                    foreach (Photo p in Model.S)
+                                    {
+                                        <tr>
+                                            <td>@p.Monthly.Master.Name</td>
+                                            <td>@p.Title</td>
+                                            <td>@p.Score</td>
+                                            <td>@p.Award</td>
+                                            <td class="text-center">@(p.Winner == true ? "✔" : "")</td>
+                                            <td class="text-center">@(p.Club_Winner==true ? "✔" : "")</td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table><br />
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+

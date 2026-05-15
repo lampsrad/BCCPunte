@@ -1,0 +1,91 @@
+﻿@using BCC.Models
+
+<h2 class="headerText">@LevelName</h2>
+@if (!string.IsNullOrEmpty(PromotionText))
+{
+    <h6>@PromotionText</h6>
+}
+
+<table id="members">
+    <colgroup>
+        <col width="250" />
+        <col span="7" style="background-color: cadetblue" />
+        <col span="4" style="background-color: darkseagreen" />
+        <col span="3" style="background-color: cornflowerblue" />
+        <col span="4" style="background-color: yellowgreen" />
+    </colgroup>
+    <thead>
+        <tr>
+            <th></th>
+            <th colspan="7">For Month</th>
+            <th colspan="4">For Group</th>
+            <th colspan="3">For Promotion</th>
+            <th colspan="4">For Year</th>
+        </tr>
+        <tr>
+            <th>Name</th>
+            <th title="Set Subject for month">Set</th>
+            <th title="Certificate of Merit for month">M</th>
+            <th title="Gold for month">G</th>
+            <th title="Silver for month">S</th>
+            <th title="Bronze for month">B</th>
+            <th title="Club Points for month">Pts</th>
+            <th title="Salons for month">Sal</th>
+            <th title="Certificate of Merit for group">M</th>
+            <th title="Gold for group">G</th>
+            <th title="Silver for group">S</th>
+            <th title="Bronze for group">B</th>
+            <th title="Gold or Certificate of merit for promotion">GM</th>
+            <th title="Club Points for promotion">Pts</th>
+            <th title="Salons for promotion">Sal</th>
+            <th title="Gold or Certificate of mertis for year">GM</th>
+            <th title="Club points for year">Pts</th>
+            <th title="Set subject for year">Set</th>
+            <th title="Salons for year">Sal</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (Monthly m in Members)
+        {
+            <tr title="Click to Drill down">
+                <td>@m.Master.Name <span style="font-size:x-small">@m.Title</span></td>
+                <td>@m.VOm</td>
+                <td>@m.Mm</td>
+                <td>@m.Gm</td>
+                <td>@m.Sm</td>
+                <td>@m.Bm</td>
+                <td>@m.Pm</td>
+                <td>@m.Salm</td>
+                <td>@m.Mg</td>
+                <td>@m.Gg</td>
+                <td>@m.Sg</td>
+                <td>@m.Bg</td>
+                <td style="@(GmThreshold.HasValue && m.GMp >= GmThreshold ? "background-color: red" : "")">@m.GMp</td>
+                <td style="@(PtsThreshold.HasValue && m.Pp >= PtsThreshold ? "background-color: red" : "")">@m.Pp</td>
+                <td style="@(SalThreshold.HasValue && m.Salp >= SalThreshold ? "background-color: red" : "")">@m.Salp</td>
+                <td>@m.GMy</td>
+                <td>@m.Py</td>
+                <td>@m.VOy</td>
+                <td>@m.Saly</td>
+                <button class="btn-sm btn-primary" @onclick="() => ViewAll(m)">All</button>
+            </tr>
+        }
+    </tbody>
+</table>
+<br />
+<br />
+
+@code {
+    [Parameter] public string LevelName { get; set; } = string.Empty;
+    [Parameter] public IList<Monthly> Members { get; set; } = new List<Monthly>();
+    [Parameter] public int? GmThreshold { get; set; }
+    [Parameter] public int? PtsThreshold { get; set; }
+    [Parameter] public int? SalThreshold { get; set; }
+    [Parameter] public string? PromotionText { get; set; }
+    [Parameter] public EventCallback<Monthly> OnViewAll { get; set; }
+
+    private void ViewAll(Monthly m)
+    {
+        OnViewAll.InvokeAsync(m);
+    }
+}

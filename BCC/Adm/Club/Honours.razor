@@ -1,0 +1,37 @@
+﻿
+@page "/honours"
+@rendermode InteractiveServer
+<style>
+    .mod {
+        width: 400px;
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="d-flex flex-column mod mod-box">
+        <h1>Honours</h1>
+        @if (Masters == null)
+        {
+            <p><em>Loading...</em></p>
+        }
+        else
+        {
+            <EditForm FormName="HonoursForm" Model="mod">
+                <select  @bind ="mod.ID" @bind:event="oninput" @onchange=OnIDChanged @ref="refmember">
+                    @foreach (Master m in Masters)
+                        {
+                        <option value="@m.ID.ToString()">@m.Name</option>
+                        }
+                </select><br /><br />
+                <label>Prev Title :  @mod.PrevTitle</label>
+
+                <br><br>
+                <InputText placeholder="New Honours Title" @bind-Value="mod.Title" />
+                <button type="submit" class="btn-sm btn-danger" @onclick="Submitted">Submit</button>
+                <button class="btn-sm btn-primary" @onclick="Abort">Cancel</button>
+            </EditForm>
+        }
+    </div>
+</div>
+
+

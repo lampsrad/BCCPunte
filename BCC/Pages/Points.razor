@@ -1,0 +1,164 @@
+﻿@page "/points/{Data}"
+@page "/points"
+
+<div class="points">
+    @if (Model == null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else
+    {
+        <DateChange ecbMonthChanged="MonthChanged" />
+        <div class="container-fluid bodyText">
+            <p class="titleText">@Title</p>
+            <p class="headerText">YEAR TO DATE : TOP TEN</p>
+
+            <div class="d-flex justify-content-center">
+                <div class="flex-column mr-3">
+                    <div class="threeColumnHeader">Club Points</div>
+                    <table id="members" class="table-striped">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (Monthly mp in Model.Py)
+                            {
+                                <tr>
+                                    <td>@mp.Master.Name</td>
+                                    <td>@mp.Py</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table><br /><br />
+                </div>
+
+                <div class="flex-column mr-3">
+                    <div class="threeColumnHeader">Set Subject</div>
+                    <table id="members" style="width: auto" class="table-striped">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (Monthly mp in Model.Voy)
+                            {
+                                <tr class="@(mp.VOy!=null? "show":"d-none")">
+                                        <td>@mp.Master.Name</td>
+                                        <td>@mp.VOy</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table><br /><br />
+                </div>
+
+                <div class="flex-column">
+                    <div class="threeColumnHeader">Salons</div>
+                    <table id="members" style="width: auto" class="table-striped">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (Monthly mp in Model.Saly)
+                            {
+                                <tr class="@(mp.Saly !=null? "show": "d-none")">
+                                    <td>@mp.Master.Name</td>
+                                    <td>@mp.Saly</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table><br /><br />
+                </div>
+            </div>
+
+            <div class="d-flex flex-column">
+                @if (Model.Prom.Any())
+                {
+                    <h2 class="headerText">PROMOTIONS</h2>
+                    <table id="members" style="width: auto" align="center" class="table-striped">
+                        <tbody>
+                            @foreach (Monthly mp in Model.Prom)
+                            {
+                                <tr>
+                                    <td>@mp.Master.Name</td>
+                                    <td>@mp.PromoString.ToString()</td>
+                                    <td>@mp.Master.Email</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+
+                    <br />
+            
+                    <br />
+                }
+                <StarLevelTable LevelName="ONE STAR"
+                                Members="Model.S1"
+                                GmThreshold="4"
+                                PtsThreshold="20"
+                                SalThreshold="null"
+                                PromotionText="For promotoion to 2 Star : GM = 4; Pts = 20"
+                                OnViewAll="ViewAllScores" />
+
+                <StarLevelTable LevelName="TWO STAR"
+                                Members="Model.S2"
+                                GmThreshold="6"
+                                PtsThreshold="35"
+                                SalThreshold="null"
+                                PromotionText="For promotion to 3 Star : GM = 6; Pts = 35"
+                                OnViewAll="ViewAllScores" />
+
+                <StarLevelTable LevelName="THREE STAR"
+                                Members="Model.S3"
+                                GmThreshold="8"
+                                PtsThreshold="50"
+                                SalThreshold="18"
+                                PromotionText="For promotion to 4 Star : GM = 8; Pts = 50; Sal = 18"
+                                OnViewAll="ViewAllScores" />
+
+                <StarLevelTable LevelName="FOUR STAR"
+                                Members="Model.S4"
+                                GmThreshold="12"
+                                PtsThreshold="80"
+                                SalThreshold="50"
+                                PromotionText="For promotion to 5 Star : GM = 12; Pts = 80; Sal = 50"
+                                OnViewAll="ViewAllScores" />
+
+                <StarLevelTable LevelName="FIVE STAR"
+                                Members="Model.S5"
+                                GmThreshold="null"
+                                PtsThreshold="150"
+                                SalThreshold="200"
+                                PromotionText="For promotion to Golden Honours : Pts = 150; Sal = 200; APSSA"
+                                OnViewAll="ViewAllScores" />
+
+                <StarLevelTable LevelName="GOLDEN HONOURS"
+                                Members="Model.S6"
+                                GmThreshold="null"
+                                PtsThreshold="150"
+                                SalThreshold="400"
+                                PromotionText="For promotion to Galaxy : Pts = 150; Sal = 400; FPSSA"
+                                OnViewAll="ViewAllScores" />
+
+                <StarLevelTable LevelName="GALAXY"
+                                Members="Model.S7"
+                                GmThreshold="null"
+                                PtsThreshold="null"
+                                SalThreshold="null"
+                                PromotionText="For the fun"
+                                OnViewAll="ViewAllScores" />
+            </div>
+        </div>
+    }
+</div>
+
+
+
+

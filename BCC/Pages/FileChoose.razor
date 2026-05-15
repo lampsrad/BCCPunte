@@ -1,0 +1,70 @@
+﻿
+
+<style>
+
+    .custom-modal {
+        width: 300px;
+    }
+    .custom-color {
+        background-color: #007bff !important;
+        color: white;
+    }
+</style>
+
+@if (IsVisible)
+{
+    <div class="mod">
+        <div class="modal-dialog custom-modal">
+            <div class="modal-content custom-color">
+                <div class="modal-header">
+                    <h5 class="modal-title">@state.TitleD</h5>
+                    <button type="button" class="btn-close" @onclick="Cancel"></button>
+                </div>
+                <div class="modal-body">
+                        <InputFile OnChange="LoadFiles" accept="@FileType" />
+                </div>
+                <div class="modal-footer">
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
+@code {
+    [Inject] State state { get; set; }
+    private TaskCompletionSource tcs;
+    string FileType = "*.csv";
+    bool IsVisible;
+
+    private Task FileGet()
+    {
+        tcs = new TaskCompletionSource();
+        IsVisible = true;
+        InvokeAsync(StateHasChanged);
+        return tcs.Task;
+    }
+    private async Task LoadFiles(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        string dest = gData.ImportDirectory;
+        if (Directory.Exists(dest))
+            Directory.Delete(dest, true);
+        Directory.CreateDirectory(dest);
+        string fn = Path.Combine(dest, file.Name);
+        await using FileStream fs = new(fn, FileMode.Create);
+        await file.OpenReadStream().CopyToAsync(fs);
+        tcs.SetResult();
+    }
+    private void Cancel()
+    {
+        tcs.SetResult();
+    }
+    protected override void OnInitialized()
+    {
+        state.FileChoose -= FileGet;
+        state.FileChoose += FileGet;
+        //IsVisible = true;
+    }
+}

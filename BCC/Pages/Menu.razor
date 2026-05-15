@@ -1,0 +1,87 @@
+﻿@using BCC.Models
+
+
+<hr id="menu" style="height:4px;background-color: #bf9f00; margin: 0px;" />
+<div class="menubar">
+    <div class="d-inline-block">
+        <div class="mendate redText me-2" title="The Database in use">@gData.connectionKey</div>
+        <div class="mendate me-2">@state.Title</div>
+        <a class="men" href="/">BCC</a>
+    </div>
+   
+    <ul>
+        <li>
+            <a class=men href="#">Members</a>
+            <ul class=sub>
+                <li><a href="results/">Awards</a></li>
+                <li><a href="points/">Scores</a></li>
+                <li><a href="salons/">Salons</a></li>
+                <li><a href="masterview">Members List</a></li>
+            </ul>
+        </li>
+    </ul>
+
+    <ul>
+        <li>
+            <a class=men href="#">Honours</a>
+            <ul>
+                <li><a href="honours" title="Adjust Honours">Honours</a> </li>
+            </ul>
+        </li>
+
+        <li>
+            <a class=men href="#">Salons</a>
+            <ul>
+                <li><a href="salonMasMain">Salons Current</a></li>
+                <li><a href="salonMasMain/prev">Salons Previous</a></li>
+                <li><a href="salonMasMain/importlist" title="Import Salonlist for Year; Get pdf from PSSA website and convert to .csv">Import Salons</a></li>
+            </ul>
+        </li>
+
+        <li>
+            <a class=men href="#">Info</a>
+            <ul>
+                @if (menuItems.Count > 0)
+                {
+                    foreach (string nam in menuItems)
+                    {
+                        string men = $"info/{nam}";
+                        <li><a href="@men">@nam</a></li>
+                    }
+                }
+
+            </ul>
+        </li>
+
+        <li>
+            <a class=men href="#">Admin</a>
+            <ul class=sub>
+                <li><a href="admin/images-import" title="1. Unzip Photos from Selected .zips(3) to 'D:\BKK\Inbox\Club\Photos\Date\'.&#13;&#10;2. Copy and Rename from 1.=> D:\BKK\Inbox\Club\Photos\Date\\Temp\#######.jpg. &#13;&#10;3. Generate New Images 1365x768 from 2. => 'D:\BKK\Inbox\Club\Photos\WEB\#######.jpg. &#13;&#10;4. Copy from 3. to LocalWebsite\wwwroot\ClubPhotos\Date\#######.jpg. &#13;&#10;5. Zip from 3. => ..\Downloads\ZippedExport\ &#13;&#10;6. Upload 5 => AbsoluteHost API to \wwwroot\Import\yyyy.mm.zip">Local Images</a></li>
+                <li><a href="admin/club-import" title="Scoresheet.csv or Results.csv file you select or YearEnd if Month is October">Import Club</a></li>
+                <li><a href="salonMasMain">Import Salon</a></li>
+                <li><a href="worddoc" title="Converts a chosen Microsoft Word doc to html and save it to wwwroot/Html/">Word</a></li>
+                <li><a href="/upload-to-abs" title="Upload .html files or .zip files(images) to Absoluite Hosting">Upload to AbsHosting</a></li>
+                <li><a href="admin/backup">Backup DB</a></li>
+                <li><a href="admin/restore">Restore DB</a></li>
+                <li><a href="admin/excel" title="Export Monthlies to D:\\BKK\\ARCHIVES\\Ou punte rekords\Year\">Excel</a></li>
+                <li><a href="admin/deletemonth" title="Delete Last Month from Db but leave Images intact">Delete Month</a></li>
+            </ul>
+        </li>
+
+        <li>
+            <a class=men href="#">DB</a>
+            <ul>
+                <li><a href="#" @onclick="DatabaseLocal">Local</a></li>
+                <li><a href="#" @onclick="DatabaseAbsolute" title="Connect VPN to access Database on Absolute Hosting">Absolute Hosting</a></li>
+            </ul>
+        </li>
+
+        @if (env.IsProduction())
+        {
+            <a class="men ms-2" @onclick="Close" title="Close App & Browser">Close</a>
+        }
+    </ul>
+
+</div>
+<hr class=hrbottom />
+

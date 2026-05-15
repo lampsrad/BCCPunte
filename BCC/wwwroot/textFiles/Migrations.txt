@@ -1,0 +1,6 @@
+﻿dotnet ef -h : Help
+add-migration [name of migration]
+update-database [name of migration] : If no name then latest migration will be applied
+dotnet ef dbcontext scaffold "Server =SIGMA\\SQLABS; Database= bcc2018; User ID = sa; Password = Xanadu16; Trusted_Connection=False; MultipleActiveResultSets=True;" Microsoft.EntityFrameworkCore.SqlServer -OutputDir Model : Scaffold existing DB to Model folder using Fluent API
+dotnet ef dbcontext scaffold "Server =SIGMA\\SQLABS; Database= bcc2018; User ID = sa; Password = Xanadu16; Trusted_Connection=False; MultipleActiveResultSets=True;" Microsoft.EntityFrameworkCore.SqlServer -OutputDir Model -DataAnnotations : Scaffold existing DB to Model folder using Data annotation
+

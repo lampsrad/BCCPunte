@@ -1,0 +1,605 @@
+.main {
+    flex: 1;
+}
+
+h1:focus {
+    outline: none;
+}
+
+a, .btn-link {
+    color: #0071c1;
+}
+
+.btn-primary {
+    color: #fff;
+    background-color: #1b6ec2;
+    border-color: #1861ac;
+}
+
+html, body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background-color: #292727;
+    color: white;
+}
+
+.bodyText {
+    font-size: 1rem;
+}
+
+.imgT {
+    max-width: 23px;
+    height: auto;
+}
+
+a, .btn-link {
+    color: #006bb7;
+}
+
+.btn-primary {
+    color: #fff;
+    background-color: #1b6ec2;
+    border-color: #1861ac;
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+.content {
+    padding-top: 1.1rem;
+}
+
+h1:focus {
+    outline: none;
+}
+
+.valid.modified:not([type=checkbox]) {
+    outline: 1px solid #26b050;
+}
+
+.invalid {
+    outline: 1px solid #e50000;
+}
+
+.validation-message {
+    color: #e50000;
+}
+
+.blazor-error-boundary::after {
+    content: "An error has occurred."
+}
+
+.darker-border-checkbox.form-check-input {
+    border-color: #929292;
+}
+
+#members {
+    background-color: bisque;
+    color: black;
+    margin: 0;
+}
+
+    #members th, #members td {
+        border: 1px solid;
+        border-collapse: collapse;
+        border-color: black;
+        padding-left: .3rem;
+        vertical-align: bottom;
+    }
+
+    #members thead {
+        background-color: #c29e87;
+        text-align: center;
+        padding: 1px;
+    }
+
+    #members th {
+        text-align: center;
+    }
+
+    #members tr:hover {
+        background-color: #ddd;
+    }
+
+
+
+/*NEW COPY FROM BKK*/
+
+@import url('open-iconic/font/css/open-iconic-bootstrap.min.css');
+
+.main {
+    flex: 1;
+}
+
+h1:focus {
+    outline: none;
+}
+
+a, .btn-link {
+    color: #0071c1;
+}
+
+.btn-primary {
+    color: #fff;
+    background-color: #1b6ec2;
+    border-color: #1861ac;
+}
+
+.content {
+    padding-top: 1.1rem;
+}
+
+.valid.modified:not([type=checkbox]) {
+    outline: 1px solid #26b050;
+}
+
+.invalid {
+    outline: 1px solid red;
+}
+
+.validation-message {
+    color: red;
+}
+
+#blazor-error-ui {
+    background: lightyellow;
+    bottom: 0;
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+    display: none;
+    left: 0;
+    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
+    #blazor-error-ui .dismiss {
+        cursor: pointer;
+        position: absolute;
+        right: 0.75rem;
+        top: 0.5rem;
+    }
+
+.blazor-error-boundary::after {
+    content: "An error has occurred."
+}
+
+
+
+
+app {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+a, .btn-link {
+    color: #0366d6;
+}
+
+    a:hover, b:hover {
+        color: red;
+    }
+
+h6 {
+    font-size: .8rem;
+}
+
+h5 {
+    font-size: 1rem;
+}
+
+hr {
+    position: relative;
+    background-color: #099cdd;
+    height: 3px;
+    opacity: 1;
+}
+
+html, body {
+    font-family: Arial;
+    color: #dddada;
+    background-color: #22262a;
+}
+
+.bg-photography {
+    background-color: #191b1d;
+    color: #dddada;
+}
+
+.bold {
+    font-size: large;
+    color: #0085f6;
+}
+
+.btn-primary {
+    color: #fff;
+    background-color: #1b6ec2;
+    border-color: #1861ac;
+}
+
+.bodyText {
+    font-size: 1rem;
+}
+
+.cell-green {
+    background-color: green;
+}
+
+.container-fluid {
+    padding: 0px;
+    font-family: Arial;
+    color: white;
+}
+
+.dropdown-menu {
+    background-color: rgb(5,39,103);
+    color: #a4a0a0;
+}
+
+.fa {
+    float: right;
+}
+
+.flexmargins {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.green-border {
+    border: solid green 3px;
+}
+
+.headerText {
+    display: flex;
+    color: cornflowerblue;
+    justify-content: center;
+    vertical-align: top;
+    font-size: 180%;
+}
+
+.imgMed {
+    max-width: 350px;
+    max-height: 262px;
+    margin: 5px;
+}
+
+.imgScroll {
+    max-width: 100%;
+    height: auto;
+    margin: 3px;
+}
+
+.imgSmall {
+    max-width: 270px;
+    max-height: 180px;
+    margin: 5px;
+}
+
+.imgT {
+    max-width: 23px;
+    height: auto;
+}
+
+.imgThumb {
+    max-width: 100px;
+    max-height: 66px;
+    margin: 3px;
+}
+
+.invalid {
+    outline: 1px solid red;
+}
+
+.invisible {
+    display: none;
+}
+
+.jumbotron {
+    background-color: #1c263d;
+    margin-bottom: 2rem;
+    border-radius: 1.5rem;
+}
+
+.mod {
+    position: sticky;
+    z-index: 100;
+    top: 10px;
+}
+
+.mod-box {
+    border: 12px solid #239ef7;
+    background-color: bisque;
+    color: black;
+    padding: 2rem;
+}
+
+.navbar-toggler {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.prev,
+.next {
+    background-color: darkgreen;
+    cursor: pointer;
+    width: auto;
+    padding: 10px 10px 10px 10px;
+    font-size: 12px;
+    border-radius: 3px 3px 3px 3px;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.pl-8 {
+    padding-left: 2rem;
+}
+
+.pl-12 {
+    padding-left: 2rem;
+    font-size: 0.9rem;
+}
+
+.red-border {
+    border: solid red 3px;
+}
+
+.redText {
+    cursor: pointer;
+    color: red;
+}
+
+.selected {
+    background-color: yellow;
+    color: black;
+}
+
+.sort-th {
+    cursor: pointer;
+}
+
+.subscripts {
+    color: #8a8a8c;
+    text-align: center;
+    font-size: .8rem;
+}
+
+.titleText {
+    display: flex;
+    color: cornflowerblue;
+    justify-content: center;
+    vertical-align: top;
+}
+
+.top-row {
+    height: 3.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.valid.modified:not([type=checkbox]) {
+    outline: 1px solid #26b050;
+}
+
+.validation-message {
+    color: red;
+}
+
+.visible {
+    display: block;
+}
+
+
+.footerGlobal a {
+    white-space: nowrap;
+}
+
+.footerGlobal .d-flex {
+    flex-flow: row wrap;
+}
+
+.footerGlobal .headerText {
+    font-size: 140%;
+    justify-content: left;
+}
+
+.logoHome hr {
+    height: 4px;
+    background-color: #bf9f00;
+    margin: 0px;
+}
+
+
+.logoHome .jumbotron {
+    width: 100%;
+    background-color: #0d5da6;
+    border-radius: 0px;
+    padding: 0px;
+    margin-bottom: 0px;
+}
+
+.logoHome a {
+    color: white;
+}
+
+    .logoHome a:hover {
+        color: red;
+    }
+
+.main .top-row {
+    background-color: #f7f7f7;
+    border-bottom: 1px solid #d6d5d5;
+    justify-content: flex-end;
+}
+
+    .main .top-row > a, .main .top-row .btn-link {
+        white-space: nowrap;
+        margin-left: 1.5rem;
+    }
+
+    .main .top-row a:first-child {
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+.points .container-fluid {
+    padding: 0px;
+    padding-left: .25rem;
+}
+
+.points .d-flex {
+    align-items: center;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.points .headerText {
+    text-align: center;
+}
+
+.pointsMember body {
+    background-color: #e7ddd2;
+}
+
+.pointsMember .tdText {
+    font-size: 90%;
+}
+
+.salonsMember .headerText {
+    color: antiquewhite;
+}
+
+.gallery {
+    display: none;
+}
+
+.thumbNails .btn-thumb {
+    background-color: rgb(5,39,103);
+    color: #a4a0a0;
+    border: 1px solid #cac8c8;
+    padding: 5px;
+    border-radius: 3px;
+    width: auto;
+    margin: 1px;
+    height: 2rem;
+}
+
+.thumbNails .d-flex {
+    flex-flow: row wrap;
+}
+
+.thumbNails .headerText {
+    font-size: 230%;
+}
+
+.wallFame {
+    background-color: #191b1d;
+}
+
+    .wallFame .bordercolumn {
+        margin-right: 0.5rem;
+        border: solid 1px bisque;
+        padding: 1rem;
+    }
+
+    .wallFame .headerPhoto {
+        color: #f27f6f;
+        font-size: 140%;
+        text-align: center;
+        cursor: pointer;
+    }
+
+    .wallFame .titleText {
+        font-size: 280%;
+    }
+
+.year .container-fluid {
+    background-color: #1c2024;
+}
+
+.year .headerText {
+    font-size: 200%;
+}
+
+#blazor-error-ui {
+    background: lightyellow;
+    bottom: 0;
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+    display: none;
+    left: 0;
+    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
+    #blazor-error-ui .dismiss {
+        cursor: pointer;
+        position: absolute;
+        right: 0.75rem;
+        top: 0.5rem;
+    }
+
+#members {
+    background-color: bisque;
+    color: black;
+    margin: 0;
+}
+
+    #members th, #members td {
+        border: 1px solid;
+        border-collapse: collapse;
+        border-color: black;
+        padding-left: .3rem;
+        vertical-align: bottom;
+    }
+
+    #members thead {
+        background-color: #c29e87;
+        text-align: center;
+        padding: 1px;
+    }
+
+    #members th {
+        text-align: center;
+    }
+
+    #members tr:hover {
+        background-color: dodgerblue;
+    }
+
+
+
+@media (max-width: 576px) {
+    .bodyText {
+        font-size: .8rem;
+    }
+}
+
+@media (max-width:768px) {
+    .headerPhoto {
+        font-size: 100%;
+    }
+
+    .imgMed {
+        max-width: 360px;
+        max-height: 270px;
+    }
+}
+
+@media (max-width: 999px) {
+    .subscripts {
+        font-size: .7rem;
+    }
+}
+
+@media (min-width:1000px) {
+    .bodyText {
+        font-size: 1.1rem;
+    }
+}
+
+@media (min-width:1280px) {
+    .bodyText {
+        font-size: 1.1rem;
+    }
+}

@@ -1,0 +1,97 @@
+﻿
+<style>
+    .linker {
+        color: dodgerblue;
+    }
+
+        .linker:hover {
+            color: red;
+        }
+
+
+    #salonmembers {
+        background-color: #1d1d1d;
+        color: antiquewhite;
+        margin: 0;
+    }
+
+        #salonmembers th, #members td {
+            border: 1px solid;
+            border-collapse: collapse;
+            border-color: dimgray;
+            padding-left: .3rem;
+            vertical-align: bottom;
+            padding: 1px 10px 1px 1px;
+        }
+
+        #salonmembers thead {
+            background-color: darkolivegreen;
+            text-align: center;
+            padding: 1px;
+        }
+
+        #salonmembers th {
+            text-align: center;
+        }
+
+        #salonmembers tr:hover {
+            background-color: darkblue;
+        }
+
+
+</style>
+<div class="d-flex">
+<button class="btn btn-primary btn-sm" @onclick="Create">Create</button>
+    <button class="btn btn-primary btn-sm ms-2" @onclick=Back>Back</button>
+</div>
+<h2>@SalonMaster!.SalonName</h2>
+<table id="salonmembers" class="table-bordered">
+    <thead>
+        <tr>
+            <th class="sort-th" @onclick="@(() => SortTable("Name"))">Name<span class="fa @(setSortIcon("Name"))"></span></th>
+            <th>Acceptance</th>
+            <th>Com</th>
+            <th>Judge</th>
+            <th class="sort-th" @onclick="@(() => SortTable("Points"))">Points<span class="fa @(setSortIcon("Points"))"></span></th>
+            <th>Award</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Salons == null)
+        {
+            <p><em>Loading...</em></p>
+        }
+        else
+        {
+            @foreach (var sal in Salons)
+            {
+                <tr>
+                    <td>
+                        @sal.Monthly.Master.Name
+                    </td>
+                    <td>
+                        @sal.Acceptance
+                    </td>
+                    <td>
+                        @sal.Com
+                    </td>
+                    <td>
+                        @sal.Judge
+                    </td>
+                    <td>
+                        @sal.Points
+                    </td>
+                    <td>
+                        @sal.Award
+                    </td>
+                    <td>
+                        <a class="btn-sm btn-primary" @onclick="@(()=>Edit(sal))">Edit</a>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+

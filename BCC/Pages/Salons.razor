@@ -1,0 +1,98 @@
+﻿@page "/salons"
+@page "/salons/{Data}"
+
+<style>
+    
+    .d-flex {
+        align-items: center;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .headerText{
+        font-size:180%;
+    }
+
+        #salonmembers {
+        background-color: #1d1d1d;
+        color: antiquewhite;
+        margin: 0;
+    }
+
+        #salonmembers th, #members td {
+            border: 1px solid;
+            border-collapse: collapse;
+            border-color: dimgray;
+            padding-left: .3rem;
+            vertical-align: bottom;
+            padding: 1px 10px 1px 1px;
+        }
+
+        #salonmembers thead {
+            background-color: darkolivegreen;
+            text-align: center;
+            padding: 1px;
+        }
+        #salonmembers th {
+            text-align: center;
+        }
+        #salonmembers tr:hover {
+            background-color: darkblue;
+        }
+</style>
+
+<div>
+    <DateChange IsSalons="IsSalons" ecbMonthChanged="MonthChanged"/>
+   <p/>
+    <div class="container-fluid bodyText">
+        <div class="d-flex flex-column">
+            <div class="headerText">SALONS FOR @Title</div><br />
+            <table id="salonmembers" style="width: auto" align="center" class="table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th title="Alias Name">SalonName</th>
+                        <th>Name</th>
+                        <th>Coms</th>
+                        <th>Acc</th>
+                        <th>Judge</th>
+                        <th>Points</th>
+                        <th>Award</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Salonne == null)
+                    {
+                        <p><em>Loading...</em></p>
+                    }
+                    else
+                    {
+                        foreach (Salon sal in Salonne)
+                        {
+                            <tr>
+                                <td>@(sal.SalonMaster.Alias?? @sal.SalonMaster.SalonName)</td>
+                                <td>@sal.Monthly.Master.Name</td>
+                                <td>@sal.Com</td>
+                                <td>@sal.Acceptance</td>
+                                <td>@sal.Judge</td>
+                                <td>@sal.Points</td>
+                                <td>@sal.Award</td>
+                            </tr>
+                        }
+                          <tr style="font-weight:bold">
+                        <td>Totals</td>
+                        <td></td>
+                        <td>@Salonne.Sum(x=>x.Com)</td>
+                        <td>@Salonne.Sum(x=>x.Acceptance)</td>
+                        <td></td>
+                        <td></td>
+                        <td>@Salonne.Where(x=>x.Award != null).Count()</td>
+                    </tr>
+                    }
+                </tbody>
+            </table><br />
+
+        </div>
+    </div>
+</div>
+
+

@@ -1,0 +1,34 @@
+﻿Photo/Yearline;Bloemfontein Camera Club Home;Bloemfontein camera club year;index,follow;
+Photo/Monthline;Bloemfontein Camera Club Months;Bloemfontein camera club months;index,follow
+Photo/Catstar;Bloemfontein Camera Club Category;Bloemfontein camera club categories;index,follow
+Photo/MemberMonth;Bloemfontein Camera Club MemberMonth;Bloemfontein camera club monthly results for member;index,follow
+Photo/MemberYear;Bloemfontein Camera Club MemberYear;Bloemfontein camera club yearly results for member;index,follow
+Photo/Clubwinners;Bloemfontein Camera Club Club Winners;Bloemfontein camera club winners for year;index,follow
+Photo/Winners;Bloemfontein Camera Club Category Winners;Bloemfontein camera club category winners for year;index,follow
+Photo/Merits;Bloemfontein Camera Club Merits;Bloemfontein camera club merits for year;index,follow
+Photo/Golds;Bloemfontein Camera Club Gold Winners;Bloemfontein camera club gold winners for year;index,follow
+Club/DateChoose;Bloemfontein Camera Club Choose Date;Bloemfontein camera club choose a date;noindex,nofollow
+Club/Results;Bloemfontein Camera Club Results;Bloemfontein camera club results for the month;index,follow
+Club/Points;Bloemfontein Camera Club Scores;Bloemfontein camera club scores for month;index,follow
+Club/Salons;Bloemfontein Camera Club Salons;Bloemfontein camera club salons for month;index,follow
+Club/lecture;Bloemfontein Camera Club Lecture;Bloemfontein camera club lecture for month;noindex,nofollow
+Club/SalonsMember;Bloemfontein Camera Club Salons member;Bloemfontein Camera Club salons for member;noindex,nofollow
+Club/Pointsmember;Bloemfontein Camera Club Scores member;Bloemfontein Camera Club scores for member;noindex,nofollow
+Club/About;Bloemfontein Camera Club About;Bloemfontein camera club about us;index,follow
+Club/Members;Bloemfontein Camera Club Members;Bloemfontein camera club become a member;index,follow
+Club/Visit;Bloemfontein Camera Club Visit;Bloemfontein camera club visit us;index,follow
+Club/Registration;Bloemfontein Camera Club Register;Bloemfontein camera club registration for new members;index,follow
+Club/Event; Bloemfontein Camera Club Events;Bloemfontein camera club events with map;index,follow
+Club/Contact; Bloemfontein Camera Club Contact;Bloemfontein camera club contact us;index,follow
+Club/Links; Bloemfontein Camera Club Links;Bloemfontein camera club usefull links;index,follow
+Club/Grading;Bloemfontein Camera Club Grading;Bloemfontein camera club grading for promotion;index,follow
+Club/Glossary;Bloemfontein Camera Club Glossary;Bloemfontein camera club glossary of all;index,follow
+Club/Imagesize;Bloemfontein Camera Club Imagesize;Bloemfontein camera club imagesize;index,follow
+Club/judging;Bloemfontein Camera Club Judging;Bloemfontein camera club judging in our club;index,follow
+Club/Assessment;Bloemfontein Camera Club Assessment;Bloemfontein camera club assessment for judging;index,follow
+Club/Pssa;Bloemfontein Camera Club Pssa;Bloemfontein camera club Pssa;index,follow
+Club/Pssasalons;Bloemfontein Camera Club Pssa salons;Bloemfontein camera club pssa salons;index,follow
+Club/Photovault;Bloemfontein Camera Club Photovault;Bloemfontein camera club photovault;index,follow
+Club/Gert;Bloemfontein Camera Club Courses;Bloemfontein camera club courses in our club;index,follow
+Club/Problems;Bloemfontein Camera Club Problems;Bloemfontein camera club problems old webiste;index,follow
+Club/Help;Bloemfontein Camera Club Help;Bloemfontein camera club help menu;index,follow

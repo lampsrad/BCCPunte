@@ -1,0 +1,32 @@
+﻿@page "/admin/{Data}"
+@using BCC.Pages
+@rendermode @(new InteractiveServerRenderMode(prerender:false))
+
+<div class="container">
+    <h1>@Title</h1>
+    <ProgressBar @ref="progressBar" Info="Info"/>
+    @if (Messages.Count>0)
+    {
+        <ul class="text-white">
+            @foreach (var m in Messages)
+            {
+                <li>@m</li>
+            }
+        </ul>
+    }
+    @if (Errors.Count > 0)
+    {
+        <ul class="text-danger">
+            @foreach (var e in Errors)
+            {
+                <li><h4>@e</h4></li>
+            }
+        </ul>
+    }
+</div>
+@if (filePick == true)
+{
+    <Backup Data="@Title" ecbBackup="ecbBackup" ecbRestore="ecbRestore" />
+}
+
+

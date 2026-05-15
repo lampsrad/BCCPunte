@@ -1,0 +1,49 @@
+﻿ts
+SONY A1 vs CANON R5
+
+li
+Extracts from DigitalCameraWorld;https://www.digitalcameraworld.com/features/sony-a1-vs-canon-eos-r5-which-is-the-best-hi-res-8k-camera 
+
+h
+Resolution:
+Sony A1 with 50 megapixels versus the R5 with 45 megapixels.
+The A1 wins with 5 megapixels.
+
+h
+Autofocus:
+The Canon EOS R5 holds a significant edge over the Sony A1 when it comes to autofocus in both stills and video. 
+The R5 features 5,940 AF points for stills (with 4,500 for video) with 100% coverage, and is capable of focusing down to -6EV and boasts the world’s fastest AF speed of just 0.05 sec. The A1 has a comparatively paltry 759 AF points with 92% coverage, and can only focus down to -4EV. 
+Canon's Dual Pixel AF II combined with its AI-programmed Deep Learning AF makes the R5 capable of transformatively accurate eye, face and body tracking for humans and animals. 
+While the A1 also features real-time Eye AF for humans, animals and birds, the latter only works for still images – whereas Canon's impossibly accurate animal eye AF works on birds in video as well as stills.  
+
+h
+Burst Shooting:
+A1 with 30 fps vs R5 with 20 fps.
+The A1 holds the edge here.
+
+h
+ISO Sensitivity:
+R5 with native ISO range 100-51,200 versus A1 range 100-32,000
+Factor in the R5's -6EV autofocus capability compared to the A1's -4EV, and the Canon is the superior performer for low light shooting. 
+
+h
+Video:
+The Canon can record full sensor width videos, the A1 uses a cropped sensor.
+While Canon's Dual Pixel CMOS AF, with eye and animal eye AF, is available in all video modes on the R5, as noted the Sony A1 cannot perform animal eye AF in movie mode.
+Another feature that is, at present, exclusive to the R5 is the Frame Grab facility. This enables you to take a pristine 35.4MP still image from 8K footage in either JPG or HEIF format – something that is surprisingly useful in practice.
+
+h
+Body, Electronic Viewfinder and LCD:
+A1 has a higher resolution EVF with 9.44 million DPI versus R5 with 5.60 million DPI. The refresh rate of the EVF in the A1 is 240 fps versus the R5 with 120 fps.
+So overall the EVF in the A1 is better than the R5.
+The flash sync speed of the A1 is faster than the R5 with 1/400 sec versus 1/200 sec.
+When it comes to in-body image stabilization (IBIS), however, the clear advantage goes to Canon. The EOS R5 boasts up to 8 stops of stabilization, thanks to a combination of IBIS and lens IS, while the A1 maxes out at a claimed 5.5 stops. 
+
+h
+Prices in South Africa:
+Current prices in RSA: A1 at R130 000 (ORMS, ODP, Takealot) and the R5 at R69 000 (Takealot).
+The A1 is 47% more expensive than the R5
+Memory cards:
+A1 with CF Express type A versus R5 with CF Express type B. The type A is 127% more expensive than the type B 
+
+  

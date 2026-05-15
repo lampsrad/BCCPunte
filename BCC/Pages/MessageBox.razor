@@ -1,0 +1,127 @@
+@implements IDisposable
+
+<style>
+    .custom-modal {
+        width: 300px;
+    }
+
+    .custom-color {
+        background-color: #007bff !important;
+        color: white;
+    }
+</style>
+
+@if (IsVisible)
+{
+    <div class="modal fade show" style="display:block; z-index:10;" tabindex="-1">
+        <div class="modal-dialog custom-modal">
+            <div class="modal-content custom-color">
+                <div class="modal-header">
+                    <h4 class="modal-title">@Title</h4>
+                    <button type="button" class="btn-close" @onclick="Cancel"></button>
+                </div>
+                <div class="modal-body">
+                    <h5>@Message</h5>
+                </div>
+                <div class="modal-footer">
+                    <button class="@(btYes? "show":"d-none")" @onclick="Yes">Yes</button>
+                    <button class="@(btNo ? "show" : "d-none")" @onclick="No">No</button>
+                    <button class="@(btOk ? "show" : "d-none")" @onclick="Ok">Ok</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
+@code {
+    [Inject] State state { get; set; }
+    string Title { get; set; }
+    string Message { get; set; }
+    private bool IsVisible, btYes, btNo, btOk;
+    private TaskCompletionSource<string> tcs;
+    private TaskCompletionSource<bool> tcsConfirm;
+
+
+    private Task<string> MessageShow(string title, string mes, string but)
+    {
+        IsVisible = true;
+        Title = title;
+        Message = mes;
+        btYes = but.Contains("y", StringComparison.OrdinalIgnoreCase);
+        btNo = but.Contains("n", StringComparison.OrdinalIgnoreCase);
+        btOk = but.Contains("ok", StringComparison.OrdinalIgnoreCase);
+        tcs = new TaskCompletionSource<string>();
+        InvokeAsync(StateHasChanged);
+        return tcs.Task;
+    }
+
+    private Task<bool> MessageShowConfirm(string title, string mes)
+    {
+        IsVisible = true;
+        Title = title;
+        Message = mes;
+        btYes = true;
+        btNo = true;
+        btOk = false;
+        tcsConfirm = new TaskCompletionSource<bool>();
+        InvokeAsync(StateHasChanged);
+        return tcsConfirm.Task;
+    }
+
+    private void Cancel()
+    {
+        Default();
+        tcs?.SetResult(null);
+        tcsConfirm?.SetResult(false);
+    }
+
+    public void Default()
+    {
+        Title = string.Empty;
+        Message = string.Empty;
+        IsVisible = false;
+        btYes = false;
+        btNo = false;
+        btOk = false;
+        tcs = null;
+        tcsConfirm = null;
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        state.MessageShow -= MessageShow;
+        state.MessageConfirm -= MessageShowConfirm;
+    }
+
+    private void No()
+    {
+        var confirm = tcsConfirm;
+        var str = tcs;
+        Default();
+        str?.SetResult("No");
+        confirm?.SetResult(false);
+    }
+
+    private void Yes()
+    {
+        var confirm = tcsConfirm;
+        var str = tcs;
+        Default();
+        str?.SetResult("Yes");
+        confirm?.SetResult(true);
+    }
+
+    protected override void OnInitialized()
+    {
+        state.MessageShow += MessageShow;
+        state.MessageConfirm += MessageShowConfirm;
+    }
+
+    private void Ok()
+    {
+        Default();
+        tcs?.SetResult("Ok");
+    }
+}

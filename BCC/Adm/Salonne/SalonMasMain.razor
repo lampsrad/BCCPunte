@@ -1,0 +1,50 @@
+﻿<style>
+    .linker {
+        color: dodgerblue;
+    }
+
+        .linker:hover {
+            color: red;
+        }
+</style>
+
+@page "/salonMasMain"
+@page "/salonMasMain/{Data}"
+@rendermode InteractiveServer
+
+@if (salonMasShow)
+{
+    <div class="d-flex">
+        <button class="btn btn-sm btn-primary" @onclick="createSalonMaster" title="Create New Master">Create</button>
+        <div class="d-inline-flex align-items-center ms-4">
+            <InputCheckbox @bind-Value="delete" class="me-1" title="Check to Show Delete Buttons" />
+            Delete
+        </div>
+    </div>
+    <SalonMasIndex salonMasters="salonMasters" salonDelete="Delete" salonEdit="Edit" salonShow="salonShow" sortTable="SortTableSalonMasters" Title="@Title" delete="@delete"/>
+}
+@if (createShow)
+{
+    <SalonMasCreate Close="CloseSMCreate" />
+}
+@if (editShow)
+{
+    <SalonMasEdit SalonMaster="Salonmaster" Close="Close" />
+}
+@if (salonsShow)
+{
+    <SalonIndex Salons="Salons" SalonMaster="Salonmaster" CreateSalon="CreateSalon" EditSalon="EditSalon" sortTable="SortTableSalons" BacktoParent="Back"/>
+}
+@if (salonCreateShow)
+{
+    <SalonCreate Masters="Masters" SalonMaster="Salonmaster" Salon="Salon" Close="salonClose" />
+}
+
+@if (salonEditShow)
+{
+    <SalonEdit SalonMaster="Salonmaster" Salon="Salon" Close="salonClose" />
+}
+
+
+
+

@@ -1,0 +1,73 @@
+﻿<style>
+
+    #salonmembers {
+        background-color: #1d1d1d;
+        color: antiquewhite;
+        margin: 0;
+    }
+
+        #salonmembers th, #members td {
+            border: 1px solid;
+            border-collapse: collapse;
+            border-color: dimgray;
+            padding-left: .3rem;
+            vertical-align: bottom;
+            padding: 1px 10px 1px 1px;
+        }
+
+        #salonmembers thead {
+            background-color: darkolivegreen;
+            text-align: center;
+            padding: 1px;
+        }
+        #salonmembers th {
+            text-align: center;
+        }
+        #salonmembers tr:hover {
+            background-color: darkblue;
+        }
+</style>
+<h3>@Title</h3>
+<div style="overflow-y:auto;max-height: calc(85vh); width:fit-content;">
+    <table id="salonmembers" class="table-bordered table-striped">
+        <thead style="position:sticky;top:0;z-index:10;">
+            <tr>
+                <th class="sort-th" @onclick="@(() => SortTable("Name"))">SalonName<span class="fa @(setSortIcon("Name"))"></span></th>
+                <th class="sort-th" @onclick="@(() => SortTable("Date"))">Salon Date<span class="fa @(setSortIcon("Date"))"></span></th>
+                <th title="International">
+                    Int
+                </th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (salonMasters == null)
+            {
+                <p><em>Loading...</em></p>
+            }
+            else
+            {
+                @foreach (SalonMaster sal in salonMasters)
+                {
+                    <tr>
+                        <td @onclick="@(()=>SalonImport(sal))" title="Click to Import this Salon from .csv File">@(sal.Alias?? sal.SalonName)</td>
+                        <td class="@(sal.Imported? "text-success": "")">@sal.Date</td>
+                        <td>
+                            <input type="checkbox" checked="@sal.International"/>
+                        </td>
+                        <td>
+                            <button class="btn-sm btn-primary" @onclick="@(() => Edit(sal))" @onclick:stopPropagation>Edit</button>
+                            <button class="btn-sm btn-success" title="Show Participants" @onclick="@(() => Show(sal))" @onclick:stopPropagation>Show</button>
+                            <button class="@(delete? "show": "d-none") btn-sm btn-danger" title="Delete Salon" @onclick="@(() => Delete(sal))" @onclick:stopPropagation>Delete</button>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+
+
+
+

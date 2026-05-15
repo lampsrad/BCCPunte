@@ -1,0 +1,214 @@
+﻿@page "/masterview"
+@using Microsoft.VisualBasic.FileIO
+@using System.Text.RegularExpressions
+
+<style>
+    #salonmembers {
+        background-color: #1d1d1d;
+        color: antiquewhite;
+        margin: 0;
+    }
+
+        #salonmembers th, #members td {
+            border: 1px solid;
+            border-collapse: collapse;
+            border-color: dimgray;
+            padding-left: .3rem;
+            vertical-align: bottom;
+            padding: 1px 10px 1px 1px;
+        }
+
+        #salonmembers thead {
+            background-color: darkolivegreen;
+            text-align: center;
+            padding: 1px;
+        }
+
+        #salonmembers th {
+            text-align: center;
+        }
+
+        #salonmembers tr:hover {
+            background-color: darkblue;
+        }
+</style>
+<div class="d-flex">
+    <button class="btn btn-sm btn-primary me-3" title="*Ledelys.csv in Downloads Folder" @onclick="Update">Update</button>
+    <h3>@Title</h3>
+    <button class="btn btn-sm btn-primary ms-3" @onclick="Paid" title="Paid Members">Paid</button>
+    <button class="btn btn-sm btn-primary ms-3" @onclick="All" title="All Members">All</button>
+    <button class="btn btn-sm btn-primary ms-3" @onclick="MemberList" title="Writes a .csv list of Members to //Download//BKK//">List</button>
+</div>
+
+<div style="overflow-y:auto;max-height: calc(90vh); width:fit-content;">
+    <table id="salonmembers" class="table-bordered table-striped">
+        <thead style="position:sticky;top:0;z-index:10;">
+            <tr>
+                <th class="sort-th" @onclick="@(() => SortTable("Name"))">Name<span class="fa @(setSortIcon("Name"))"></span></th>
+                <th>Rating</th>
+                <th>Title</th>
+                <th>Email</th>
+                <th>Mobile</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Masters == null)
+            {
+                <p><em>Loading...</em></p>
+            }
+            else
+            {
+                @foreach (Master m in Masters)
+                {
+                    <tr>
+                        <td>@m.Name</td>
+                        <td>@m.Rating.Rate</td>
+                        <td>@m.Title</td>
+                        <td>@m.Email</td>
+                        <td>@m.Mobile</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    [Inject] Repo repo { get; set; }
+    [Inject] State state{ get; set; }
+    string Title;
+    private string activeSortColum = "Points";
+    private bool isSortedAscending = true;
+    IList<Master> Masters;
+    private IList<string> Headers { get; set; }
+
+
+    public async Task  All()
+    {
+        Title = "All Members";
+        Masters = await repo.GetEntitiesNTAsync<Master>(null);
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        Title = "All Members";
+        Masters = await repo.GetEntitiesNTAsync<Master>(null, x => x.Name);
+    }
+    private async Task Paid()
+    {
+        Title = "Paid Members";
+        Masters = await repo.GetEntitiesNTAsync<Master>(x => x.Paid);
+    }
+    private void SortTable(string colName)
+    {
+        sortVM vm = new sortVM();
+        vm.colName = colName;
+        if (colName != activeSortColum)
+        {
+            vm.ascending = true;
+            isSortedAscending = true;
+            activeSortColum = colName;
+        }
+        else
+        {
+            if (isSortedAscending)
+                vm.ascending = false;
+            else
+                vm.ascending = true;
+            isSortedAscending = !isSortedAscending;
+        }
+    }
+    private string setSortIcon(string ico)
+    {
+        if (activeSortColum != ico)
+            return string.Empty;
+        if (isSortedAscending)
+            return "fa-sort-up";
+        else
+            return "fa-sort-down";
+    }
+    private async Task Update()
+    {
+        string file = Directory.GetFiles(gData.Downloads, "*Ledelys*.csv").FirstOrDefault();
+        if(file == null)
+        {
+            await state.ShowMessageAsync("NOT FOUND", "Ledelys not found", "Ok");
+            return;
+        }
+        await using var scope = repo.CreateScope();
+        var masters = await scope.GetEntitiesAsync<Master>(null, x => x.Name);
+        foreach (var m in masters)
+        {
+            m.Paid = false;
+        }
+        await scope.SaveChangesDetachAsync();
+        using(TextFieldParser p = new TextFieldParser(file))
+        {
+            TextFieldParserInitialize(p);
+            int lastname = Headers.IndexOf("lastname");
+            int firstname = Headers.IndexOf("firstname");
+            var bday = Headers.IndexOf("birthday"); 
+            int mobile = Headers.IndexOf("mobile");
+            int email = Headers.IndexOf("email");
+            while (!p.EndOfData)
+            {
+                var data = p.ReadFields();
+                var name = $"{data[lastname]} {data[firstname]}";
+                Master master = Masters.FirstOrDefault(x => x.Name == name);
+                if (master != null)
+                {
+                    master.Bday = string.IsNullOrEmpty(data[bday])==false? DateOnly.Parse(data[bday]) : null;  
+                    master.Mobile = data[mobile];
+                    master.Paid = true;
+                    master.Email = data[email];
+                    int cc = await repo.UpdateSaveDetachAsync(master);
+                }
+                else
+                {
+                    master = new Master();
+                    master.Firstname = data[firstname];
+                    master.Lastname = data[lastname];   
+                    master.Name = name;
+                    master.Bday = string.IsNullOrEmpty(data[bday]) == false ? DateOnly.Parse(data[bday]) : null;
+                    master.Mobile = data[mobile];
+                    master.Paid = true;
+                    master.Email = data[email];
+                    await repo.AddSaveAsync(master); 
+                }
+            }
+        }
+        await state.ShowMessageAsync("UPDATED","Update Completed", "Ok");
+    }
+    private TextFieldParser TextFieldParserInitialize(TextFieldParser p)
+    {
+        string headings = p.ReadLine();//Headers
+        headings = headings.ToLower();
+        bool m1 = Regex.IsMatch(headings, @";");
+        string delimeter = m1 == true ? ";" : ",";
+        Headers = headings.Split(delimeter).ToList();
+        p.TextFieldType = FieldType.Delimited;
+        p.SetDelimiters(delimeter);
+        p.TrimWhiteSpace = true;
+        p.HasFieldsEnclosedInQuotes = true;
+        return p;
+    }
+    private async Task MemberList()
+    {
+
+        string fn = Path.Combine(gData.Downloads, "Members.csv");
+        if (File.Exists(fn))
+            File.Delete(fn);
+        using StreamWriter sw = File.AppendText(fn);
+        var head = $"Name,Rating,Title,Email,Mobile";
+        await sw.WriteLineAsync(head);
+        IList<Master> masters = await repo.GetEntitiesNTAsync<Master>(x => x.Paid);
+        foreach (var m in masters)
+        {
+            string ln = $"{m.Name},{m.Rating.Rate},{m.Title},{m.Email},{m.Mobile}";
+            await sw.WriteLineAsync(ln);
+        }
+    }
+}
+
+
+
+

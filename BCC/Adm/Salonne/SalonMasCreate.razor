@@ -1,0 +1,54 @@
+﻿
+<style>
+    .mod {
+        width: 400px;
+    }
+</style>
+
+<h3>SalonCreate</h3>
+
+<div class="d-flex flex-column">
+    <div class="mod mod-box">
+        <EditForm Model="salonMaster">
+            <div class="form-group">
+                <label class="control-label">Salon Name</label>
+                <InputText @bind-Value="salonMaster.SalonName" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label class="control-label">Date</label>
+                <InputDate @bind-Value="salonMaster.Date" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label class="control-label">International</label>
+                <InputCheckbox @bind-Value="salonMaster.International" class="form-check" />
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" @onclick="Submitted" />
+            </div>
+        </EditForm>
+
+    </div>
+</div>
+
+@code{
+    [Inject] Repo repo { get; set; }
+    [Parameter] public EventCallback<SalonMaster> Close { get; set; }
+    SalonMaster salonMaster = new();
+    private async Task Submitted()
+    {
+        SalonMaster sm;
+        if (salonMaster.ID == 0)
+        {
+            sm = new();
+        }
+        else
+        {
+            sm = await repo.GetEntityNTAsync<SalonMaster>(x => x.ID == salonMaster.ID);
+        }
+        sm.SalonName = salonMaster.SalonName;
+        sm.Date = salonMaster.Date;
+        sm.International = salonMaster.International;
+        await repo.UpdateSaveDetachAsync(sm);
+        await Close.InvokeAsync(salonMaster);
+    }
+}

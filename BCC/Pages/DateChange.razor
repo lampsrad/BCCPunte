@@ -1,0 +1,26 @@
+﻿
+<div class="box mx-auto mt-2 d-flex flex-column align-items-center" title="Click to select Month for Member Results">
+    @for (int row = 0; row < 4; row++)
+    {
+        <div class="rows">
+            @for (int col = 0; col < 3; col++)
+            {
+                int month = row * 3 + col + 1;
+                <button class="btn-primary btn-sm btn-dat" @onclick="(()=>OnClicked(month))">@(((monthS)month).ToString())</button>
+            }
+        </div>
+    }
+    @if (IsSalons)
+    {
+        <div class="rows">
+            <button class="btn-primary btn-sm btn-dat" title="PSSA Year" @onclick="OnPSSAYear">PSY</button>
+            <button class="btn-primary btn-sm btn-dat" title="New Salons for Next Month" @onclick="OnNewMonth">NEW</button>
+            <button class="btn-primary btn-sm btn-dat" title="BCC Year" @onclick=OnBCCYear>BCY</button>
+        </div>
+    }
+    else
+    {
+        <button class="btn-primary btn-sm btn-dat" title="New Salons for Next Month" @onclick="(()=>OnClicked(13))">NEW</button>
+    }
+
+</div>

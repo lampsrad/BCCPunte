@@ -1,0 +1,151 @@
+﻿@using System.Text.RegularExpressions
+@implements IDisposable
+
+<style>
+    .custom-modal {
+        width:auto;
+    }
+
+    .custom-color {
+        background-color: #007bff !important;
+        color: white;
+    }
+</style>
+
+@if (IsVisible)
+{
+    <div class="modal fade show" style="display:block; z-index:10;" tabindex="-1">
+        <div class="modal-dialog custom-modal">
+            <div class="modal-content custom-color">
+                <div class="modal-header">
+                    <h5 class="modal-title">@Title</h5>
+                    <button type="button" class="btn-close" @onclick="Cancel"></button>
+                </div>
+                <div class="modal-body">
+                    <h6>@Message</h6>
+                    <InputFile OnChange="LoadFiles" multiple />
+                    @if (selectedFiles.Any())
+                    {
+                        <ul>
+                            @foreach (var file in selectedFiles)
+                            {
+                                <li>@file.Name (@(file.Size / 1024) KB)</li>
+                            }
+                        </ul>
+                    }
+                </div>
+                <div class="modal-footer">
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
+@code {
+    [Inject] State state { get; set; }
+    private List<IBrowserFile> selectedFiles = new();
+    private const long MaxFileSize = 1024 * 1024 * 100; // 100 MB per file (adjust as needed)
+    private const int MaxAllowedFiles = 10;
+    private TaskCompletionSource<string> tcs;
+    string Title, Message, UploadPath,  Ym=null;
+    bool IsVisible;
+
+    private void Cancel()
+    {
+        Clear();
+        tcs.SetResult(null);
+    }
+    private void Clear()
+    {
+        Title = string.Empty;
+        Message = string.Empty;
+        IsVisible = false;
+        InvokeAsync(StateHasChanged);
+    }
+    public void Dispose()
+    {
+        state.FileUpload -= FileGet;
+    }
+    public string ExtractName(string filename)
+    {
+        filename = filename.ToLower();
+        var match = Regex.Match(filename, @"photos-([a-z]+)_(\d{4})-([a-z]+)");
+        if (match.Success)
+        {
+            string monthName = match.Groups[1].Value;
+            string year = match.Groups[2].Value;
+            string category = match.Groups[3].Value;
+            string month = monthName switch
+            {
+                "january" or "januarie" => "01",
+                "february" or "februarie" => "02",
+                "march" or "maart" => "03",
+                "april" => "04",
+                "may" or "mei" => "05",
+                "june" or "junie" => "06",
+                "july" or "julie" => "07",
+                "august" or "augustus" => "08",
+                "september" => "09",
+                "october" or "oktober" => "10",
+                "november" => "11",
+                "december" or "desember" => "12",
+                _ => null
+            };
+            return $"{year}-{month} {category.toCap()}";
+        }
+        return Path.GetFileNameWithoutExtension(filename);
+    }
+    private Task<string> FileGet(string title, string message, string uploadpath)
+    {
+        Title = title;
+        Message = message;
+        UploadPath = uploadpath;
+        tcs = new TaskCompletionSource<string>();
+        IsVisible = true;
+        InvokeAsync(StateHasChanged);
+        return tcs.Task;
+    }
+    private async Task LoadFiles(InputFileChangeEventArgs e)
+    {
+        if (Directory.Exists(UploadPath))
+            Directory.Delete(UploadPath, true);
+        Directory.CreateDirectory(UploadPath);
+        selectedFiles.Clear();
+        foreach (var file in e.GetMultipleFiles(MaxAllowedFiles))
+        {
+            if (file.Size > MaxFileSize)
+            {
+                Message = $"File {file.Name} exceeds the maximum allowed size of {MaxFileSize / (1024 * 1024)} MB.";
+                await InvokeAsync(StateHasChanged);
+                return;
+            }
+            selectedFiles.Add(file);
+            await InvokeAsync(StateHasChanged);
+            await ProcessFileAsync(file);
+        }
+        Clear();
+        tcs.SetResult(Ym);
+    }
+    private async Task ProcessFileAsync(IBrowserFile file)
+    {
+        try
+        {
+            string Filename = ExtractName(file.Name);
+            await using var stream = file.OpenReadStream(MaxFileSize);
+            var trustedName = Filename + Path.GetExtension(file.Name);
+            var path = Path.Combine(UploadPath, trustedName);
+            await using var fs = new FileStream(path, FileMode.Create);
+            await stream.CopyToAsync(fs);
+            Ym = Filename.Split(' ')[0];
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Error processing file {file.Name}: {e.Message}");
+        }
+    }
+    protected override void OnInitialized()
+    {
+        state.FileUpload += FileGet;
+    }
+}

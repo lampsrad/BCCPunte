@@ -1,0 +1,61 @@
+﻿<style>
+    .custom-modal {
+        width: 300px;
+    }
+
+    .custom-color {
+        background-color: #007bff !important;
+        color: white;
+    }
+</style>
+
+@if (IsVisible)
+{
+    <div class="mod">
+        <div class="modal-dialog custom-modal">
+            <div class="modal-content custom-color">
+                <div class="modal-header">
+                    <h4 class="modal-title">@Info.CurrentStage</h4>
+                    <button type="button" class="btn-close" @onclick="Cancel"></button>
+                </div>
+                <div class="modal-body">
+                        <div class="text-white">
+                            <h5>@Info.Message</h5>
+                            <progress max="100" value="@Info.Percentage" style="accent-color: blue;"></progress>
+                            @Info.Percentage%
+                        </div>
+                </div>
+                <div class="modal-footer">
+
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
+@code {
+    [Inject] State state { get; set; }
+    [Parameter] public ProgressInfo Info { get; set; }
+    public bool IsVisible;
+   
+
+    private void Cancel()
+    {
+        Default();
+    }
+    public void Default()
+    {
+        IsVisible = false;;
+        StateHasChanged();
+    }
+    private void No()
+    {
+        Default();
+    }
+    private void Progress(bool show)
+    {
+        IsVisible = show;
+        InvokeAsync(StateHasChanged);
+    }
+}

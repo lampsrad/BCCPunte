@@ -1,0 +1,84 @@
+@page "/"
+<PageTitle>Index</PageTitle>
+
+<style>
+    .winner-card {
+        background-color: #1d1d1d;
+        border: 1px solid #444;
+        color: white;
+    }
+
+    .winner-img {
+        width: 100%;
+        height: auto;
+    }
+
+    .cat-label {
+        font-size: .8rem;
+        color: #bf9f00;
+        text-transform: uppercase;
+        font-weight: bold;
+    }
+
+    .photo-title {
+        font-style: italic;
+        font-size: .9rem;
+        color: #ccc;
+    }
+
+    .page-header {
+        color: #bf9f00;
+        text-align: center;
+        font-size: 1.4rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin: 1rem 0;
+    }
+</style>
+
+@if (Winners == null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!Winners.Any())
+{
+    <p class="text-center mt-4">No category winners found for @MonthTitle.</p>
+}
+else
+{
+    <div class="page-header">@MonthTitle — Category Winners</div>
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-3 mx-2 mb-4">
+        @foreach (var p in Winners)
+        {
+            <div class="col">
+                <div class="card winner-card h-100">
+                    <img src="@p.Filename" class="winner-img card-img-top" alt="@p.Title" />
+                    <div class="card-body">
+                        <div class="cat-label">@p.Category.toCategory_Rating()</div>
+                        <div class="fw-bold">@p.Monthly.Master.Name</div>
+                        <div class="photo-title">@p.Title</div>
+                        <div class="mt-1">
+                            Score: @p.Score
+                            @if (!string.IsNullOrEmpty(p.Award))
+                            {
+                                <span class="ms-2">— @p.Award.toAward()</span>
+                            }
+                        </div>
+                        <div class="mt-1">
+                            @if (p.Winner == true)
+                            {
+                                <span class="badge me-1" style="background-color:#bf9f00;color:#000">Winner</span>
+                            }
+                            @if (p.Club_Winner == true)
+                            {
+                                <span class="badge" style="background-color:#2e7d32">Club Winner</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+

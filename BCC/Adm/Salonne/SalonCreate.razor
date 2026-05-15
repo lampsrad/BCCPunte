@@ -1,0 +1,61 @@
+﻿
+
+<style>
+    .mod {
+        width: 400px;
+    }
+
+    .linker {
+        color: dodgerblue;
+    }
+
+        .linker:hover {
+            color: red;
+        }
+</style>
+<h2>Create</h2>
+
+<h4>@SalonMaster.SalonName</h4>
+<hr />
+<div class="d-flex flex-column">
+    <div class="mod mod-box">
+        <EditForm Model="Salon" OnValidSubmit="Submitted">
+            <div class="form-group">
+                <InputSelect @bind-Value="Salon!.MasterID">
+                    <label class="control-label">Member</label>
+                    @foreach (Master m in Masters!)
+                    {
+                        <option value="@m.ID">@m.Name</option>
+                    }
+                </InputSelect>
+            </div>
+            <div class="form-group">
+                <label class="control-label">Acceptance</label>
+                <InputNumber @bind-Value="Salon.Acceptance" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label class="control-label">Com</label>
+                <InputNumber @bind-Value="Salon.Com" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label class="control-label">Points</label>
+                <InputNumber @bind-Value="Salon.Points" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label class="control-label">Judge</label>
+                <InputNumber @bind-Value="Salon.Judge" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label class="control-label">Award</label>
+                <InputText @bind-Value="Salon.Award" class="form-control" />
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary"/>
+            </div>
+        </EditForm>
+    </div>
+</div>
+<br />
+
+<p class="linker" @onclick="close">Back to List</p>
+

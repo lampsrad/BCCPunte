@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="af">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bloemfontein Kameraklub: Die Klubhuis</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 17px;
+      line-height: 1.75;
+      color: #1a1a1a;
+      background: #edeae4;
+    }
+
+    /* ── Header ── */
+    header {
+      background: #111;
+      color: #fff;
+      text-align: center;
+      padding: 56px 24px 48px;
+    }
+    header h1 {
+      font-size: 2.2rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-weight: normal;
+      margin-bottom: 10px;
+    }
+    header .rule {
+      width: 60px;
+      height: 1px;
+      background: #888;
+      margin: 0 auto 16px;
+    }
+    header p.sub {
+      font-size: 1rem;
+      color: #bbb;
+      font-style: italic;
+    }
+
+    /* ── Page container ── */
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 56px 24px 72px;
+    }
+
+    /* ── Article cards ── */
+    .article {
+      background: #fff;
+      border-radius: 2px;
+      padding: 44px 52px;
+      margin-bottom: 56px;
+      box-shadow: 0 1px 6px rgba(0,0,0,.10);
+    }
+    .article h2 {
+      font-size: 1.15rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: bold;
+      color: #111;
+      margin-bottom: 6px;
+    }
+    .article .rule {
+      width: 40px;
+      height: 2px;
+      background: #111;
+      margin-bottom: 28px;
+    }
+    .article p {
+      margin-bottom: 1.1em;
+      color: #2a2a2a;
+    }
+    .article p:last-child { margin-bottom: 0; }
+    .article .byline {
+      margin-top: 28px;
+      padding-top: 20px;
+      border-top: 1px solid #e0e0e0;
+      font-style: italic;
+      color: #666;
+      font-size: 0.92em;
+    }
+
+    /* ── Section heading ── */
+    .gallery-heading {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: #777;
+      margin-bottom: 20px;
+    }
+
+    /* ── Masonry gallery using CSS columns ── */
+    .masonry {
+      columns: 3;
+      column-gap: 10px;
+      margin-bottom: 56px;
+    }
+    @media (max-width: 700px) { .masonry { columns: 2; } }
+    @media (max-width: 420px) { .masonry { columns: 1; } }
+
+    .masonry figure {
+      break-inside: avoid;
+      margin: 0 0 10px 0;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      border-radius: 2px;
+      background: #ccc;
+    }
+    .masonry figure img {
+      width: 100%;
+      height: auto;
+      display: block;
+      transition: transform 0.35s ease, filter 0.35s ease;
+    }
+    .masonry figure:hover img {
+      transform: scale(1.025);
+      filter: brightness(1.08);
+    }
+    .masonry figure .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0);
+      transition: background 0.3s;
+      display: flex;
+      align-items: flex-end;
+      padding: 10px;
+    }
+    .masonry figure:hover .overlay {
+      background: rgba(0,0,0,0.18);
+    }
+    .masonry figure .overlay span {
+      font-family: Arial, sans-serif;
+      font-size: 0.7rem;
+      color: #fff;
+      opacity: 0;
+      transition: opacity 0.3s;
+      text-shadow: 0 1px 3px rgba(0,0,0,.7);
+      letter-spacing: 0.05em;
+    }
+    .masonry figure:hover .overlay span { opacity: 1; }
+
+    /* ── Lightbox ── */
+    #lb {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.92);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      cursor: zoom-out;
+    }
+    #lb.open { display: flex; }
+    #lb img {
+      max-width: 94vw;
+      max-height: 92vh;
+      width: auto;
+      height: auto;
+      display: block;
+      border-radius: 2px;
+      box-shadow: 0 8px 40px rgba(0,0,0,.6);
+      cursor: default;
+    }
+    #lb-close {
+      position: fixed;
+      top: 18px;
+      right: 24px;
+      color: #fff;
+      font-size: 2rem;
+      cursor: pointer;
+      line-height: 1;
+      opacity: 0.7;
+      font-family: Arial, sans-serif;
+      user-select: none;
+    }
+    #lb-close:hover { opacity: 1; }
+    #lb-prev, #lb-next {
+      position: fixed;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #fff;
+      font-size: 2.5rem;
+      cursor: pointer;
+      opacity: 0.55;
+      font-family: Arial, sans-serif;
+      user-select: none;
+      padding: 16px;
+      transition: opacity 0.2s;
+    }
+    #lb-prev:hover, #lb-next:hover { opacity: 1; }
+    #lb-prev { left: 10px; }
+    #lb-next { right: 10px; }
+    #lb-caption {
+      position: fixed;
+      bottom: 18px;
+      left: 0; right: 0;
+      text-align: center;
+      color: #ccc;
+      font-family: Arial, sans-serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.06em;
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      font-family: Arial, sans-serif;
+      font-size: 0.75rem;
+      color: #999;
+      padding: 24px;
+      letter-spacing: 0.04em;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Lightbox ── -->
+<div id="lb">
+  <span id="lb-close" title="Sluit">&times;</span>
+  <span id="lb-prev">&#8249;</span>
+  <img id="lb-img" src="" alt="">
+  <span id="lb-next">&#8250;</span>
+  <div id="lb-caption"></div>
+</div>
+
+<header>
+  <h1>Bloemfontein Kameraklub</h1>
+  <div class="rule"></div>
+  <p class="sub">&ldquo;Die Klubhuis&rdquo; &mdash; Opening &amp; Inwydingsgeleentheid &mdash; 26 Maart 2026</p>
+</header>
+
+<div class="container">
+
+    <!-- ── Article 1 ── -->
+    <div class="article">
+        <h2>Bloemfontein Kameraklub: &ldquo;Die Klubhuis&rdquo;</h2>
+        <div class="rule"></div>
+
+        <p>Hoe, waar en wat?</p>
+
+        <p>
+            Om di&eacute; vrae te beantwoord kan &lsquo;n bietjie bymekaarkom-geskiedenis in o&euml;nskou geneem word.
+            Vir baie jare het Bloemfontein Kameraklub in &lsquo;n ouditorium by die Bloemfontein Nasionale Museum vergader.
+            Dit was in die tyd van films en skyfies.
+        </p>
+
+        <p>
+            Maar tye het verander. Dit het onveilig en gevaarlik geword om saans by die Museum te vergader.
+            Die bymekaarkomplek het oor &lsquo;n tydperk gewissel van by o.a. Oranje Meisieskool, die St James Kerk in
+            Heuwelsig en die laaste 7 jaar by die Planetarium op Naval Hill. Laasgenoemde was &lsquo;n mooi en gerieflike
+            vergaderplek. Tegnologie- en nuwe huurvereistes het verhuising genoodsaak. Verskeie moontlike vergaderplekopsies
+            is ondersoek. Moontlike plekke het egter almal bepaalde lastige tekortkominge gehad.
+        </p>
+
+        <p>
+            &lsquo;n Klompie kiekiesafari&rsquo;s het by klublid, Fanus Theron, se hoewe te Bainsvlei, Bloemfontein
+            plaasgevind. Die een ding lei tot &lsquo;n ander en Fanus bied &lsquo;n skuur aan as &lsquo;n moontlike
+            bymekaarkomplek. Weliswaar moet sekere goed met die skuur gebeur om dit geskik vir die klub te maak.
+        </p>
+
+        <p>
+            Somme word gemaak na verkryging van kwotasies. Gelukkig was daar spaargeld en die projek kry die groen lig.
+            Bloemfontein Kameraklub kry &lsquo;n nuwe bymekaarkomplek. Iemand doop dit &ldquo;Die Klubhuis&rdquo;.
+            Die Therons skep met innoverende, dog treffend minimalistiese dekor, verder ook &lsquo;n heerlike atmosfeer
+            van tuiskoms.
+        </p>
+
+        <p>Ons stel bekend: &ldquo;Die Klubhuis&rdquo;</p>
+
+        <p class="byline">Deur Chris de Wet</p>
+    </div>
+
+    <!-- ── Article 2 ── -->
+    <div class="article">
+        <h2>&ldquo;Die Klubhuis&rdquo; Ingewy</h2>
+        <div class="rule"></div>
+
+        <p>
+            Op 26 Maart 2026 om 18:30 word die nuwe bymekaarkomplek van die Bloemfontein Kameraklub amptelik ingewy
+            en gebeur dit by wyse van &lsquo;n kaas- en wyngeselligheid.
+        </p>
+
+        <p>
+            Die Klub is bevoorreg om vereer te word met die teenwoordigheid van Nicol du Toit, eerste Visepresident
+            van PSSA en sy eggenoot, asook ander gaste, byname voormalige Klubpresident Marius Saunders, Peet en Marna
+            Venter van Ventronics, &lsquo;n toerustingverskaffer en kundige tegnici, byname Darus van den Berg vergesel
+            deur sy vrou Chorn&eacute;, Gavin Coetzer, Senior Beampte verbonde aan die Departement Inligting- en
+            Kommunikasietegnologie van die Vrystaatse Universiteit en Juandr&eacute; Badenhorst, &lsquo;n kenner van
+            DaVinci Resolve, &lsquo;n film-en-videosagtewareprogram. Ook teenwoordig Charles Smith van Netwerk24 en sy
+            vriendin Rozaan Ridemann.
+        </p>
+
+        <p>
+            Na die verwelkomingswoord deur die klubpresident, Koot Marais, vergas Charles Whitehead ons met &lsquo;n
+            netjiese oudiovisuele aanbieding oor die klubgeskiedenis. Tereg maak hy melding van die feit dat die klub
+            &lsquo;n bymekaarkomplek is vir persone met &lsquo;n belangstelling in fotografie, dat dit nie net &lsquo;n
+            leerskool is nie, maar ook &lsquo;n plek waar vriendskappe die afgelope reeds meer as 70 jaar gesmee word.
+        </p>
+
+        <p>
+            Prof Nico Smith lewer &lsquo;n interessante aanbieding oor die ontwikkeling van fotografie tydens die
+            bestaan van Bloemfontein Kameraklub met sy aanbieding &ldquo;Toe, Nou en die Toekoms&rdquo;.
+        </p>
+
+        <p>
+            Daarna gekuier almal heerlik saam en raak opgewonde oor die toekoms van en pad vorentoe vir Bloemfontein
+            Kameraklub.
+        </p>
+
+        <p class="byline">Deur Chris de Wet<br>Foto&rsquo;s deur Charles Whitehead</p>
+    </div>
+
+    <!-- ── Klub Opening Photos ── -->
+    <p class="gallery-heading">Foto&rsquo;s &mdash; Klubhuis Opening</p>
+
+    <div class="masonry" id="gallery-opening">
+        <figure data-src="Html/images/Klub Opening 1.jpg" data-caption="Klub Opening 1"><img src="Html/images/Klub Opening 1.jpg" alt="Klub Opening 1"><div class="overlay"><span>Klub Opening 1</span></div></figure>
+        <figure data-src="Html/images/Klub Opening 2.jpg" data-caption="Klub Opening 2"><img src="Html/images/Klub Opening 2.jpg" alt="Klub Opening 2"><div class="overlay"><span>Klub Opening 2</span></div></figure>
+        <figure data-src="Html/images/Klub Opening 3.jpg" data-caption="Klub Opening 3"><img src="Html/images/Klub Opening 3.jpg" alt="Klub Opening 3"><div class="overlay"><span>Klub Opening 3</span></div></figure>
+        <figure data-src="Html/images/Klub Opening 4.jpg" data-caption="Klub Opening 4"><img src="Html/images/Klub Opening 4.jpg" alt="Klub Opening 4"><div class="overlay"><span>Klub Opening 4</span></div></figure>
+        <figure data-src="Html/images/Klub Opening 5.jpg" data-caption="Klub Opening 5"><img src="Html/images/Klub Opening 5.jpg" alt="Klub Opening 5"><div class="overlay"><span>Klub Opening 5</span></div></figure>
+        <figure data-src="Html/images/Klub Opening 6.jpg" data-caption="Klub Opening 6"><img src="Html/images/Klub Opening 6.jpg" alt="Klub Opening 6"><div class="overlay"><span>Klub Opening 6</span></div></figure>
+        <figure data-src="Html/images/Klub Opening 7.jpg" data-caption="Klub Opening 7"><img src="Html/images/Klub Opening 7.jpg" alt="Klub Opening 7"><div class="overlay"><span>Klub Opening 7</span></div></figure>
+        <figure data-src="Html/images/Klub Opening 8.jpg" data-caption="Klub Opening 8"><img src="Html/images/Klub Opening 8.jpg" alt="Klub Opening 8"><div class="overlay"><span>Klub Opening 8</span></div></figure>
+        <figure data-src="Html/images/Klub Opening 9.jpg" data-caption="Klub Opening 9"><img src="Html/images/Klub Opening 9.jpg" alt="Klub Opening 9"><div class="overlay"><span>Klub Opening 9</span></div></figure>
+        <figure data-src="Html/images/Klub Opening 10.jpg" data-caption="Klub Opening 10"><img src="Html/images/Klub Opening 10.jpg" alt="Klub Opening 10"><div class="overlay"><span>Klub Opening 10</span></div></figure>
+        <figure data-src="Html/images/Klub Opening 11.jpg" data-caption="Klub Opening 11"><img src="Html/images/Klub Opening 11.jpg" alt="Klub Opening 11"><div class="overlay"><span>Klub Opening 11</span></div></figure>
+        <figure data-src="Html/images/Klub Opening 12.jpg" data-caption="Klub Opening 12"><img src="Html/images/Klub Opening 12.jpg" alt="Klub Opening 12"><div class="overlay"><span>Klub Opening 12</span></div></figure>
+        <figure data-src="Html/images/Klub Opening 13.jpg" data-caption="Klub Opening 13"><img src="Html/images/Klub Opening 13.jpg" alt="Klub Opening 13"><div class="overlay"><span>Klub Opening 13</span></div></figure>
+        <figure data-src="Html/images/Klub Opening 14.jpg" data-caption="Klub Opening 14"><img src="Html/images/Klub Opening 14.jpg" alt="Klub Opening 14"><div class="overlay"><span>Klub Opening 14</span></div></figure>
+        <figure data-src="Html/images/Klub Opening 15.jpg" data-caption="Klub Opening 15"><img src="Html/images/Klub Opening 15.jpg" alt="Klub Opening 15"><div class="overlay"><span>Klub Opening 15</span></div></figure>
+        <figure data-src="Html/images/Klub Opening 16.jpg" data-caption="Klub Opening 16"><img src="Html/images/Klub Opening 16.jpg" alt="Klub Opening 16"><div class="overlay"><span>Klub Opening 16</span></div></figure>
+        <figure data-src="Html/images/Klub Opening 17.jpg" data-caption="Klub Opening 17"><img src="Html/images/Klub Opening 17.jpg" alt="Klub Opening 17"><div class="overlay"><span>Klub Opening 17</span></div></figure>
+    </div>
+ 
+
+</div>
+
+<footer>Bloemfontein Kameraklub &mdash; &ldquo;Die Klubhuis&rdquo; &mdash; Maart 2026</footer>
+
+<script>
+  // Collect all figures across both galleries into one flat list for lightbox navigation
+  const figures = Array.from(document.querySelectorAll('.masonry figure'));
+  const lb      = document.getElementById('lb');
+  const lbImg   = document.getElementById('lb-img');
+  const lbCap   = document.getElementById('lb-caption');
+  let current   = 0;
+
+  function openLB(idx) {
+    current = idx;
+    lbImg.src = figures[idx].dataset.src;
+    lbCap.textContent = figures[idx].dataset.caption;
+    lb.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeLB() {
+    lb.classList.remove('open');
+    lbImg.src = '';
+    document.body.style.overflow = '';
+  }
+  function showNext() { openLB((current + 1) % figures.length); }
+  function showPrev() { openLB((current - 1 + figures.length) % figures.length); }
+
+  figures.forEach((fig, i) => fig.addEventListener('click', () => openLB(i)));
+  document.getElementById('lb-close').addEventListener('click', closeLB);
+  document.getElementById('lb-next').addEventListener('click', e => { e.stopPropagation(); showNext(); });
+  document.getElementById('lb-prev').addEventListener('click', e => { e.stopPropagation(); showPrev(); });
+  lb.addEventListener('click', closeLB);
+  lbImg.addEventListener('click', e => e.stopPropagation());
+
+  document.addEventListener('keydown', e => {
+    if (!lb.classList.contains('open')) return;
+    if (e.key === 'ArrowRight') showNext();
+    if (e.key === 'ArrowLeft')  showPrev();
+    if (e.key === 'Escape')     closeLB();
+  });
+</script>
+</body>
+</html>
