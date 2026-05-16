@@ -1,15 +1,12 @@
-﻿using BCC.Models;
+using BCC.Models;
 using BCC.Pages;
 using BCC.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.VisualBasic.FileIO;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
-using System.Diagnostics;
 using System.IO.Compression;
 using System.Net.Http.Headers;
-using System.Reflection;
-using System.Reflection.Metadata;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -34,7 +31,11 @@ public partial class Admin
     private IList<string> Headers { get; set; }
     private string status { get; set; }
     private string Filename { get; set; }
-    private string Category { get; set; } = null;
+
+    // Pre-computed score-import column indices (set once after header parse)
+    private int _si_cat, _si_pvid, _si_ln, _si_fn, _si_rating, _si_title, _si_intref, _si_email, _si_honours, _si_score, _si_awards;
+    // Pre-computed result-import column indices
+    private int _ri_catName, _ri_awardId, _ri_eventPhoto, _ri_photoTitle, _ri_ln, _ri_fn, _ri_rating, _ri_honours;
 
     private string Backup()
     {
@@ -238,8 +239,7 @@ public partial class Admin
     }
     private TextFieldParser TextFieldParserInitialize(TextFieldParser p)
     {
-        string headings = p.ReadLine();//Headers
-        headings = headings.ToLower();
+        string headings = p.ReadLine().ToLower();
         Headers = headings.Split(",").ToList();
         p.TextFieldType = FieldType.Delimited;
         p.SetDelimiters(",");
@@ -250,24 +250,25 @@ public partial class Admin
     #region ClubImport
     private async Task<Master> AddNewMaster(Photo phot)
     {
-        Master master = new Master();
         var m = Regex.Match(phot.Name, @"^(.*)\s+(\S+)$");
-        master.Lastname = m.Groups[1].Value.Trim();
-        master.Firstname = m.Groups[2].Value.Trim();
-        master.Name = phot.Name;
-        master.RatingID = phot.Club_Rating;
-        master.Title = phot.Honours;
-        master.Active = true;
-        master.IdVault = phot.PVID != null ? phot.PVID : master.IdVault;
-        master.Email = phot.Email != null ? phot.Email : master.Email;
-        master.Title = phot.Honours;
+        var master = new Master
+        {
+            Lastname  = m.Groups[1].Value.Trim(),
+            Firstname = m.Groups[2].Value.Trim(),
+            Name      = phot.Name,
+            RatingID  = phot.Club_Rating,
+            Title     = phot.Honours,
+            Active    = true,
+            IdVault   = phot.PVID ?? default,
+            Email     = phot.Email ?? default
+        };
         await repo.AddSaveAsync(master);
         return master;
     }
     public async Task DatesStoreInDb()
     {
         Datum lastImport = await repo.Datum(x => x.ID == "lastImport");
-        var latestdate = await repo.monthlyLastDateAsync();//Date of Monhly with max ID 
+        var latestdate = await repo.monthlyLastDateAsync();
         if (latestdate.Month == 9)
             latestdate = latestdate.AddMonths(1);
         lastImport.Date = latestdate;
@@ -282,11 +283,9 @@ public partial class Admin
     }
     public async Task<Master> GetMasterRow(Photo phot)
     {
-        Master master = null;
-        if (phot.PVID == null)
-            master = await repo.GetEntityNTAsync<Master>(x => x.Name == phot.Name);
-        else
-            master = await repo.GetEntityNTAsync<Master>(x => x.IdVault == phot.PVID);
+        Master master = phot.PVID == null
+            ? await repo.GetEntityNTAsync<Master>(x => x.Name == phot.Name)
+            : await repo.GetEntityNTAsync<Master>(x => x.IdVault == phot.PVID);
         if (master == null)
         {
             var resp = await state.ShowConfirmAsync($"{phot.Name}", "Add New Master??");
@@ -295,45 +294,47 @@ public partial class Admin
         }
         return master;
     }
-    private async Task<bool> HeadersCheckScores(TextFieldParser p, string fn = null)
+    private async Task<bool> HeadersCheckScores(TextFieldParser p, string fn)
     {
+        var headerSet = new HashSet<string>(Headers);
         if (fn.StartsWith("Scoresheet", StringComparison.OrdinalIgnoreCase))
         {
-            foreach (var pr in typeof(ScoreHeaders).GetProperties())
+            var required = new[]
             {
-                string val = pr.GetValue(this).ToString();
-                if (Headers.Any(x => x == val) == false)
-                    throw new Exception("Headers of Import File is Incorrect");
-            }
+                ScoreHeaders.Category, ScoreHeaders.MemberId, ScoreHeaders.Lastname,
+                ScoreHeaders.Firstname, ScoreHeaders.ClubStarRating, ScoreHeaders.Title,
+                ScoreHeaders.InternalReference, ScoreHeaders.Email, ScoreHeaders.Honours,
+                ScoreHeaders.ScoreTotal, ScoreHeaders.Awards
+            };
+            if (required.Any(h => !headerSet.Contains(h)))
+                throw new Exception("Headers of Import File is Incorrect");
         }
         if (fn.StartsWith("Results", StringComparison.OrdinalIgnoreCase))
         {
-            foreach (var pr in typeof(ResultHeaders).GetProperties())
+            var required = new[]
             {
-                string val = pr.GetValue(this).ToString();
-                if (Headers.Any(x => x == val) == false)
-                    throw new Exception("Headers of Import File is Incorrect");
-            }
+                ResultHeaders.CategoryName, ResultHeaders.AwardID, ResultHeaders.EventPhotoID,
+                ResultHeaders.PhotoTitle, ResultHeaders.Lastname, ResultHeaders.Firstname,
+                ResultHeaders.ClubStarRating, ResultHeaders.Honours
+            };
+            if (required.Any(h => !headerSet.Contains(h)))
+                throw new Exception("Headers of Import File is Incorrect");
         }
-        string ln = p.PeekChars(400);
-        ln = ln.Replace("\"", string.Empty).Replace(",", ";");
-        var m1 = Regex.Match(ln, @";(\d{7});");
-        string intref = m1.Groups[1].Value;
-        int? ir = int.Parse(intref);
-        bool imported = await repo.AnyAsync<Photo>(x => x.IntRef == ir && x.Monthly.Date.Year == gData.lastDateClubImported.Year);
-        return imported;
+        // This is strange and querable??????????????????????????????????????????????????
+        string ln = p.PeekChars(400).Replace("\"", string.Empty).Replace(",", ";");
+        int ir = int.Parse(Regex.Match(ln, @";(\d{7});").Groups[1].Value);
+        return await repo.AnyAsync<Photo>(x => x.IntRef == ir && x.Monthly.Date.Year == gData.lastDateClubImported.Year);
     }
     private async Task<string> Import(string fn)
     {
-        await ds.LastDates();//Gets from DB gData.lastDateImported ; gData.lastDateClubYear
+        await ds.LastDates();
         string file = Directory.GetFiles(gData.ImportDirectory, $"*{fn}*").FirstOrDefault();
         if (file == null)
             throw new Exception($"File is not a {fn} File");
         return file;
     }
-    private async Task<string> ImportClub()//ENTRY POINT FOR IMPORT CLUB
+    private async Task<string> ImportClub()// Hoof Ingangsroete vir Clubimport !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     {
-        IList<string> lst = new List<string>();
         try
         {
             if (gData.lastDateClubImported.Month == 9)
@@ -344,6 +345,7 @@ public partial class Admin
             string fn = await state.ShowFileUpload("CLUB IMPORT", "Upload Score or Results", gData.ImportDirectory);
             if (fn == null)
                 return null;
+            IList<string> lst;
             if (fn.StartsWith("Scoresheet", StringComparison.OrdinalIgnoreCase))
                 lst = await ImportScores(fn);
             else if (fn.StartsWith("Results", StringComparison.OrdinalIgnoreCase))
@@ -360,24 +362,22 @@ public partial class Admin
             return null;
         }
     }
-    public async Task<IList<string>> ImportScores(string filename)//IMPORT SCORESHEET
+    public async Task<IList<string>> ImportScores(string filename)
     {
-        IList<Photo> photos = new List<Photo>();
+        var photos = new List<Photo>();
         string file = await Import(filename);
-        using (TextFieldParser p = new TextFieldParser(file))
+        using (var p = new TextFieldParser(file))
         {
             TextFieldParserInitialize(p);
+            SetScoreIndices();
             bool imported = await HeadersCheckScores(p, Path.GetFileName(file));
-            if (imported == true) // Already Imported; updatescores from Resultssheet
+            if (imported)
             {
                 await UpdateScores(file);
                 return Messages;
             }
             while (!p.EndOfData)
-            {
-                Photo photo = processLineScores(p.ReadFields());
-                photos.Add(photo);
-            }
+                photos.Add(processLineScores(p.ReadFields()));
         }
         var gpvid = photos.GroupBy(x => x.PVID);
         foreach (var key in gpvid)
@@ -385,41 +385,36 @@ public partial class Admin
             Master master = await GetMasterRow(key.FirstOrDefault());
             Monthly monthly = await ds.GetLastMonthly(master);
             foreach (var p in key)
-            {
                 p.MonthlyID = monthly.ID;
-            }
         }
-        photos = PhotoQuantity(photos);//Correct Awards; Remove duplicates for Winners; Only 5 photos entered
+        photos = (List<Photo>)PhotoQuantity(photos);
         await using var scope = repo.CreateScope();
-        scope.AddRange(photos);//Adds new Photos to Db
+        scope.AddRange(photos);
         int count = await scope.SaveChangesDetachAsync();
         await MonthlyUpdate();
         await MonthlyCompute();
         await ds.Promotion_Due();
         await DatesStoreInDb();
         await ds.CleanImportDirectory();
-        Messages.Add($"Succesfully Imported {count} Records");
+        Messages.Add($"Successfully Imported {count} Records");
         return Messages;
     }
-    private async Task<IList<string>> ImportResults(string filename)//IMPORT RESULTSHEET
+    private async Task<IList<string>> ImportResults(string filename)
     {
-        IList<Photo> photos = new List<Photo>();
+        var photos = new List<Photo>();
         string file = await Import(filename);
-        using (TextFieldParser p = new TextFieldParser(file))
+        using (var p = new TextFieldParser(file))
         {
             TextFieldParserInitialize(p);
+            SetResultIndices();
             bool imported = await HeadersCheckScores(p, Path.GetFileName(file));
-            if (imported == true)
+            if (imported)
             {
-                //await UpdateScores(file);
                 Messages.Add("Already Imported Scoresheet into DB");
                 return Messages;
             }
             while (!p.EndOfData)
-            {
-                Photo photo = processLineResults(p.ReadFields(), photos);
-                photos.Add(photo);
-            }
+                photos.Add(processLineResults(p.ReadFields(), photos));
         }
         var ig = photos.GroupBy(x => x.IntRef).Where(g => g.Count() > 1).ToList();
         foreach (var g in ig)
@@ -436,13 +431,11 @@ public partial class Admin
             Master master = await GetMasterRow(key.FirstOrDefault());
             Monthly monthly = await ds.GetLastMonthly(master);
             foreach (var p in key)
-            {
                 p.MonthlyID = monthly.ID;
-            }
         }
-        photos = PhotoQuantity(photos);//Correct Awards; Remove duplicates for Winners; Only 5 photos entered
+        photos = (List<Photo>)PhotoQuantity(photos);
         await using var scope = repo.CreateScope();
-        scope.AddRange(photos);//Adds new Photos to Db
+        scope.AddRange(photos);
         int count = await scope.SaveChangesDetachAsync();
         await MonthlyUpdate();
         await MonthlyCompute();
@@ -453,47 +446,42 @@ public partial class Admin
     }
     private async Task MonthlyCompute()
     {
-        DateOnly date = await repo.monthlyLastDateAsync();//Date of Monhly with max ID
+        DateOnly date = await repo.monthlyLastDateAsync();
         await using var scope = repo.CreateScope();
         IList<Monthly> monthlies = await scope.GetEntitiesAsync<Monthly>(x => x.Date.Year == date.Year && x.Date.Month == date.Month);
         foreach (Monthly m in monthlies)
         {
-            int? pts = null;
-            pts = m.Mm * 5;
-            if (pts != null)
+            if (m.Mm.HasValue)
             {
-                m.Pm = m.Pm.AddNull(pts);
+                m.Pm = m.Pm.AddNull(m.Mm * 5);
                 m.Mg = m.Mg.AddNull(m.Mm);
             }
-            pts = m.Gm * 3;
-            if (pts != null)
+            if (m.Gm.HasValue)
             {
-                m.Pm = m.Pm.AddNull(pts);
+                m.Pm = m.Pm.AddNull(m.Gm * 3);
                 m.Gg = m.Gg.AddNull(m.Gm);
             }
-            pts = m.Sm * 2;
-            if (pts != null)
+            if (m.Sm.HasValue)
             {
-                m.Pm = m.Pm.AddNull(pts);
+                m.Pm = m.Pm.AddNull(m.Sm * 2);
                 m.Sg = m.Sg.AddNull(m.Sm);
             }
-            pts = m.Bm * 1;
-            if (pts != null)
+            if (m.Bm.HasValue)
             {
-                m.Pm = m.Pm.AddNull(pts);
+                m.Pm = m.Pm.AddNull(m.Bm);
                 m.Bg = m.Bg.AddNull(m.Bm);
             }
             m.GMp = m.Mg.AddNull(m.Gg);
-            m.Pp = m.Pp.AddNull(m.Pm);
+            m.Pp  = m.Pp.AddNull(m.Pm);
             m.GMy = (m.GMy.AddNull(m.Mm)).AddNull(m.Gm);
-            m.Py = m.Py.AddNull(m.Pm);
+            m.Py  = m.Py.AddNull(m.Pm);
             m.VOy = m.VOy.AddNull(m.VOm);
         }
-        int aa = await scope.SaveChangesDetachAsync();
+        await scope.SaveChangesDetachAsync();
     }
     private async Task MonthlyUpdate()
     {
-        DateOnly date = await repo.monthlyLastDateAsync();//Last Monthly Date
+        DateOnly date = await repo.monthlyLastDateAsync();
         await using var scope = repo.CreateScope();
         IList<Photo> photos = await scope.GetEntitiesAsync<Photo>(x => x.Monthly.Date >= date);
         foreach (Photo p in photos)
@@ -502,234 +490,149 @@ public partial class Admin
             {
                 switch (p.Award)
                 {
-                    case "C":
-                        p.Monthly.Mm = p.Monthly.Mm.AddNull(1);
-                        break;
-                    case "G":
-                        p.Monthly.Gm = p.Monthly.Gm.AddNull(1);
-                        break;
-                    case "S":
-                        p.Monthly.Sm = p.Monthly.Sm.AddNull(1);
-                        break;
-                    case "B":
-                        p.Monthly.Bm = p.Monthly.Bm.AddNull(1);
-                        break;
+                    case "C": p.Monthly.Mm = p.Monthly.Mm.AddNull(1); break;
+                    case "G": p.Monthly.Gm = p.Monthly.Gm.AddNull(1); break;
+                    case "S": p.Monthly.Sm = p.Monthly.Sm.AddNull(1); break;
+                    case "B": p.Monthly.Bm = p.Monthly.Bm.AddNull(1); break;
                 }
             }
             if (p.Category == "S")
             {
                 switch (p.Award)
                 {
-                    case "C":
-                        p.Monthly.VOm = p.Monthly.VOm.AddNull(5);
-                        break;
-                    case "G":
-                        p.Monthly.VOm = p.Monthly.VOm.AddNull(3);
-                        break;
-                    case "S":
-                        p.Monthly.VOm = p.Monthly.VOm.AddNull(2);
-                        break;
-                    case "B":
-                        p.Monthly.VOm = p.Monthly.VOm.AddNull(1);
-                        break;
+                    case "C": p.Monthly.VOm = p.Monthly.VOm.AddNull(5); break;
+                    case "G": p.Monthly.VOm = p.Monthly.VOm.AddNull(3); break;
+                    case "S": p.Monthly.VOm = p.Monthly.VOm.AddNull(2); break;
+                    case "B": p.Monthly.VOm = p.Monthly.VOm.AddNull(1); break;
                 }
             }
         }
-        int aa = await scope.SaveChangesDetachAsync();
+        await scope.SaveChangesDetachAsync();
     }
     private async Task<string> OctoberMonth()
     {
-        await ds.LastDates();//Gets from DB gData.lastDateImported ; gData.lastDateClubYear
-        await ds.Promotion_Due();//Promotions for latest month(Promote for salons entered September)
+        await ds.LastDates();
+        await ds.Promotion_Due();
         await DatesStoreInDb();
         return "October month with no Imports, but Promotions succesfully done";
     }
     private IList<Photo> PhotoQuantity(IList<Photo> Photos)
     {
-        int count = 0;
-        var monthlies = Photos.GroupBy(x => x.MonthlyID);
-        foreach (var m in monthlies)
+        foreach (var m in Photos.GroupBy(x => x.MonthlyID).ToList())
         {
-            var photos = m.AsEnumerable().ToList();
-            var phots = photos.Where(x => x.Category != "S").OrderBy(x => x.Category).ToList();
-            count = phots.Count();
-            if (count > 3)
-            {
-                for (int i = 0; i < count - 3; i++)
-                {
-                    var phot = phots.LastOrDefault();
-                    phots.Remove(phot);
-                    Photos.Remove(phot);
-                }
-            }
-            phots = photos.Where(x => x.Category == "S").ToList();
-            count = phots.Count();
-            if (count > 2)
-            {
-                for (int i = 0; i < count - 2; i++)
-                {
-                    var phot = phots.LastOrDefault();
-                    phots.Remove(phot);
-                    Photos.Remove(phot!);
-                }
-            }
+            var group = m.ToList();
+            foreach (var excess in group.Where(x => x.Category != "S").OrderBy(x => x.Category).Skip(3))
+                Photos.Remove(excess);
+            foreach (var excess in group.Where(x => x.Category == "S").Skip(2))
+                Photos.Remove(excess);
         }
-        var almas = Photos.Where(x => x.Name == "Erasmus Alma").ToList();
         return Photos;
     }
     private Photo processLineResults(string[] data, IList<Photo> photos)
     {
-        string d = string.Empty;
-        string firstname = string.Empty, lastname = string.Empty;
-        var props = typeof(ResultHeaders).GetProperties();
-        Photo phot = new Photo();
-        foreach (var p in props)
+        string lastname  = data[_ri_ln] == "DeBeer" ? "De Beer" : data[_ri_ln];
+        string firstname = data[_ri_fn];
+        string rating    = data[_ri_rating];
+        string awardRaw  = data[_ri_awardId];
+        string catname   = data[_ri_catName];
+
+        var phot = new Photo
         {
-            switch (p.Name)
-            {
-                case "CategoryName":
-                    string catname = ValueGet(data, p);
-                    Category = catname[0].ToString();
-                    break;
-                case "Lastname":
-                    lastname = ValueGet(data, p);
-                    break;
-                case "Firstname":
-                    firstname = ValueGet(data, p);
-                    break;
-                case "ClubStarRating":
-                    d = ValueGet(data, p);
-                    phot.Club_Rating = d switch
-                    {
-                        "Golden Honours" => 6,
-                        "Galaxy" => 7,
-                        "5" => 5,
-                        "4" => 4,
-                        "3" => 3,
-                        "2" => 2,
-                        "1" or "" => 1,
-                        _ => 0
-                    };
-                    phot.Star_Group = phot.Club_Rating switch
-                    {
-                        1 or 2 => 1,
-                        3 => 2,
-                        4 or 5 => 3,
-                        6 or 7 => 4,
-                        _ => 1
-                    };
-                    break;
-                case "PhotoTitle":
-                    phot.Title = ValueGet(data, p);
-                    break;
-                case "EventPhotoID":
-                    d = ValueGet(data, p);
-                    phot.IntRef = int.Parse(d);
-                    break;
-                case "Honours":
-                    phot.Honours = ValueGet(data, p);
-                    break;
-                case "AwardID":
-                    d = ValueGet(data, p).ToLower();
-                    phot.Award = d switch
-                    {
-                        "com" => "C",
-                        _ => d
-                    };
-                    phot.Award = phot.Award.ToUpper();
-                    break;
-            }
-        }
-        lastname = lastname == "DeBeer" ? "De Beer" : lastname;
+            Title   = data[_ri_photoTitle],
+            Honours = data[_ri_honours],
+            IntRef  = int.Parse(data[_ri_eventPhoto])
+        };
+
+        phot.Club_Rating = rating switch
+        {
+            "Golden Honours" => 6,
+            "Galaxy"         => 7,
+            "5"              => 5,
+            "4"              => 4,
+            "3"              => 3,
+            "2"              => 2,
+            "1" or ""        => 1,
+            _                => 0
+        };
+        phot.Star_Group = phot.Club_Rating switch
+        {
+            1 or 2 => 1,
+            3      => 2,
+            4 or 5 => 3,
+            _      => 4
+        };
+
+        phot.Award = (awardRaw.ToLower() == "com" ? "C" : awardRaw).ToUpper();
+
         phot.Name = $"{lastname} {firstname}";
-        phot.Category = Category == "S" ? Category : $"{Category}{phot.Star_Group}";
-        Category = null;
+        string category = catname[0].ToString();
+        phot.Category = category == "S" ? category : $"{category}{phot.Star_Group}";
         return phot;
     }
     private Photo processLineScores(string[] data)
     {
+        string lastname  = data[_si_ln];
+        string firstname = data[_si_fn];
+        string rating    = data[_si_rating];
+        string awards    = data[_si_awards];
 
-        Photo phot = new Photo();
-        string d = string.Empty;
-        string firstname = string.Empty, lastname = string.Empty;
-        var props = typeof(ScoreHeaders).GetProperties();
-        foreach (var p in props)
+        var phot = new Photo
         {
-            switch (p.Name)
-            {
-                case "Category":
-                    phot.Category = ValueGet(data, p);
-                    break;
-                case "MemberId":
-                    phot.PVID = ValueGet(data, p);
-                    break;
-                case "Lastname":
-                    lastname = ValueGet(data, p);
-                    break;
-                case "Firstname":
-                    firstname = ValueGet(data, p);
-                    break;
-                case "ClubStarRating":
-                    d = ValueGet(data, p);
-                    phot.Club_Rating = d switch
-                    {
-                        "Golden Honours" => 6,
-                        "Galaxy" => 7,
-                        _ => int.Parse(d)
-                    };
-                    phot.Star_Group = phot.Club_Rating switch
-                    {
-                        1 or 2 => 1,
-                        3 => 2,
-                        4 or 5 => 3,
-                        6 or 7 => 4,
-                        _ => 1
-                    };
-                    break;
-                case "Title":
-                    phot.Title = ValueGet(data, p);
-                    break;
-                case "InternalReference":
-                    d = ValueGet(data, p);
-                    phot.IntRef = int.Parse(d);
-                    break;
-                case "Honours":
-                    phot.Honours = ValueGet(data, p);
-                    break;
-                case "Email":
-                    phot.Email = ValueGet(data, p);
-                    break;
-                case "ScoreTotal":
-                    phot.Score = int.Parse(ValueGet(data, p));
-                    break;
-                case "Awards":
-                    d = ValueGet(data, p);
-                    if (Regex.IsMatch(d, @"~\w+~"))
-                    {
-                        phot.Winner = true;
-                        phot.Club_Winner = true;
-                    }
-                    else
-                        if (Regex.IsMatch(d, @"~"))
-                            phot.Winner = true;
-                    phot.Award = Regex.Match(d, @"^\w").ToString();
-                    break;
-            }
-        }
+            Category = data[_si_cat],
+            PVID     = data[_si_pvid],
+            Honours  = data[_si_honours],
+            Email    = data[_si_email],
+            Title    = data[_si_title],
+            IntRef   = int.Parse(data[_si_intref]),
+            Score    = int.Parse(data[_si_score])
+        };
+
+        phot.Club_Rating = rating switch
+        {
+            "Golden Honours" => 6,
+            "Galaxy"         => 7,
+            _                => int.Parse(rating)
+        };
+        phot.Star_Group = phot.Club_Rating switch
+        {
+            1 or 2 => 1,
+            3      => 2,
+            4 or 5 => 3,
+            _      => 4
+        };
+
+        if (Regex.IsMatch(awards, @"~\w+~")) { phot.Winner = true; phot.Club_Winner = true; }
+        else if (Regex.IsMatch(awards, @"~")) phot.Winner = true;
+        phot.Award = Regex.Match(awards, @"^\w").Value;
+
         phot.Name = $"{lastname} {firstname}";
         phot.Category = phot.Category == "S" ? phot.Category : $"{phot.Category}{phot.Star_Group}";
         return phot;
     }
-    private Photo processLineScoresUpdate(string[] data)
+    private void SetScoreIndices()
     {
-        Photo phot = new Photo();
-        string d = string.Empty;
-        var props = typeof(ScoreHeaders).GetProperties();
-        var fnp = props.FirstOrDefault(x => x.Name == "InternalReference");
-        phot.IntRef = int.Parse(ValueGet(data, fnp));
-        var st = props.FirstOrDefault(x => x.Name == "ScoreTotal");
-        phot.Score = int.Parse(ValueGet(data, st));
-        return phot;
+        _si_cat     = Headers.IndexOf(ScoreHeaders.Category);
+        _si_pvid    = Headers.IndexOf(ScoreHeaders.MemberId);
+        _si_ln      = Headers.IndexOf(ScoreHeaders.Lastname);
+        _si_fn      = Headers.IndexOf(ScoreHeaders.Firstname);
+        _si_rating  = Headers.IndexOf(ScoreHeaders.ClubStarRating);
+        _si_title   = Headers.IndexOf(ScoreHeaders.Title);
+        _si_intref  = Headers.IndexOf(ScoreHeaders.InternalReference);
+        _si_email   = Headers.IndexOf(ScoreHeaders.Email);
+        _si_honours = Headers.IndexOf(ScoreHeaders.Honours);
+        _si_score   = Headers.IndexOf(ScoreHeaders.ScoreTotal);
+        _si_awards  = Headers.IndexOf(ScoreHeaders.Awards);
+    }
+    private void SetResultIndices()
+    {
+        _ri_catName    = Headers.IndexOf(ResultHeaders.CategoryName);
+        _ri_awardId    = Headers.IndexOf(ResultHeaders.AwardID);
+        _ri_eventPhoto = Headers.IndexOf(ResultHeaders.EventPhotoID);
+        _ri_photoTitle = Headers.IndexOf(ResultHeaders.PhotoTitle);
+        _ri_ln         = Headers.IndexOf(ResultHeaders.Lastname);
+        _ri_fn         = Headers.IndexOf(ResultHeaders.Firstname);
+        _ri_rating     = Headers.IndexOf(ResultHeaders.ClubStarRating);
+        _ri_honours    = Headers.IndexOf(ResultHeaders.Honours);
     }
     private async Task UpdateScores(string file)
     {
@@ -738,24 +641,20 @@ public partial class Admin
         Photo first = phots.FirstOrDefault();
         if (first.Score > 0)
             throw new Exception("Scores already Present; No Update is neccesary!!", null) { HResult = 1 };
-        using (TextFieldParser p = new TextFieldParser(file))
+        using (var p = new TextFieldParser(file))
         {
             TextFieldParserInitialize(p);
+            SetScoreIndices();
             while (!p.EndOfData)
             {
-                Photo phot = processLineScoresUpdate(p.ReadFields());
-                Photo photo = phots.SingleOrDefault(x => x.IntRef == phot.IntRef);
-                photo.Score = phot.Score;
+                var data  = p.ReadFields();
+                var photo = phots.SingleOrDefault(x => x.IntRef == int.Parse(data[_si_intref]));
+                if (photo != null)
+                    photo.Score = int.Parse(data[_si_score]);
             }
         }
         int cc = await scope.SaveChangesAsync();
-        Messages.Add($"Succesfully Updated {cc} Scores");
-    }
-    private string ValueGet(string[] data, PropertyInfo p)
-    {
-        string val = p.GetValue(this).ToString();
-        int indx = Headers.IndexOf(val);
-        return data[indx];
+        Messages.Add($"Successfully Updated {cc} Scores");
     }
     private async Task YearEnd()
     {

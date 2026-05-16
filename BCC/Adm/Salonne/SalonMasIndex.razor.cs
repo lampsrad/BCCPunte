@@ -1,7 +1,6 @@
 using BCC.Models;
 using BCC.Viewmodels;
 using BKK.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using System.Text.RegularExpressions;
 
@@ -18,71 +17,47 @@ public partial class SalonMasIndex
     [Parameter] public EventCallback<sortVM> sortTable { get; set; }
     [Inject] State state { get; set; }
     [Inject] SalonImport si { get; set; }
+
     private string activeSortColum = "Points";
     private bool isSortedAscending = true;
 
-    private async void Delete(SalonMaster sm)
+    private Task Delete(SalonMaster sm) => salonDelete.InvokeAsync(sm.ID);
+    private Task Edit(SalonMaster sm) => salonEdit.InvokeAsync(sm.ID);
+    private Task Show(SalonMaster sm) => salonShow.InvokeAsync(sm.ID);
+
+    private async Task SalonImport(SalonMaster sm)
     {
-        await salonDelete.InvokeAsync(sm.ID);
-    }
-    private async void Edit(SalonMaster sm)
-    {
-        await salonEdit.InvokeAsync(sm.ID);
-    }
-    private async void SalonImport(SalonMaster sm)
-    {
-        var m1 = Regex.Match(sm.Alias?? sm.SalonName, @"^(\w+)");
-        string salonname = m1.ToString();
+        string salonname = Regex.Match(sm.Alias ?? sm.SalonName, @"^(\w+)").Value;
+
         if (sm.Salons.Any())
         {
-            var m = await state.ShowMessageAsync("SALON IMPORT",$"{sm.SalonName} Already Imported", "ok");
+            await state.ShowMessageAsync("SALON IMPORT", $"{sm.SalonName} Already Imported", "ok");
             return;
         }
+
         state.TitleD = "Choose CSV File";
-       var fn  = await state.ShowFileUpload("File Upload",$"Select {sm.SalonName} File", gData.ImportDirectory);
+        var fn = await state.ShowFileUpload("File Upload", $"Select {sm.SalonName} File", gData.ImportDirectory);
         if (fn == null)
             return;
-        if(!fn.Contains(salonname.ToLower()))
+
+        if (!fn.Contains(salonname.ToLower()))
         {
             await state.ShowMessageAsync("SALON IMPORT", $"File does not contain {salonname}", "ok");
             return;
         }
-       var mess = await si.ImportSalon(sm, salonname);
-        string mes = string.Join(Environment.NewLine, mess);
-        await state.ShowMessageAsync("SALON IMPORT", $"{mes}", "ok");
-    }
-    private async void Show(SalonMaster sm)
-    {
-        await salonShow.InvokeAsync(sm.ID);
-    }
-    private void SortTable(string colName)
-    {
-        sortVM vm = new sortVM();
-        vm.colName = colName;
-        if (colName != activeSortColum)
-        {
-            vm.ascending = true;
-            isSortedAscending = true;
-            activeSortColum = colName;
-        }
-        else
-        {
-            if (isSortedAscending)
-                vm.ascending = false;
-            else
-                vm.ascending = true;
-            isSortedAscending = !isSortedAscending;
-        }
-        sortTable.InvokeAsync(vm);
-    }
-    private string setSortIcon(string ico)
-    {
-        if (activeSortColum != ico)
-            return string.Empty;
-        if (isSortedAscending)
-            return "fa-sort-up";
-        else
-            return "fa-sort-down";
+
+        var mess = await si.ImportSalon(sm, salonname);
+        await state.ShowMessageAsync("SALON IMPORT", string.Join(Environment.NewLine, mess), "ok");
     }
 
+    private void SortTable(string colName)
+    {
+        bool ascending = colName != activeSortColum || !isSortedAscending;
+        activeSortColum = colName;
+        isSortedAscending = ascending;
+        sortTable.InvokeAsync(new sortVM { colName = colName, ascending = ascending });
+    }
+
+    private string setSortIcon(string ico) =>
+        activeSortColum != ico ? string.Empty : isSortedAscending ? "fa-sort-up" : "fa-sort-down";
 }
