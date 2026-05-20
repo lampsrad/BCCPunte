@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>BCC Application Help</title>
+
+<style>
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #1e2226;
+    color: #dddada;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Override host page styles that bleed in via .d-flex { color: black } */
+  .help-wrap {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 1.5rem 2rem 3rem 2rem;
+    background-color: #1e2226;
+    color: #dddada;
+    font-family: Arial, sans-serif;
+  }
+
+  /* Blanket reset so Info.razor host styles cannot win */
+  .help-wrap p,
+  .help-wrap li,
+  .help-wrap td,
+  .help-wrap th,
+  .help-wrap span,
+  .help-wrap label,
+  .help-wrap div {
+    color: inherit;
+  }
+
+  /* ── Title ─────────────────────────────────────────── */
+  .help-title {
+    text-align: center;
+    font-size: 2rem;
+    font-weight: bold;
+    color: #bf9f00;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    border-bottom: 3px solid #bf9f00;
+    padding-bottom: .6rem;
+    margin-bottom: .4rem;
+  }
+
+  .help-subtitle {
+    text-align: center;
+    color: #8e9db0;
+    font-size: .9rem;
+    margin-bottom: 2rem;
+  }
+
+  /* ── Table of contents ──────────────────────────────── */
+  .toc {
+    background-color: #252b31;
+    border: 1px solid #3a4450;
+    border-radius: 6px;
+    padding: 1rem 1.4rem;
+    margin-bottom: 2.2rem;
+  }
+
+  .toc-title {
+    font-size: 1.05rem;
+    font-weight: bold;
+    color: #bf9f00;
+    margin-bottom: .6rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .toc ol {
+    margin: 0;
+    padding-left: 1.4rem;
+    columns: 2;
+    column-gap: 2rem;
+  }
+
+  .toc li {
+    margin-bottom: .25rem;
+    font-size: .92rem;
+  }
+
+  .toc a {
+    color: #6bb4e8;
+    text-decoration: none;
+  }
+
+  .toc a:hover { text-decoration: underline; color: #f0a500; }
+
+  /* ── Sections ───────────────────────────────────────── */
+  .section {
+    margin-bottom: 2.4rem;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: #bf9f00;
+    text-transform: uppercase;
+    border-bottom: 2px solid #3a4450;
+    padding-bottom: .3rem;
+    margin-top: 0;
+    margin-bottom: .8rem;
+  }
+
+  h3 {
+    font-size: 1rem;
+    font-weight: bold;
+    color: #6bb4e8;
+    margin-bottom: .4rem;
+    margin-top: .9rem;
+  }
+
+  p {
+    margin: 0 0 .6rem 0;
+    line-height: 1.55;
+    font-size: .93rem;
+  }
+
+  ul, ol {
+    margin: .3rem 0 .7rem 0;
+    padding-left: 1.5rem;
+  }
+
+  li {
+    margin-bottom: .25rem;
+    font-size: .93rem;
+    line-height: 1.5;
+  }
+
+  /* ── Tables ─────────────────────────────────────────── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+    font-size: .9rem;
+  }
+
+  thead tr {
+    background-color: #2d404f;
+    color: #c8d8e4;
+  }
+
+  th {
+    padding: .45rem .65rem;
+    text-align: left;
+    border: 1px solid #3a4f60;
+    font-weight: bold;
+  }
+
+  td {
+    padding: .4rem .65rem;
+    border: 1px solid #3a4450;
+    vertical-align: top;
+    color: #d4d0cf;
+  }
+
+  tr:nth-child(even) td { background-color: #252b31; }
+
+  /* ── Note / tip boxes ───────────────────────────────── */
+  .note {
+    background-color: #1b2d3d;
+    border-left: 4px solid #099cdd;
+    padding: .55rem .85rem;
+    border-radius: 0 4px 4px 0;
+    margin-bottom: .8rem;
+    font-size: .88rem;
+    color: #b8cfe0;
+  }
+
+  .warn {
+    background-color: #2d1c1c;
+    border-left: 4px solid #c0392b;
+    padding: .55rem .85rem;
+    border-radius: 0 4px 4px 0;
+    margin-bottom: .8rem;
+    font-size: .88rem;
+    color: #e8b4b0;
+  }
+
+  .tip {
+    background-color: #1c2d1c;
+    border-left: 4px solid #27ae60;
+    padding: .55rem .85rem;
+    border-radius: 0 4px 4px 0;
+    margin-bottom: .8rem;
+    font-size: .88rem;
+    color: #b4d8b4;
+  }
+
+  /* ── Code / path ────────────────────────────────────── */
+  code {
+    background-color: #2a3038;
+    color: #f0a500;
+    padding: .1rem .35rem;
+    border-radius: 3px;
+    font-size: .88rem;
+    font-family: Consolas, monospace;
+  }
+
+  /* ── Step list ──────────────────────────────────────── */
+  .steps {
+    counter-reset: step;
+    list-style: none;
+    padding-left: 0;
+  }
+
+  .steps li {
+    counter-increment: step;
+    display: flex;
+    align-items: flex-start;
+    gap: .7rem;
+    margin-bottom: .5rem;
+  }
+
+  .steps li::before {
+    content: counter(step);
+    min-width: 1.6rem;
+    height: 1.6rem;
+    background-color: #bf9f00;
+    color: #111;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: .85rem;
+    flex-shrink: 0;
+    margin-top: .05rem;
+  }
+
+  /* ── Route badge ────────────────────────────────────── */
+  .route {
+    display: inline-block;
+    background-color: #2d404f;
+    color: #6bb4e8;
+    padding: .05rem .45rem;
+    border-radius: 3px;
+    font-size: .82rem;
+    font-family: Consolas, monospace;
+    margin-left: .3rem;
+  }
+
+  /* ── Award badges ───────────────────────────────────── */
+  .badge-gold { color: #f0c040; font-weight: bold; }
+  .badge-silver { color: #aaaaaa; font-weight: bold; }
+  .badge-bronze { color: #cd7f32; font-weight: bold; }
+  .badge-com { color: #8bc34a; font-weight: bold; }
+
+  /* ── Scroll-to-top button ──────────────────────────── */
+  #scrollTopBtn {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 2.8rem;
+    height: 2.8rem;
+    background-color: #bf9f00;
+    color: #111;
+    border: none;
+    border-radius: 50%;
+    font-size: 1.4rem;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,.6);
+    z-index: 9999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s;
+  }
+  #scrollTopBtn.visible { opacity: 1; pointer-events: auto; }
+  #scrollTopBtn:hover { background-color: #f0c040; }
+</style>
+
+</head>
+<body>
+<div class="help-wrap">
+
+  <!-- ═══════════════════════════════════════════════════
+       TITLE
+  ════════════════════════════════════════════════════ -->
+  <div class="help-title">BCC Application Help</div>
+  <div class="help-subtitle">Bloemfontein Camera Club &mdash; Salon &amp; Competition Management System &mdash; v2026</div>
+
+  <!-- ═══════════════════════════════════════════════════
+       TABLE OF CONTENTS
+  ════════════════════════════════════════════════════ -->
+  <div class="toc">
+    <div class="toc-title">Contents</div>
+    <ol>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#navigation">Navigation &amp; Menu</a></li>
+      <li><a href="#awards">Awards (Results)</a></li>
+      <li><a href="#scores">Scores (Points)</a></li>
+      <li><a href="#salons-view">Salons View</a></li>
+      <li><a href="#members-list">Members List</a></li>
+      <li><a href="#honours">Honours</a></li>
+      <li><a href="#salons-admin">Salon Administration</a></li>
+      <li><a href="#admin-images">Admin: Images Process</a></li>
+      <li><a href="#admin-import">Admin: Import Club Data</a></li>
+      <li><a href="#admin-word">Admin: Word to HTML</a></li>
+      <li><a href="#admin-upload">Admin: Upload to AbsHosting</a></li>
+      <li><a href="#admin-backup">Admin: Backup &amp; Restore DB</a></li>
+      <li><a href="#admin-excel">Admin: Excel Export</a></li>
+      <li><a href="#admin-delete">Admin: Delete Month</a></li>
+      <li><a href="#db-switch">Database Switching</a></li>
+      <li><a href="#scoring">Scoring &amp; Promotion System</a></li>
+      <li><a href="#conventions">File &amp; Naming Conventions</a></li>
+    </ol>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       1. OVERVIEW
+  ════════════════════════════════════════════════════ -->
+  <div class="section" id="overview">
+    <h2>1. Overview</h2>
+    <p>
+      The <strong>BCC Application</strong> is a web-based management system for the
+      <strong>Bloemfontein Camera Club (BCC)</strong>.  It tracks monthly competition
+      entries, scores, awards, member grading, and salon participation throughout the
+      club's fiscal year (1 November – 31 October).
+    </p>
+    <p>Key capabilities at a glance:</p>
+    <ul>
+      <li>Display and manage monthly competition results (Pictorial, Nature, Set Subject)</li>
+      <li>Year-to-date scoring, star-level promotions, and Golden Honours / Galaxy tracking</li>
+      <li>Full salon (PSSA national/international) participation records per member</li>
+      <li>Member list management with CSV import from Ledelys</li>
+      <li>Admin tools: photo import/processing, data import, database backup/restore,
+          Word-to-HTML conversion, and publishing to the live hosting server</li>
+    </ul>
+    <div class="note">
+      The application runs on <strong>ASP.NET Core Blazor Server</strong>.  All
+      interactions update in real time without page reloads.
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       2. NAVIGATION
+  ════════════════════════════════════════════════════ -->
+  <div class="section" id="navigation">
+    <h2>2. Navigation &amp; Menu</h2>
+    <p>
+      The gold horizontal bar at the top is the persistent menu bar.  It shows the
+      current <strong>database key</strong> (red, clickable to switch) and the active
+      <strong>month/year title</strong> next to the BCC home link.
+    </p>
+
+    <table>
+      <thead><tr><th>Menu</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Members</strong></td><td>Awards results, year-to-date scores, salon view, and the full members list.</td></tr>
+        <tr><td><strong>Honours</strong></td><td>Assign or edit a member's honorary title/designation.</td></tr>
+        <tr><td><strong>Salons</strong></td><td>Manage salon master records (current year, previous year, import from PSSA).</td></tr>
+        <tr><td><strong>Info</strong></td><td>Static HTML content pages (About, Grading, Constitution, Program, etc.) loaded from <code>wwwroot/html/</code>.</td></tr>
+        <tr><td><strong>Admin</strong></td><td>All administrative operations: image import, data import, Word conversion, uploads, backup/restore, Excel export, and this help file.</td></tr>
+        <tr><td><strong>DB</strong></td><td>Switch the active database between Local (development) and Absolute Hosting (production).</td></tr>
+        <tr><td><strong>Close</strong> (production only)</td><td>Gracefully closes the application and the browser window.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="tip">
+      Many menu items have tooltip text explaining their function — hover over them
+      to see detailed descriptions.
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       3. AWARDS (RESULTS)
+  ════════════════════════════════════════════════════ -->
+  <div class="section" id="awards">
+    <h2>3. Awards (Results) <span class="route">/results</span></h2>
+    <p>
+      Displays all award-winning photos for a selected month, grouped by category
+      and star level.  Use the <strong>month selector</strong> at the top to navigate
+      between months.
+    </p>
+
+    <h3>Categories</h3>
+    <ul>
+      <li><strong>Pictorial</strong> – general creative photography</li>
+      <li><strong>Nature</strong> – wildlife, flora, and natural landscapes</li>
+      <li><strong>Set Subject</strong> – a prescribed theme announced per month</li>
+    </ul>
+
+    <h3>Award Indicators</h3>
+    <table>
+      <thead><tr><th>Badge</th><th>Code</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge-gold">Gold</span></td><td>G</td><td>Gold award — highest club-level honour</td></tr>
+        <tr><td><span class="badge-silver">Silver</span></td><td>S</td><td>Silver award</td></tr>
+        <tr><td><span class="badge-bronze">Bronze</span></td><td>B</td><td>Bronze / Bronz award</td></tr>
+        <tr><td><span class="badge-com">COM</span></td><td>C</td><td>Commendation</td></tr>
+      </tbody>
+    </table>
+
+    <p>
+      A <strong>Winner</strong> badge marks the top scorer in a category/star group;
+      a <strong>Club Winner</strong> badge marks the top overall club scorer.
+    </p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       4. SCORES (POINTS)
+  ════════════════════════════════════════════════════ -->
+  <div class="section" id="scores">
+    <h2>4. Scores (Points) <span class="route">/points</span></h2>
+    <p>
+      Shows the year-to-date scoring dashboard for the current or selected year.
+      Three columns are displayed side by side:
+    </p>
+    <ul>
+      <li><strong>Club Points</strong> – cumulative competition scores per member</li>
+      <li><strong>Set Subject Points</strong> – points earned specifically in the set-subject category</li>
+      <li><strong>Salon Points</strong> – points from PSSA salon participation</li>
+    </ul>
+
+    <h3>Star Promotion Levels</h3>
+    <p>
+      Each column is segmented by star group (1★ to 5★, Golden Honours, Galaxy).
+      A <strong>StarLevelTable</strong> at the bottom of the page shows the thresholds
+      required for promotion (see <a href="#scoring">Section 17: Scoring &amp; Promotion</a>).
+    </p>
+
+    <h3>Individual Member Scores</h3>
+    <p>
+      Click any member name to open their <strong>personal score history</strong>
+      <span class="route">/pointsmember/{Data}</span>, showing every monthly entry
+      with colour-coded promotion status:
+    </p>
+    <ul>
+      <li><strong style="color:#27ae60">Green</strong> – on track for promotion</li>
+      <li><strong style="color:#c0392b">Red</strong> – at risk / behind target</li>
+    </ul>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       5. SALONS VIEW
+  ════════════════════════════════════════════════════ -->
+  <div class="section" id="salons-view">
+    <h2>5. Salons View <span class="route">/salons</span></h2>
+    <p>
+      Displays the salon participation table for a selected salon event.  Each row
+      represents a member and shows:
+    </p>
+    <table>
+      <thead><tr><th>Column</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>Member</td><td>Member's name</td></tr>
+        <tr><td>Acceptances</td><td>Number of images accepted by the salon</td></tr>
+        <tr><td>COM</td><td>Commendation awards received</td></tr>
+        <tr><td>Judge</td><td>Image judged / selected as judge's choice</td></tr>
+        <tr><td>Points</td><td>Total salon points earned</td></tr>
+        <tr><td>Award</td><td>Any special award received</td></tr>
+      </tbody>
+    </table>
+    <p>
+      A totals row at the bottom summarises commendations, acceptances, and awards
+      for the entire club in that salon.
+    </p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       6. MEMBERS LIST
+  ════════════════════════════════════════════════════ -->
+  <div class="section" id="members-list">
+    <h2>6. Members List <span class="route">/masterview</span></h2>
+    <p>
+      Shows the full member roster with sortable columns: Name, Rating (star level),
+      Title (honours), Email, and Mobile.  A toggle lets you view <em>paid members
+      only</em> or all members.
+    </p>
+
+    <h3>Importing Members from Ledelys</h3>
+    <ol class="steps">
+      <li>Export the member CSV file from the Ledelys system.</li>
+      <li>Click <strong>Import CSV</strong> on the Members List page.</li>
+      <li>Select the exported <code>.csv</code> file in the file chooser dialog.</li>
+      <li>The system maps and imports the member data automatically.</li>
+    </ol>
+
+    <h3>Export</h3>
+    <p>
+      Use the Export button to download the current member list to a CSV file for
+      external use (mail merges, reports, etc.).
+    </p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       7. HONOURS
+  ════════════════════════════════════════════════════ -->
+  <div class="section" id="honours">
+    <h2>7. Honours <span class="route">/honours</span></h2>
+    <p>
+      Allows an administrator to assign or update a member's photographic title /
+      honours designation (e.g. <em>APSSA</em>, <em>FPSSA</em>).
+    </p>
+    <ol class="steps">
+      <li>Select the member from the dropdown list.</li>
+      <li>The current honours title is displayed for reference.</li>
+      <li>Type the new title in the input field.</li>
+      <li>Click <strong>Save</strong> to apply the change.</li>
+    </ol>
+    <div class="note">
+      Honours titles appear next to the member's name on the scoring and results pages.
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       8. SALON ADMINISTRATION
+  ════════════════════════════════════════════════════ -->
+  <div class="section" id="salons-admin">
+    <h2>8. Salon Administration <span class="route">/salonMasMain</span></h2>
+    <p>
+      The salon administration hub manages <strong>Salon Masters</strong> (the salon
+      events themselves) and the <strong>participant scores</strong> for each event.
+      Three views are available from the Salons menu:
+    </p>
+    <table>
+      <thead><tr><th>View</th><th>Route</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td>Salons Current</td><td><code>/salonMasMain</code></td><td>Current fiscal year's salons</td></tr>
+        <tr><td>Salons Previous</td><td><code>/salonMasMain/prev</code></td><td>Previous fiscal year's salons</td></tr>
+        <tr><td>Import Salons</td><td><code>/salonMasMain/importlist</code></td><td>Import a PSSA salon list from CSV</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Creating a New Salon Master</h3>
+    <ol class="steps">
+      <li>Click <strong>New</strong> on the salon list.</li>
+      <li>Enter the salon Name, Date, and check <em>International</em> if applicable.</li>
+      <li>Click <strong>Save</strong>.</li>
+    </ol>
+
+    <h3>Adding Participant Scores</h3>
+    <ol class="steps">
+      <li>Select a salon from the list to open its detail view.</li>
+      <li>Click <strong>Add Participant</strong>.</li>
+      <li>Choose the member, then fill in Acceptances, COM, Points, Judge, and Award fields.</li>
+      <li>Click <strong>Save</strong>.</li>
+    </ol>
+
+    <h3>Importing from PSSA CSV</h3>
+    <ol class="steps">
+      <li>Download the PSSA salon result PDF from the PSSA website.</li>
+      <li>Convert the PDF to a <code>.csv</code> file.</li>
+      <li>Navigate to <strong>Salons &rarr; Import Salons</strong>.</li>
+      <li>Select the <code>.csv</code> file — the system parses and imports all results.</li>
+    </ol>
+    <div class="tip">
+      The import sets the <em>Imported</em> flag on the Salon Master automatically.
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       9. ADMIN: IMAGES PROCESS
+  ════════════════════════════════════════════════════ -->
+  <div class="section" id="admin-images">
+    <h2>9. Admin: Images Process <span class="route">/admin/images-import</span></h2>
+    <p>
+      Automates the full pipeline from raw zip archives of club photos to
+      web-ready images on both the local server and Absolute Hosting.
+      The pipeline runs six sequential steps:
+    </p>
+    <ol class="steps">
+      <li>Unzip selected <code>.zip</code> archives to
+          <code>D:\BKK\Inbox\Club\Photos\{Date}\</code>.</li>
+      <li>Copy and rename photos to a standardised 7-digit numeric filename
+          in the <code>Temp\</code> sub-folder.</li>
+      <li>Generate web-optimised images (1365 &times; 768 px) and save to
+          <code>D:\BKK\Inbox\Club\Photos\WEB\</code>.</li>
+      <li>Copy web images to the local website folder
+          <code>wwwroot\ClubPhotos\{Date}\</code>.</li>
+      <li>Create a zip of the web images in
+          <code>..\Downloads\ZippedExport\</code>.</li>
+      <li>Upload the zip to Absolute Hosting via the API to
+          <code>wwwroot\Import\{yyyy.mm}.zip</code>.</li>
+    </ol>
+    <div class="warn">
+      Ensure VPN is connected before starting if the upload step (step 6)
+      is required to reach Absolute Hosting.
+    </div>
+    <p>
+      Progress is displayed in the modal progress bar during each stage.
+    </p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       10. ADMIN: IMPORT CLUB DATA
+  ════════════════════════════════════════════════════ -->
+  <div class="section" id="admin-import">
+    <h2>10. Admin: Import Club Data <span class="route">/admin/club-import</span></h2>
+    <p>
+      Imports monthly competition scores from a <code>Scoresheet.csv</code> or
+      <code>Results.csv</code> file.  In October (year-end) a special
+      <strong>YearEnd</strong> import mode is available.
+    </p>
+
+    <h3>Typical Monthly Import</h3>
+    <ol class="steps">
+      <li>Place the scoresheet CSV in the Import staging folder
+          (<code>wwwroot/Import/</code>).</li>
+      <li>Navigate to <strong>Admin &rarr; Import Club</strong>.</li>
+      <li>Select the correct month if not already pre-selected.</li>
+      <li>Click <strong>Import</strong> — results appear on the page as they load.</li>
+    </ol>
+
+    <h3>Year-End Import (October)</h3>
+    <p>
+      When the active month is October, an additional <strong>YearEnd</strong>
+      option appears.  This finalises the fiscal year, locks scores, and prepares
+      the database for the new November start.
+    </p>
+    <div class="warn">
+      Run the YearEnd import only once at the end of October.  It cannot be
+      easily reversed — take a database backup first.
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       11. ADMIN: WORD TO HTML
+  ════════════════════════════════════════════════════ -->
+  <div class="section" id="admin-word">
+    <h2>11. Admin: Word to HTML <span class="route">/worddoc</span></h2>
+    <p>
+      Converts a Microsoft Word <code>.docx</code> document to an HTML file and
+      saves it automatically to <code>wwwroot/Html/</code>, making it
+      immediately accessible from the <strong>Info</strong> menu.
+    </p>
+    <ol class="steps">
+      <li>Navigate to <strong>Admin &rarr; Word</strong>.</li>
+      <li>Click the file input and select a <code>.docx</code> file.</li>
+      <li>The conversion runs server-side; the resulting HTML is saved with
+          the same base name as the Word document.</li>
+      <li>The new page appears automatically in the <strong>Info</strong> menu
+          on the next menu refresh.</li>
+    </ol>
+    <div class="note">
+      Images embedded in the Word document are extracted and saved alongside
+      the HTML file.
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       12. ADMIN: UPLOAD TO ABSHOSTING
+  ════════════════════════════════════════════════════ -->
+  <div class="section" id="admin-upload">
+    <h2>12. Admin: Upload to AbsHosting <span class="route">/upload-to-abs</span></h2>
+    <p>
+      Uploads HTML content files or photo ZIP archives directly to the Absolute
+      Hosting server using a token-authenticated API.
+    </p>
+    <ul>
+      <li><strong>.html files</strong> – replaces the corresponding Info page on the live site</li>
+      <li><strong>.zip files</strong> – bulk image packages placed in the live <code>Import/</code> folder</li>
+    </ul>
+    <ol class="steps">
+      <li>Navigate to <strong>Admin &rarr; Upload to AbsHosting</strong>.</li>
+      <li>Select the file(s) to upload.</li>
+      <li>Click <strong>Upload</strong> — progress is shown per file.</li>
+    </ol>
+    <div class="warn">
+      Requires a valid API token configured in <code>appsettings.json</code> and
+      an active VPN connection to Absolute Hosting if uploading from outside the
+      hosted environment.
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       13. ADMIN: BACKUP & RESTORE
+  ════════════════════════════════════════════════════ -->
+  <div class="section" id="admin-backup">
+    <h2>13. Admin: Backup &amp; Restore DB</h2>
+
+    <h3>Backup <span class="route">/admin/backup</span></h3>
+    <p>
+      Creates a full SQL Server backup of the active database and saves it to the
+      local <code>wwwroot/Backup/</code> folder.
+    </p>
+    <ol class="steps">
+      <li>Navigate to <strong>Admin &rarr; Backup DB</strong>.</li>
+      <li>Enter a filename (or accept the date-stamped default).</li>
+      <li>Click <strong>Backup</strong> — the backup file appears in the list
+          when complete.</li>
+    </ol>
+
+    <h3>Restore <span class="route">/admin/restore</span></h3>
+    <p>
+      Restores the database from a previously created backup file.
+    </p>
+    <ol class="steps">
+      <li>Navigate to <strong>Admin &rarr; Restore DB</strong>.</li>
+      <li>Choose the backup file from the dropdown list.</li>
+      <li>Click <strong>Restore</strong> and confirm the warning dialog.</li>
+    </ol>
+    <div class="warn">
+      <strong>Restore overwrites all current data.</strong>  Always take a fresh
+      backup before restoring to a different point in time.
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       14. ADMIN: EXCEL EXPORT
+  ════════════════════════════════════════════════════ -->
+  <div class="section" id="admin-excel">
+    <h2>14. Admin: Excel Export <span class="route">/admin/excel</span></h2>
+    <p>
+      Exports all monthly competition records (Monthlies) for the selected year to
+      an Excel file.  Files are saved to:
+    </p>
+    <p><code>D:\BKK\ARCHIVES\Ou punte rekords\{Year}\</code></p>
+    <ol class="steps">
+      <li>Navigate to <strong>Admin &rarr; Excel</strong>.</li>
+      <li>Verify the year shown is correct.</li>
+      <li>Click <strong>Export</strong> — the file is created and its path is
+          confirmed on screen.</li>
+    </ol>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       15. ADMIN: DELETE MONTH
+  ════════════════════════════════════════════════════ -->
+  <div class="section" id="admin-delete">
+    <h2>15. Admin: Delete Month <span class="route">/admin/deletemonth</span></h2>
+    <p>
+      Removes all competition records for the <strong>last imported month</strong>
+      from the database.  Photo image files on disk are <em>not</em> deleted.
+    </p>
+    <div class="warn">
+      This operation is destructive and cannot be undone from within the application.
+      Always perform a <strong>database backup</strong> before deleting a month.
+    </div>
+    <ol class="steps">
+      <li>Navigate to <strong>Admin &rarr; Delete Month</strong>.</li>
+      <li>Confirm the month shown is the one to be removed.</li>
+      <li>Click <strong>Delete</strong> and confirm the warning dialog.</li>
+    </ol>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       16. DATABASE SWITCHING
+  ════════════════════════════════════════════════════ -->
+  <div class="section" id="db-switch">
+    <h2>16. Database Switching</h2>
+    <p>
+      The application can connect to two database environments.  The active
+      database key is shown in red at the left of the menu bar.
+    </p>
+    <table>
+      <thead><tr><th>Option</th><th>Key</th><th>Use Case</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Local</strong></td>
+          <td><code>XPS</code> / <code>ROG</code></td>
+          <td>Development and data-entry on the local machine.</td>
+        </tr>
+        <tr>
+          <td><strong>Absolute Hosting</strong></td>
+          <td><code>Abshost</code></td>
+          <td>Live production database on the hosted server.
+              Requires VPN access.</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>
+      Navigate to <strong>DB &rarr; Local</strong> or
+      <strong>DB &rarr; Absolute Hosting</strong> to switch.  The page reloads
+      and re-connects automatically.
+    </p>
+    <div class="note">
+      Changes made on Local are <strong>not</strong> automatically synchronised to
+      Absolute Hosting.  Use the Backup / Restore workflow or the Upload tool to
+      push data to the live server.
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       17. SCORING & PROMOTION SYSTEM
+  ════════════════════════════════════════════════════ -->
+  <div class="section" id="scoring">
+    <h2>17. Scoring &amp; Promotion System</h2>
+    <p>
+      The club uses a star-based grading system.  Members are promoted when they
+      meet the cumulative thresholds for their <em>current</em> star group.
+    </p>
+
+    <h3>Promotion Thresholds</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>From &rarr; To</th>
+          <th>Club Points</th>
+          <th>Gold / Merit Awards</th>
+          <th>Salon Points</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>1★ &rarr; 2★</td><td>20</td><td>4</td><td>—</td></tr>
+        <tr><td>2★ &rarr; 3★</td><td>35</td><td>6</td><td>—</td></tr>
+        <tr><td>3★ &rarr; 4★</td><td>50</td><td>8</td><td>18</td></tr>
+        <tr><td>4★ &rarr; 5★</td><td>80</td><td>12</td><td>50</td></tr>
+        <tr><td>5★ &rarr; Golden Honours</td><td>150</td><td>—</td><td>200 + APSSA Digital</td></tr>
+        <tr><td>Golden Honours &rarr; Galaxy</td><td>150</td><td>—</td><td>400 + FPSSA Digital</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Salon Points Calculation</h3>
+    <table>
+      <thead><tr><th>Result</th><th>Images</th><th>AV</th></tr></thead>
+      <tbody>
+        <tr><td>Acceptance (national or international)</td><td>1 pt</td><td>2 pts</td></tr>
+        <tr><td>COM or Medal</td><td>2 pts</td><td>4 pts</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Important Rules</h3>
+    <ul>
+      <li>
+        Club points and gold/merit awards earned within a star group do
+        <strong>not carry over</strong> to the next group — only salon points accumulate
+        across promotions.
+      </li>
+      <li>
+        The club fiscal year runs from <strong>1 November</strong> to
+        <strong>31 October</strong>.
+      </li>
+      <li>
+        Only <strong>paid members</strong> are included in active scoring tables.
+      </li>
+    </ul>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       18. FILE & NAMING CONVENTIONS
+  ════════════════════════════════════════════════════ -->
+  <div class="section" id="conventions">
+    <h2>18. File &amp; Naming Conventions</h2>
+
+    <h3>Photo Filenames</h3>
+    <p>
+      Web-optimised photos are renamed to a standardised <strong>7-digit numeric
+      ID</strong> (e.g. <code>0012345.jpg</code>).  The original filename from the
+      member is used to derive the category, star group, and date during the Images
+      Process pipeline.
+    </p>
+
+    <h3>Import Folders</h3>
+    <table>
+      <thead><tr><th>Path</th><th>Contents</th></tr></thead>
+      <tbody>
+        <tr><td><code>wwwroot/Import/</code></td><td>Staging area for incoming CSV and ZIP files</td></tr>
+        <tr><td><code>wwwroot/Backup/</code></td><td>SQL Server database backup files</td></tr>
+        <tr><td><code>wwwroot/html/</code></td><td>Static HTML content files served via the Info menu</td></tr>
+        <tr><td><code>wwwroot/ClubPhotos/{Date}/</code></td><td>Web-ready competition photos per month</td></tr>
+        <tr><td><code>D:\BKK\Inbox\Club\Photos\</code></td><td>Raw photo working directory (local machine)</td></tr>
+        <tr><td><code>D:\BKK\ARCHIVES\</code></td><td>Long-term Excel archive exports</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Info / HTML Content Files</h3>
+    <p>
+      Any <code>.html</code> file placed in <code>wwwroot/html/</code> automatically
+      becomes an item in the <strong>Info</strong> menu.  The menu entry label is the
+      filename without the <code>.html</code> extension.  Files are served via the
+      route <code>/info/{filename}</code>.
+    </p>
+
+    <h3>Database Connection Keys</h3>
+    <table>
+      <thead><tr><th>Key</th><th>Machine / Environment</th></tr></thead>
+      <tbody>
+        <tr><td><code>XPS</code></td><td>Dell XPS local development machine</td></tr>
+        <tr><td><code>ROG</code></td><td>ASUS ROG local machine</td></tr>
+        <tr><td><code>Abshost</code></td><td>Absolute Hosting production server</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      Connection strings and FTP/API credentials are stored in
+      <code>appsettings.json</code>.  Do not commit this file to a public repository.
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       FOOTER
+  ════════════════════════════════════════════════════ -->
+  <hr style="border-color:#3a4450; margin-top:2rem;" />
+  <p style="text-align:center; color:#5a6a78; font-size:.8rem;">
+    BCC Application &mdash; Help Guide &mdash; Updated May 2026
+  </p>
+
+</div>
+
+<button id="scrollTopBtn" title="Back to top" onclick="window.scrollTo({top:0,behavior:'smooth'})">&#8679;</button>
+
+<script>
+  var btn = document.getElementById('scrollTopBtn');
+  window.addEventListener('scroll', function() {
+    btn.classList.toggle('visible', window.scrollY > 300);
+  });
+</script>
+
+</body>
+</html>
