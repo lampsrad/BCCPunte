@@ -7,7 +7,7 @@ public class gData
     public static string Api { get; set; } = "https://bkk.co.za/";
     //public static string Api { get; set; } = "https://oef.bkk.co.za/";
     //public static string Api { get; set; } = "https://localhost:7265/";
-    public static string backupPath { get; set; }= "C:\\Users\\lammie\\OneDrive\\Database\\SQL16\\Backup\\BCC\\";   
+    public static string backupPath { get; set; }= "C:\\Users\\Lamps\\OneDrive\\Database\\SQL16\\Backup\\BCC\\";   
     public static string ClubName { get; set; } = "Bloemfontein";
     public static string clubPhotos { get; set; } = "wwwroot\\ClubPhotos\\";
     public static string connectionKey { get; set; }
