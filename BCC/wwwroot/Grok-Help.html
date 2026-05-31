@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Grok Code Analysis — BCCPunte Deep Dive</title>
+
+<style>
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #1e2226;
+    color: #dddada;
+    margin: 0;
+    padding: 0;
+  }
+
+  .help-wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 1.5rem 2rem 4rem 2rem;
+    background-color: #1e2226;
+    color: #dddada;
+    font-family: Arial, sans-serif;
+  }
+
+  .help-wrap p,
+  .help-wrap li,
+  .help-wrap td,
+  .help-wrap th,
+  .help-wrap span,
+  .help-wrap label,
+  .help-wrap div,
+  .help-wrap code {
+    color: inherit;
+  }
+
+  .help-title {
+    text-align: center;
+    font-size: 2.1rem;
+    font-weight: bold;
+    color: #bf9f00;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    border-bottom: 4px solid #bf9f00;
+    padding-bottom: .7rem;
+    margin-bottom: .3rem;
+  }
+
+  .help-subtitle {
+    text-align: center;
+    color: #8e9db0;
+    font-size: .95rem;
+    margin-bottom: 2rem;
+    line-height: 1.4;
+  }
+
+  .toc {
+    background-color: #252b31;
+    border: 1px solid #3a4450;
+    border-radius: 6px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .toc-title {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #bf9f00;
+    margin-bottom: .7rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+  }
+
+  .toc ol {
+    margin: 0;
+    padding-left: 1.5rem;
+    columns: 2;
+    column-gap: 2.2rem;
+  }
+
+  .toc li {
+    margin-bottom: .28rem;
+    font-size: .9rem;
+  }
+
+  .toc a {
+    color: #6bb4e8;
+    text-decoration: none;
+  }
+
+  .toc a:hover { text-decoration: underline; color: #f0a500; }
+
+  .section {
+    margin-bottom: 2.8rem;
+  }
+
+  h2 {
+    font-size: 1.35rem;
+    font-weight: bold;
+    color: #bf9f00;
+    text-transform: uppercase;
+    border-bottom: 2px solid #3a4450;
+    padding-bottom: .35rem;
+    margin-top: 0;
+    margin-bottom: .9rem;
+  }
+
+  h3 {
+    font-size: 1.08rem;
+    font-weight: bold;
+    color: #6bb4e8;
+    margin-bottom: .45rem;
+    margin-top: 1.1rem;
+  }
+
+  h4 {
+    font-size: .98rem;
+    color: #f0a500;
+    margin: .7rem 0 .3rem;
+  }
+
+  p {
+    margin: 0 0 .65rem 0;
+    line-height: 1.6;
+    font-size: .93rem;
+  }
+
+  ul, ol {
+    margin: .35rem 0 .8rem 0;
+    padding-left: 1.6rem;
+  }
+
+  li {
+    margin-bottom: .28rem;
+    font-size: .92rem;
+    line-height: 1.55;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.1rem;
+    font-size: .88rem;
+  }
+
+  thead tr {
+    background-color: #2d404f;
+    color: #c8d8e4;
+  }
+
+  th {
+    padding: .5rem .6rem;
+    text-align: left;
+    border: 1px solid #3a4f60;
+    font-weight: bold;
+  }
+
+  td {
+    padding: .42rem .6rem;
+    border: 1px solid #3a4450;
+    vertical-align: top;
+    color: #d4d0cf;
+  }
+
+  tr:nth-child(even) td { background-color: #252b31; }
+
+  .note {
+    background-color: #1b2d3d;
+    border-left: 4px solid #099cdd;
+    padding: .6rem .9rem;
+    border-radius: 0 4px 4px 0;
+    margin-bottom: .9rem;
+    font-size: .88rem;
+    color: #b8cfe0;
+  }
+
+  .warn {
+    background-color: #2d1c1c;
+    border-left: 4px solid #c0392b;
+    padding: .6rem .9rem;
+    border-radius: 0 4px 4px 0;
+    margin-bottom: .9rem;
+    font-size: .88rem;
+    color: #e8b4b0;
+  }
+
+  .tip {
+    background-color: #1c2d1c;
+    border-left: 4px solid #27ae60;
+    padding: .6rem .9rem;
+    border-radius: 0 4px 4px 0;
+    margin-bottom: .9rem;
+    font-size: .88rem;
+    color: #b4d8b4;
+  }
+
+  code {
+    background-color: #2a3038;
+    color: #f0a500;
+    padding: .12rem .38rem;
+    border-radius: 3px;
+    font-size: .86rem;
+    font-family: Consolas, monospace;
+  }
+
+  pre {
+    background-color: #252b31;
+    border: 1px solid #3a4450;
+    padding: .7rem .9rem;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-size: .84rem;
+    line-height: 1.45;
+  }
+
+  .steps {
+    counter-reset: step;
+    list-style: none;
+    padding-left: 0;
+  }
+
+  .steps li {
+    counter-increment: step;
+    display: flex;
+    align-items: flex-start;
+    gap: .7rem;
+    margin-bottom: .5rem;
+  }
+
+  .steps li::before {
+    content: counter(step);
+    min-width: 1.6rem;
+    height: 1.6rem;
+    background-color: #bf9f00;
+    color: #111;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: .85rem;
+    flex-shrink: 0;
+    margin-top: .05rem;
+  }
+
+  .route {
+    display: inline-block;
+    background-color: #2d404f;
+    color: #6bb4e8;
+    padding: .05rem .5rem;
+    border-radius: 3px;
+    font-size: .8rem;
+    font-family: Consolas, monospace;
+    margin-left: .25rem;
+  }
+
+  .badge-gold { color: #f0c040; font-weight: bold; }
+  .badge-silver { color: #aaaaaa; font-weight: bold; }
+  .badge-bronze { color: #cd7f32; font-weight: bold; }
+  .badge-com { color: #8bc34a; font-weight: bold; }
+
+  .fn-table td:first-child { font-family: Consolas, monospace; color: #f0c040; font-size: .85rem; }
+
+  #scrollTopBtn {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 2.8rem;
+    height: 2.8rem;
+    background-color: #bf9f00;
+    color: #111;
+    border: none;
+    border-radius: 50%;
+    font-size: 1.4rem;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,.6);
+    z-index: 9999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s;
+  }
+  #scrollTopBtn.visible { opacity: 1; pointer-events: auto; }
+  #scrollTopBtn:hover { background-color: #f0c040; }
+
+  .mono { font-family: Consolas, monospace; }
+  .small { font-size: .82rem; }
+</style>
+</head>
+<body>
+<div class="help-wrap">
+
+  <!-- TITLE -->
+  <div class="help-title">Grok Code Analysis — BCCPunte</div>
+  <div class="help-subtitle">
+    Complete In-Depth Source Code Summary &amp; Function Reference<br>
+    ASP.NET Core Blazor Server (net10 / net9) — Bloemfontein Camera Club Salon &amp; Competition System<br>
+    Fiscal Year: 1 November – 31 October &nbsp;|&nbsp; Generated April 2026
+  </div>
+
+  <!-- TOC -->
+  <div class="toc">
+    <div class="toc-title">Contents — 22 Sections</div>
+    <ol>
+      <li><a href="#overview">Project Overview &amp; Architecture</a></li>
+      <li><a href="#startup">Startup &amp; DI (Program.cs)</a></li>
+      <li><a href="#gdata">Global Configuration (gData.cs)</a></li>
+      <li><a href="#state">State Management &amp; Event Bus (State.cs)</a></li>
+      <li><a href="#extensions">Extensions — 30+ Helper Methods</a></li>
+      <li><a href="#enums">Domain Enums (Enum.cs)</a></li>
+      <li><a href="#models">Entity Models &amp; BKKEntities DbContext</a></li>
+      <li><a href="#repo">Data Access Layer — Repo.cs + RepoScope (Complete Catalog)</a></li>
+      <li><a href="#dataservice">Business Service: DataService.cs</a></li>
+      <li><a href="#salonimport">Business Service: SalonImport.cs (PSSA Import)</a></li>
+      <li><a href="#viewmodels">All ViewModels (12 DTOs)</a></li>
+      <li><a href="#pages">Presentation Layer — Core Pages (Index, Results, Points, MasterView, Salons, Info…)</a></li>
+      <li><a href="#components">Shared Components &amp; Modals (Dialogs, Progress, Upload)</a></li>
+      <li><a href="#admin">Admin Module Deep Dive — Club/Admin.razor.cs (20+ Core Functions)</a></li>
+      <li><a href="#salonadmin">Salon Administration (Adm/Salonne/*)</a></li>
+      <li><a href="#worddoc">Word → HTML Conversion (WordDoc.razor)</a></li>
+      <li><a href="#scoring">Scoring, Promotion &amp; Star-Level Rules (Exact Thresholds)</a></li>
+      <li><a href="#imagepipe">Image Processing Pipeline (Unzip → Rename → Previews → Zip)</a></li>
+      <li><a href="#flows">Key Data Flows &amp; Algorithms</a></li>
+      <li><a href="#filesystem">File System, Paths &amp; Naming Conventions</a></li>
+      <li><a href="#config">Configuration, Secrets &amp; Environment Handling</a></li>
+      <li><a href="#notes">Development Notes, Risks &amp; Observations</a></li>
+    </ol>
+  </div>
+
+  <!-- 1. OVERVIEW -->
+  <div class="section" id="overview">
+    <h2>1. Project Overview &amp; Architecture</h2>
+    <p><strong>BCCPunte</strong> is a full-featured Blazor Server application that manages the entire competition lifecycle of the Bloemfontein Camera Club (BCC). It handles monthly club competitions (Pictorial, Nature, Set Subject, Cell-Phone), star-level promotions, Golden Honours / Galaxy tracking, PSSA national &amp; international salon results, member master data, photo asset pipelines, and public website content publishing.</p>
+
+    <h3>High-Level Architecture</h3>
+    <ul>
+      <li><strong>UI:</strong> Blazor Server (real-time SignalR updates). No MVVM/ViewModel layer — components inject <code>Repo</code> + <code>State</code> directly and perform data binding inline.</li>
+      <li><strong>State:</strong> Singleton event bus (<code>State.cs</code>) for cross-component communication (progress, messages, date changes, file dialogs).</li>
+      <li><strong>Data:</strong> Repository pattern with generic EF helpers. All EF access funnels through <code>Repo</code>. <code>RepoScope</code> provides transactional units of work with eager includes.</li>
+      <li><strong>Business Logic:</strong> Concentrated in <code>DataService</code> (promotion engine, monthly record lifecycle) and <code>SalonImport</code> (PSSA CSV parsing + point aggregation). The massive <code>Admin.razor.cs</code> contains the club data import engine and the entire image processing pipeline.</li>
+      <li><strong>EF Core:</strong> Minimal <code>BKKEntities</code> DbContext (no Fluent config). Relationships via navigation properties + conventions. Heavy use of <code>AsNoTracking()</code> + manual <code>ChangeTracker.Clear()</code> for performance.</li>
+    </ul>
+
+    <div class="note">
+      <strong>Fiscal Year Rule:</strong> Club year starts 1 November. Almost every date-sensitive calculation (year accumulators Py/VOy/Saly, promotion windows, monthly copy logic) uses the custom <code>.toClubDate()</code> and <code>.toDateFirstDay()</code> extensions.
+    </div>
+
+    <h3>Technology Stack</h3>
+    <table>
+      <thead><tr><th>Layer</th><th>Technology / Package</th></tr></thead>
+      <tbody>
+        <tr><td>Framework</td><td>ASP.NET Core 10 / 9, Blazor Server, Kestrel on port 5125</td></tr>
+        <tr><td>ORM</td><td>EF Core 10 + Microsoft.Data.SqlClient (3 connection strings)</td></tr>
+        <tr><td>Image Processing</td><td>SixLabors.ImageSharp 3.1.12 (resize + autorotate + save as JPEG)</td></tr>
+        <tr><td>Document Conversion</td><td>OpenXmlPowerTools 4.5.3.2 (HtmlConverter + WordprocessingDocument)</td></tr>
+        <tr><td>CSV Parsing</td><td>Microsoft.VisualBasic.FileIO.TextFieldParser (handles quoted fields, ; or , delimiters)</td></tr>
+        <tr><td>Deployment</td><td>Self-contained exe, auto-launches Chrome in Release mode</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 2. STARTUP -->
+  <div class="section" id="startup">
+    <h2>2. Startup &amp; Dependency Injection (Program.cs)</h2>
+    <pre><code>using BCC;
+using BCC.Services;
+
+gData.connectionKey = Environment.MachineName switch
+{
+    "XPS" or "ROG" => "Local",
+    _ => "Abshost"
+};
+
+var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddRazorPages();
+builder.Services.AddServerSideBlazor();
+builder.Services.AddSingleton&lt;IDbContextFactory, DbContextFactory&gt;(sp =&gt; 
+    new DbContextFactory(Environment.MachineName, builder.Configuration));
+builder.Services.AddSingleton&lt;State&gt;();
+builder.Services.AddScoped&lt;Repo&gt;();
+builder.Services.AddScoped&lt;DataService&gt;();
+builder.Services.AddScoped&lt;SalonImport&gt;();
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Error");
+    gData.StartBrowser(url);   // launches full-screen Chrome
+}</code></pre>
+
+    <p><strong>Key Points:</strong></p>
+    <ul>
+      <li>Machine-name detection at startup selects connection string (never changes at runtime except via explicit DB menu switch).</li>
+      <li><code>State</code> is the only true singleton besides the factory.</li>
+      <li>Static file provider mounted at <code>/photos</code> → <code>gData.photosLocal</code> (physical D:\BKK\Inbox\Club\Photos\).</li>
+      <li>No authentication middleware active (the [Authorize] on DataService is vestigial).</li>
+    </ul>
+  </div>
+
+  <!-- 3. gData -->
+  <div class="section" id="gdata">
+    <h2>3. Global Configuration (gData.cs)</h2>
+    <p>Static class holding every path, credential, and constant used across the application. Many values are hard-coded and duplicated in appsettings.json.</p>
+
+    <table>
+      <thead><tr><th>Property</th><th>Value / Purpose</th></tr></thead>
+      <tbody>
+        <tr><td>Api</td><td>https://bkk.co.za/ (live site root)</td></tr>
+        <tr><td>ClubName</td><td>"Bloemfontein"</td></tr>
+        <tr><td>dbName</td><td>"BCC"</td></tr>
+        <tr><td>photosLocal</td><td>D:\BKK\Inbox\Club\Photos\ (source of monthly competition images)</td></tr>
+        <tr><td>clubPhotos</td><td>wwwroot\ClubPhotos\ (published resized images)</td></tr>
+        <tr><td>WordFiles</td><td>D:\VS\VS Active\BCCPunte\BCC\Wordfiles\</td></tr>
+        <tr><td>HtmlPath</td><td>wwwroot\Html\ (converted public documentation)</td></tr>
+        <tr><td>ImportDirectory</td><td>wwwroot\Import\ (staging for all CSV + ZIP uploads)</td></tr>
+        <tr><td>FtpServer / FtpUsername / FtpPassword</td><td>ftp.bkk.co.za + credentials (duplicated in appsettings "Ftp")</td></tr>
+        <tr><td>backupPath</td><td>C:\Users\Lamps\OneDrive\Database\SQL16\Backup\BCC\</td></tr>
+        <tr><td>Downloads</td><td>C:\Users\lammie\Downloads\BKK\</td></tr>
+        <tr><td>LocalWebsitePath</td><td>D:\VS\VS Active\BCCBlazor\BCC\ (unused?)</td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <strong>Security:</strong> SQL sa passwords, FTP password, and Auth credentials live in plaintext in both appsettings.json and gData.cs. No User Secrets or environment variables are used.
+    </div>
+  </div>
+
+  <!-- 4. STATE -->
+  <div class="section" id="state">
+    <h2>4. State Management &amp; Event Bus (State.cs)</h2>
+    <p>The only singleton service. Acts as a lightweight pub/sub bus for UI concerns that cross component boundaries.</p>
+
+    <h3>Events</h3>
+    <ul>
+      <li><code>Action&lt;bool&gt; Progress</code> — show/hide + update global progress bar</li>
+      <li><code>Action Menu</code> — fired when DatePhoto changes; Menu.razor subscribes to refresh title</li>
+      <li><code>Func&lt;Task&lt;string&gt;&gt; FileNameGet</code> — FileChoose dialog</li>
+      <li><code>Func&lt;string,string,string,Task&lt;string&gt;&gt; FileUpload</code> — generic upload modal</li>
+      <li><code>Func&lt;string,string,string,Task&lt;string&gt;&gt; MessageShow</code></li>
+      <li><code>Func&lt;string,string,Task&lt;bool&gt;&gt; MessageConfirm</code></li>
+    </ul>
+
+    <h3>Important Properties &amp; Methods</h3>
+    <table class="fn-table">
+      <thead><tr><th>Method / Property</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>DatePhoto (setter)</td><td>Triggers Menu event → all subscribers refresh (used by month selector)</td></tr>
+        <tr><td>ShowProgress(title, show, initial)</td><td>Displays the global progress overlay</td></tr>
+        <tr><td>UpdateProgress(val, title)</td><td>Clamped 0-100 update; used extensively by the image pipeline</td></tr>
+        <tr><td>ShowMessageAsync / ShowConfirmAsync</td><td>Modal dialogs driven from any component via injected State</td></tr>
+        <tr><td>ShowFilePicker / ShowFileUpload</td><td>Opens the reusable FileChoose / FileUpload components</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 5. EXTENSIONS -->
+  <div class="section" id="extensions">
+    <h2>5. Extensions — 30+ Helper Methods (Extensions.cs)</h2>
+    <p>Most date formatting, award mapping, photo path generation, and VM projection logic lives here as extension methods. The club fiscal year logic is pervasive.</p>
+
+    <h3>Date &amp; Month Helpers (core of fiscal year handling)</h3>
+    <table class="fn-table">
+      <thead><tr><th>Method</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td>.toClubDate()</td><td>Returns 1 Nov of the correct club year for any date (Nov/Dec → current year, Jan–Oct → previous year)</td></tr>
+        <tr><td>.toDateFirstDay()</td><td>Normalizes to 1st of month</td></tr>
+        <tr><td>.toMonthFull_Year() / .toMonthShort_Year()</td><td>"NOVEMBER 2025", "NOV 2025"</td></tr>
+        <tr><td>.toYear_Month_Digits()</td><td>"2025-11" (used for ClubPhotos subfolders)</td></tr>
+        <tr><td>.toYearMonthDirectory()</td><td>"2025-11\"</td></tr>
+        <tr><td>.toMonthDigit(string)</td><td>Accepts Afrikaans + English abbreviations (maa, okt, des, etc.) → 1-12</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Award &amp; Category Mapping</h3>
+    <ul>
+      <li><code>.toAward()</code> — "C"→"Com", "G"→"Gold", "S"→"Silver", "B"→"Bronz"</li>
+      <li><code>.toCategory_Rating()</code> — "N4" → "Nature - Honours &amp; Galaxy", "S" → "Set Subject", "PH" → "Cell-Phone"</li>
+      <li><code>.toStarGroup(rating)</code> — 1-2, 3, 4-5, 6-7 (Golden Honours and Galaxy)</li>
+    </ul>
+
+    <h3>Photo &amp; VM Projection Extensions</h3>
+    <ul>
+      <li><code>.toPhotoView()</code> / <code>.toPhotosView()</code> — builds public Filename paths, censors high IntRef values, attaches Name/Date</li>
+      <li><code>.toParticipantsVM()</code> — converts Photo → ParticipantsVM for results display</li>
+      <li><code>.toWall()</code> / <code>.toWallofFame()</code> — builds wall of fame aggregates from Monthly records</li>
+    </ul>
+
+    <h3>Other Utilities</h3>
+    <ul>
+      <li><code>.toCap()</code> — Title Case via regex (used on salon awards)</li>
+      <li><code>.AddNull(int?, int?)</code> — nullable addition that returns null when result is zero</li>
+      <li><code>.IsNumber()</code>, <code>.toFileName()</code></li>
+    </ul>
+  </div>
+
+  <!-- 6. ENUMS -->
+  <div class="section" id="enums">
+    <h2>6. Domain Enums (Enum.cs)</h2>
+    <p>15 enums. Several are used for both database values and UI display / CSV header matching.</p>
+
+    <table>
+      <thead><tr><th>Enum</th><th>Values / Purpose</th></tr></thead>
+      <tbody>
+        <tr><td>month / monthL / monthS</td><td>Full, Long, Short month names (used by date extensions)</td></tr>
+        <tr><td>rate / ratings</td><td>NONE, ONE_STAR … FIVE_STAR, HONOURS, GALAXY (RatingID values 0-7)</td></tr>
+        <tr><td>stargroup</td><td>All_Star_Groups, One_and_Two_Star, Three_Star, Four_and_Five_Star, Honours_and_Galaxy</td></tr>
+        <tr><td>categories</td><td>NATURE, PICTORIAL, SET_SUBJECT</td></tr>
+        <tr><td>catRat</td><td>N1–N4, P1–P4, S (category+star bucket used in ResultsVM and photo classification)</td></tr>
+        <tr><td>headings</td><td>40+ column names for club CSV import header detection (Category, Internal_Reference, ScoreTotal, Awards, Winner, Clubwinner…)</td></tr>
+        <tr><td>salHeadings</td><td>Column names for PSSA salon result CSVs (many spelling variants: Lastname/Last_Name/Surname, Clubname/Club_Name…)</td></tr>
+        <tr><td>AsyncProcessState, view, line, SitemapFrequency</td><td>Legacy / unused in current codebase</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 7. MODELS -->
+  <div class="section" id="models">
+    <h2>7. Entity Models &amp; BKKEntities DbContext</h2>
+
+    <h3>Core Tables</h3>
+    <table>
+      <thead><tr><th>Entity</th><th>Table</th><th>Key Relationships &amp; Notes</th></tr></thead>
+      <tbody>
+        <tr><td>Master</td><td>Master</td><td>IdVault, PSSA, Name, RatingID (FK→Rating), Title, Email, Mobile, Paid, Active, SalSaldo. 1→* Monthlies</td></tr>
+        <tr><td>Monthly</td><td>Monthly</td><td>MasterID, Date (club competition month), 20+ point columns (VOm, Mm, Gm, Sm, Bm, Pm, Salm, Mg…GMy, Py, VOy, Saly), Promotion flag, RatingID snapshot. 1→* Photos, 1→* Salons</td></tr>
+        <tr><td>Photo</td><td>Photo</td><td>MonthlyID, Category (N1/N2…P4/S/PH), Title, IntRef (PVID), Score, Award, Winner, Club_Winner, Star_Group. Many [NotMapped] properties for view projection.</td></tr>
+        <tr><td>Salon</td><td>Salon</td><td>MonthlyID, SalonMasterID, Acceptance, Com, Points, Judge, Award. Denormalized Firstname/Lastname for import.</td></tr>
+        <tr><td>SalonMaster</td><td>SalonMaster</td><td>Club, SalonName, Alias, Date, International (double points), Imported flag. 1→* Salons</td></tr>
+        <tr><td>Rating</td><td>Rating</td><td>Rate string (lookup for star level display)</td></tr>
+        <tr><td>Datum</td><td>Date</td><td>ID = "clubYearStart" / "lastImport" → stores the two critical DateOnly values that drive the entire monthly lifecycle</td></tr>
+        <tr><td>HitCounter</td><td>HitCounter</td><td>Simple global hit counter (used on DB switch)</td></tr>
+        <tr><td>PClub</td><td>PClub</td><td>Legacy club/salon metadata (lightly used)</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Import Structs &amp; Header Classes</h3>
+    <p><code>Csv</code>, <code>CsvSal</code>, <code>ResultHeaders</code>, <code>ScoreHeaders</code>, <code>SalonHeaders</code>, <code>SalonHeadersCheck</code>, <code>ProgressInfo</code>, <code>Messenger</code> — used only during import pipelines for column mapping and progress reporting.</p>
+  </div>
+
+  <!-- 8. REPO -->
+  <div class="section" id="repo">
+    <h2>8. Data Access Layer — Repo.cs + RepoScope (Complete Catalog)</h2>
+    <p>All database access in the application goes through these two classes. Direct LINQ outside Repo is forbidden by architecture.</p>
+
+    <h3>Generic High-Level Methods</h3>
+    <table class="fn-table">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>AddSaveAsync&lt;T&gt;(entity)</td><td>Add + SaveChanges, return entity</td></tr>
+        <tr><td>UpdateSaveDetachAsync&lt;T&gt;(entity)</td><td>Update + Save + ChangeTracker.Clear() (critical pattern to avoid tracking bloat)</td></tr>
+        <tr><td>DeleteSave(entity)</td><td>Remove + Save (sync)</td></tr>
+        <tr><td>GetEntityNTAsync&lt;T&gt;(filter)</td><td>SingleOrDefault with AsNoTracking + full BuildQuery includes</td></tr>
+        <tr><td>GetEntitiesNTAsync&lt;T&gt;(filter, sort)</td><td>ToList with AsNoTracking + includes</td></tr>
+        <tr><td>AnyAsync&lt;T&gt;(filter)</td><td>Exists check</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Specialized Monthly &amp; Date Queries</h3>
+    <ul>
+      <li><code>monthlyLastNTAsync(filter)</code> — latest Monthly per member (ordered by Date desc)</li>
+      <li><code>monthliesLastAsyncNT(filter, comparisonDate)</code> — latest per member within window; zeros out future accumulators if date &lt; comparison</li>
+      <li><code>MonthlyAsyncExcelLastAsyncNT</code> — variant used by Excel export</li>
+      <li><code>monthlyPrevNTAsync(mon)</code> — previous month record for same member (used in salon point carry-forward)</li>
+      <li><code>monthlyLastDateAsync()</code>, <code>monthliesYearsAsync()</code></li>
+      <li><code>Datum(filter)</code>, <code>lastDateAsync(filter)</code></li>
+    </ul>
+
+    <h3>BuildQuery&lt;T&gt; (Internal)</h3>
+    <p>Central include strategy. Every Get*NT call automatically receives the correct navigation graph:</p>
+    <ul>
+      <li>Master → Rating</li>
+      <li>Monthly → Master + Rating + Photos + Salons→SalonMaster</li>
+      <li>Photo → Monthly → Master</li>
+      <li>Salon → Monthly → Master + SalonMaster</li>
+    </ul>
+
+    <h3>Backup / Restore (Raw SQL)</h3>
+    <pre><code>await cx.Database.ExecuteSqlInterpolated($"Use BCC Backup Database BCC to Disk = {fn} with init");
+string sql = $"USE master; ALTER DATABASE [{gData.dbName}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; RESTORE DATABASE ... FROM DISK = @filePath WITH REPLACE;";
+cx.Database.ExecuteSqlRaw(sql, new SqlParameter("@filePath", fn));</code></pre>
+
+    <h3>RepoScope (Transactional Unit)</h3>
+    <p>Created via <code>repo.CreateScope()</code>. Gives access to <code>AddAsync</code>, <code>AddRange</code>, <code>BeginTransactionAsync</code>, <code>SaveChangesDetachAsync</code> and the same BuildQuery includes. Used heavily in Admin import and DeleteMonth operations.</p>
+  </div>
+
+  <!-- 9. DATASERVICE -->
+  <div class="section" id="dataservice">
+    <h2>9. Business Service: DataService.cs</h2>
+
+    <h3>Monthly Lifecycle Core</h3>
+    <pre><code>public async Task&lt;Monthly&gt; GetLastMonthly(Master master)
+{
+    Monthly last = await repo.monthlyLastNTAsync(x =&gt; x.MasterID == master.ID);
+    last = last ?? await MonthlyNew(master);
+    last = (last.Date &lt;= gData.lastDateClubImported) 
+        ? await MonthlyCopy(master, last) 
+        : last;
+    await repo.UpdateSaveDetachAsync(last);
+    return last;
+}</code></pre>
+
+    <p><code>MonthlyCopy</code> duplicates year accumulators (GMy, Py, VOy, Saly) and clears them when crossing the November boundary or when the previous record is before club year start.</p>
+
+    <h3>Promotion Engine (Promotion_Due + Promote)</h3>
+    <p>Runs after every club data import and after every salon import.</p>
+    <table>
+      <thead><tr><th>Current Rating</th><th>GMp</th><th>Pp</th><th>Salp</th><th>Title</th><th>Promotion Action</th></tr></thead>
+      <tbody>
+        <tr><td>1★</td><td>≥4</td><td>≥20</td><td>—</td><td>—</td><td>→ 2★</td></tr>
+        <tr><td>2★</td><td>≥6</td><td>≥35</td><td>—</td><td>—</td><td>→ 3★</td></tr>
+        <tr><td>3★</td><td>≥8</td><td>≥50</td><td>≥18</td><td>—</td><td>→ 4★</td></tr>
+        <tr><td>4★</td><td>≥12</td><td>≥80</td><td>≥50</td><td>—</td><td>→ 5★</td></tr>
+        <tr><td>5★</td><td>—</td><td>≥150</td><td>≥200</td><td>APSSA</td><td>→ Golden Honours (6)</td></tr>
+        <tr><td>Golden Honours (6)</td><td>—</td><td>≥150</td><td>≥400</td><td>FPSSA</td><td>→ Galaxy (7)</td></tr>
+      </tbody>
+    </table>
+    <p>When promotion fires: RatingID on both Master and Monthly is bumped, monthly accumulators (GMp/Pp/Mg/Gg/Sg/Bg) are nulled, and the Promotion flag is left true for UI display.</p>
+  </div>
+
+  <!-- 10. SALONIMPORT -->
+  <div class="section" id="salonimport">
+    <h2>10. Business Service: SalonImport.cs (PSSA Import)</h2>
+    <p>Full pipeline for national/international salon result CSVs.</p>
+
+    <ol class="steps">
+      <li>Locates <code>*{salonname}*.csv</code> in ImportDirectory</li>
+      <li>TextFieldParser with smart delimiter detection (; vs ,) and quote handling</li>
+      <li>Filters rows where ClubName contains "Bloemfontein"</li>
+      <li>Regex on AwardDescription column detects: acceptances, COMs, special medals (FIAP, PSSA, Club)</li>
+      <li>Aggregates per photographer (multiple images per salon entry)</li>
+      <li>Points = Acceptances + (Com × 2); ×2 again if SalonMaster.International</li>
+      <li>Calls <code>Ds.GetLastMonthly</code> to ensure a Monthly record exists for the salon date</li>
+      <li>Updates Salon + Monthly.Salm / Salp / Saly</li>
+      <li>Invokes <code>Ds.Promotion_Due()</code></li>
+    </ol>
+
+    <div class="tip">
+      The regex patterns for awards are quite loose ("acc", "com", "cert", "fiap", "pssa", "club") and rely on .toCap() for display.
+    </div>
+  </div>
+
+  <!-- 11. VIEWMODELS -->
+  <div class="section" id="viewmodels">
+    <h2>11. All ViewModels (12 DTOs)</h2>
+    <table>
+      <thead><tr><th>VM</th><th>Usage</th></tr></thead>
+      <tbody>
+        <tr><td>ResultsVM</td><td>10 buckets (N1–N4, P1–P4, S, PH) + Winners list for monthly results page</td></tr>
+        <tr><td>ScoresVM</td><td>S1–S7 lists + Prom + top-10 Py/Voy/Saly for Points dashboard</td></tr>
+        <tr><td>ScoresSingleVM</td><td>Personal member score history drill-down</td></tr>
+        <tr><td>SalonsVM</td><td>Salon participation table + totals row</td></tr>
+        <tr><td>PhotoVM / ParticipantsVM</td><td>Flattened photo data for display / selection</td></tr>
+        <tr><td>MemberVM</td><td>Minimal pointer for member selection</td></tr>
+        <tr><td>wallVM</td><td>Wall-of-fame aggregates (Py+VOy+Saly = grandMaster)</td></tr>
+        <tr><td>Pdf / VisitorVM</td><td>Legacy website contact forms (email code commented out)</td></tr>
+        <tr><td>LineFormat / sortVM</td><td>Minor helpers for Info page line parsing and table sorting</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 12. PAGES -->
+  <div class="section" id="pages">
+    <h2>12. Presentation Layer — Core Pages</h2>
+
+    <h3>Index.razor / Index.Razor.cs</h3>
+    <p>Home page. On init loads lastImport and clubYearStart from Datum table, sets global state dates, then scans the Temp folder under photosLocal for recent winners (Winner or Club_Winner flags) and displays them.</p>
+
+    <h3>Results.razor / Results.razor.cs <span class="route">/results</span></h3>
+    <p>Month selector (via DateChange component) drives <code>_state.DatePhoto</code>. Loads all Photos for the month, buckets them into ResultsVM by Category (N1/N2…PH), extracts Winners. Heavy use of <code>.toPhotosView()</code> extension for filename + name enrichment.</p>
+
+    <h3>Points.razor / Points.razor.cs <span class="route">/points</span></h3>
+    <p>Year-to-date leaderboards. Uses <code>repo.monthliesLastAsyncNT</code> with club-year window. Produces top-10 lists for Py, VOy, Saly. Promotion list shown only for current month (or all in November). Renders multiple <code>StarLevelTable</code> instances for each star group.</p>
+
+    <h3>PointsMember.razor / PointsMember.razor.cs</h3>
+    <p>Drill-down from Points or Results. Shows every Monthly record for a member with color-coded promotion status (green = on track, red = behind). Uses <code>monthlyPrevNTAsync</code> for context.</p>
+
+    <h3>MasterView.razor / MasterView.razor.cs <span class="route">/masterview</span></h3>
+    <p>Full member roster (sortable). Toggle Paid-only. Import CSV button opens FileChoose → parses Ledelys export into Master rows (IdVault, PSSA, names, Rating, Title, Email, Mobile). Export CSV button.</p>
+
+    <h3>Salons.razor / Salons.razor.cs <span class="route">/salons</span></h3>
+    <p>Salon browser. Select SalonMaster → loads all Salon rows for that event with member names, acceptances, COMs, points, awards. Aggregates club totals row.</p>
+
+    <h3>Info.razor</h3>
+    <p>Dynamically discovers every .html file in wwwroot/Html/ and presents them as a tabbed/document viewer. Used for Constitution, Program (Afr/Eng), Grading, Judging, PSSA Salon rules, etc.</p>
+  </div>
+
+  <!-- 13. COMPONENTS -->
+  <div class="section" id="components">
+    <h2>13. Shared Components &amp; Modals</h2>
+    <ul>
+      <li><strong>Menu.razor + .cs</strong> — Gold bar with DB indicator (clickable), current month title, links to Members/Honours/Salons/Info/Admin/DB/Close. Populates Info submenu from Html/ files at startup.</li>
+      <li><strong>ProgressBar.razor</strong> — Subscribes to State.Progress, shows title + percentage bar.</li>
+      <li><strong>DialogBox.razor</strong> — Multi-purpose: date picker, file chooser list, confirmation, generic message. Wires itself into State events on init.</li>
+      <li><strong>MessageBox.razor</strong> — Simple alert/confirm surface.</li>
+      <li><strong>FileUpload.razor / FileUploadAbs.razor / FileChoose.razor</strong> — Reusable upload + destination picker (destination path passed via State).</li>
+      <li><strong>StarLevelTable.razor</strong> — The detailed 19-column scoring grid with threshold highlighting (red background when GMp/Pp/Salp meet promotion targets).</li>
+    </ul>
+  </div>
+
+  <!-- 14. ADMIN DEEP DIVE -->
+  <div class="section" id="admin">
+    <h2>14. Admin Module Deep Dive — Club/Admin.razor.cs (The Heart of Data Entry)</h2>
+    <p>This single file (~960 lines) contains the entire club monthly import engine, image processing pipeline, DB maintenance, and Excel archival logic.</p>
+
+    <h3>Import Functions</h3>
+    <table class="fn-table">
+      <thead><tr><th>Function</th><th>Responsibility</th></tr></thead>
+      <tbody>
+        <tr><td>ImportClub()</td><td>Main entry point ("Hoof Ingangsroete"). Orchestrates scores + results + images + promotion.</td></tr>
+        <tr><td>ImportScores(filename)</td><td>Parses club monthly score CSV (internal reference, scores, awards). Calls UpdateScores.</td></tr>
+        <tr><td>ImportResults(filename)</td><td>Parses results/awards CSV. Matches on EventPhotoID / InternalReference.</td></tr>
+        <tr><td>HeadersCheckScores / SetScoreIndices / SetResultIndices</td><td>Fuzzy header matching against ScoreHeaders / ResultHeaders constants (case-insensitive, space-stripped).</td></tr>
+        <tr><td>processLineScores / processLineResults</td><td>Row → Photo entity mapping. Handles new Master creation via AddNewMaster/GetMasterRow.</td></tr>
+        <tr><td>MonthlyCompute()</td><td>Aggregates all photos for a member/month into VOm/Mm/Gm/Sm/Bm/Pm + monthly award counts. Calculates club points (Pm).</td></tr>
+        <tr><td>MonthlyUpdate()</td><td>Carries forward group (Mg/Gg/Sg/Bg) and year (GMy/Py/VOy) accumulators. Zeros at year boundary.</td></tr>
+        <tr><td>YearEnd() / OctoberMonth()</td><td>Special year-end reset logic for October → November transition.</td></tr>
+        <tr><td>DatesStoreInDb()</td><td>Writes current gData.lastDateClub* values back to Datum table.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Image Pipeline (ImagesProcessAsync → 5 stages)</h3>
+    <ol>
+      <li><strong>PhotosLocalUnzipAsync</strong> — extracts uploaded ZIP into dated Temp folder under photosLocal</li>
+      <li><strong>PhotosCopyRenameAsync</strong> — walks Temp, matches files to Photo.IntRef, copies to ClubPhotos/YYYY-MM/ with correct name</li>
+      <li><strong>PhotosGeneratePreviewsAsync</strong> — parallel ImageSharp pipeline: load, autorotate, resize (configurable width/height), save as high-quality JPEG</li>
+      <li><strong>PhotosZipAsync</strong> — zips the resized set for FTP upload</li>
+      <li><strong>UploadToHosting</strong> — HTTP POST login + multipart upload (or FTP path in some branches)</li>
+    </ol>
+
+    <h3>Other Admin Tools</h3>
+    <ul>
+      <li><code>Excel()</code> + <code>CsvWrite</code> — archives full Monthly snapshot for a month into dated CSV under D:\BKK\ARCHIVES\...</li>
+      <li><code>DeleteMonth()</code> — transactional delete of Photos + Monthlies + Salons + SalonMasters for the previous month (used for re-imports)</li>
+      <li><code>Backup()</code> / <code>Restore()</code> — thin wrappers around Repo.SqlBackupAsync / SqlRestoreAsync + file picker</li>
+      <li><code>GenerateImagesAsync</code> — standalone ImageSharp resize utility</li>
+    </ul>
+  </div>
+
+  <!-- 15. SALON ADMIN -->
+  <div class="section" id="salonadmin">
+    <h2>15. Salon Administration (Adm/Salonne/*)</h2>
+    <p>Full CRUD for SalonMaster (event definition) and per-member Salon participation records.</p>
+    <ul>
+      <li>SalonIndex / SalonCreate / SalonEdit — manage events (name, date, international flag)</li>
+      <li>SalonMasIndex / SalonMasCreate / SalonMasEdit / SalonMasMain — assign members to salons, manual editing of acceptances/COMs/points/awards</li>
+      <li>SalonImport button on index calls <code>SalonImport.ImportSalon</code> which triggers the full promotion recalculation</li>
+    </ul>
+  </div>
+
+  <!-- 16. WORDDOC -->
+  <div class="section" id="worddoc">
+    <h2>16. Word → HTML Conversion (WordDoc.razor)</h2>
+    <p>Admin utility that lets the club maintain documentation in Word (.docx in Wordfiles/) and publish clean HTML to wwwroot/Html/ for the public Info section.</p>
+    <pre><code>using (WordprocessingDocument wordDoc = WordprocessingDocument.Open(ms, true))
+{
+    var settings = new HtmlConverterSettings { PageTitle = ..., CssClassPrefix = "docx-" };
+    XElement html = HtmlConverter.ConvertToHtml(wordDoc, settings);
+    ...
+    if (program files) special header injection
+    File.WriteAllText(dest, htmlString);
+}</code></pre>
+    <p>Special handling exists for the two Program documents (Afr/Eng) to inject club header styling.</p>
+  </div>
+
+  <!-- 17. SCORING RULES -->
+  <div class="section" id="scoring">
+    <h2>17. Scoring, Promotion &amp; Star-Level Rules (Exact Thresholds)</h2>
+    <p>The <code>StarLevelTable</code> and Points page expose the following columns (all nullable in DB):</p>
+    <ul>
+      <li><strong>Monthly:</strong> VOm (set subject), Mm/Gm/Sm/Bm (awards), Pm (club points), Salm (salon points that month)</li>
+      <li><strong>Group accumulators:</strong> Mg/Gg/Sg/Bg (used for promotion from lower stars)</li>
+      <li><strong>Promotion window:</strong> GMp, Pp, Salp — highlighted red when thresholds met</li>
+      <li><strong>Year:</strong> GMy, Py (pictorial YTD), VOy (set subject YTD), Saly</li>
+    </ul>
+    <p>Promotion rules are hardcoded in <code>DataService.Promotion_Due</code> (see section 9). There is no configuration table.</p>
+  </div>
+
+  <!-- 18. IMAGE PIPE -->
+  <div class="section" id="imagepipe">
+    <h2>18. Image Processing Pipeline — Detailed Flow</h2>
+    <p>Triggered from Admin page "Images Process" button. Uses <code>IProgress&lt;ProgressInfo&gt;</code> for live UI updates via State.UpdateProgress.</p>
+    <p>Key transformations:</p>
+    <ul>
+      <li>Original filenames from camera or download service are ignored.</li>
+      <li>Matching is done purely on numeric IntRef (PVID) extracted during CSV import.</li>
+      <li>High IntRef numbers (&gt;10M) are treated as "Censored" and mapped to images/Censored.jpg.</li>
+      <li>Final published images live under <code>/photos/2025-11/12345.jpg</code> (served from physical gData.photosLocal via static file middleware).</li>
+    </ul>
+  </div>
+
+  <!-- 19. FLOWS -->
+  <div class="section" id="flows">
+    <h2>19. Key Data Flows &amp; Algorithms</h2>
+    <h3>Typical Monthly Import Sequence</h3>
+    <ol class="steps">
+      <li>Admin uploads scores CSV → ImportScores → processLineScores → AddNewMaster if needed → Photo rows</li>
+      <li>Admin uploads results/awards CSV → ImportResults → processLineResults → update Award/Winner/Club_Winner/Score</li>
+      <li>MonthlyCompute + MonthlyUpdate for every affected member</li>
+      <li>ImagesProcessAsync (unzip → copy/rename → generate previews → zip → upload)</li>
+      <li>Promotion_Due() runs automatically</li>
+    </ol>
+
+    <h3>Salon Import Sequence</h3>
+    <p>SalonMaster record created → CSV uploaded → SalonImport.ImportSalon → per-member GetLastMonthly → aggregate Salon rows → update Salm/Salp/Saly → Promotion_Due</p>
+  </div>
+
+  <!-- 20. FILESYSTEM -->
+  <div class="section" id="filesystem">
+    <h2>20. File System, Paths &amp; Naming Conventions</h2>
+    <table>
+      <thead><tr><th>Location</th><th>Content &amp; Convention</th></tr></thead>
+      <tbody>
+        <tr><td>wwwroot/ClubPhotos/YYYY-MM/</td><td>Resized competition images named by IntRef (e.g. 12345.jpg)</td></tr>
+        <tr><td>wwwroot/Import/</td><td>Staging — all CSVs and ZIPs uploaded by admin. Cleaned after successful import.</td></tr>
+        <tr><td>wwwroot/Html/</td><td>Public documentation (generated by WordDoc tool)</td></tr>
+        <tr><td>Wordfiles/*.docx</td><td>Source of truth for club rules, programs, constitution (maintained in Word)</td></tr>
+        <tr><td>D:\BKK\Inbox\Club\Photos\YYYY-MM\Temp\</td><td>Working folder during image unzip/processing</td></tr>
+        <tr><td>D:\BKK\ARCHIVES\Ou punte rekords\YYYY\</td><td>Monthly CSV snapshots created by Excel export</td></tr>
+        <tr><td>Backup\</td><td>.bak files from SQL Backup</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 21. CONFIG -->
+  <div class="section" id="config">
+    <h2>21. Configuration, Secrets &amp; Environment Handling</h2>
+    <p>Three connection string templates in appsettings.json. Local uses placeholder replacement in DbContextFactory:</p>
+    <pre><code>"Local": "Server =[ServerName]; Database= [DatabaseName]; ..."</code></pre>
+    <p>Runtime switch between "Local" and "Abshost" is possible via the DB menu item (updates gData.connectionKey and HitCounter for auditing).</p>
+    <div class="warn">All credentials (SQL sa, FTP, Auth) are stored in plaintext. No encryption, no secrets manager, no per-environment overrides beyond machine name at startup.</div>
+  </div>
+
+  <!-- 22. NOTES -->
+  <div class="section" id="notes">
+    <h2>22. Development Notes, Risks &amp; Observations</h2>
+
+    <h3>Strengths</h3>
+    <ul>
+      <li>Extremely consistent "everything through Repo" discipline.</li>
+      <li>Excellent handling of the awkward Nov–Oct fiscal year in dozens of places via a single extension method.</li>
+      <li>Real-time progress for long-running image jobs is well implemented.</li>
+      <li>Self-contained deployment + auto-launch Chrome makes it easy for club volunteers.</li>
+    </ul>
+
+    <h3>Risks &amp; Technical Debt</h3>
+    <ul>
+      <li>~950 lines of business logic in a single code-behind file (Admin.razor.cs).</li>
+      <li>Hardcoded paths and passwords in multiple places (gData + appsettings + occasional strings).</li>
+      <li>No automated tests whatsoever (explicitly stated in CLAUDE.md).</li>
+      <li>Heavy use of ChangeTracker.Clear() and AsNoTracking() indicates tracking-related pain in the past.</li>
+      <li>Commented-out email and API service code still present.</li>
+      <li>Promotion rules and star thresholds are magic numbers with no UI or data-driven configuration.</li>
+      <li>Regex-based award detection in salon import is fragile.</li>
+    </ul>
+
+    <h3>Interesting Implementation Details</h3>
+    <ul>
+      <li>IntRef &gt; 10 000 000 is the "censored" sentinel value.</li>
+      <li>Many point columns (VOm, Mm, etc.) are deliberately left nullable so that "no data yet" is distinguishable from zero.</li>
+      <li>The same Monthly record can be updated multiple times during a single import (scores → results → images → salons).</li>
+    </ul>
+
+    <div class="tip">
+      This document was generated by deep static + runtime analysis of every .cs, .razor, .json and supporting asset in the solution (excluding only bin/obj build outputs).
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div style="margin-top:3rem; text-align:center; color:#666; font-size:.8rem;">
+    BCCPunte — Bloemfontein Camera Club Competition Management System<br>
+    Generated by Grok 4.3 (xAI) — April 2026 — Full codebase analysis
+  </div>
+
+</div>
+
+<button id="scrollTopBtn" title="Back to top">↑</button>
+
+<script>
+  const btn = document.getElementById('scrollTopBtn');
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 400) {
+      btn.classList.add('visible');
+    } else {
+      btn.classList.remove('visible');
+    }
+  });
+  btn.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+</script>
+</body>
+</html>
