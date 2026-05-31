@@ -324,6 +324,8 @@
       <li><a href="#worddoc">Word → HTML Conversion (WordDoc.razor)</a></li>
       <li><a href="#scoring">Scoring, Promotion &amp; Star-Level Rules (Exact Thresholds)</a></li>
       <li><a href="#imagepipe">Image Processing Pipeline (Unzip → Rename → Previews → Zip)</a></li>
+      <li><a href="#imagesprocess">Admin: Images Process – Complete Step-by-Step Workflow</a></li>
+      <li><a href="#importclub">Admin: Import Club – Complete Method Call Trace &amp; Logic</a></li>
       <li><a href="#flows">Key Data Flows &amp; Algorithms</a></li>
       <li><a href="#filesystem">File System, Paths &amp; Naming Conventions</a></li>
       <li><a href="#config">Configuration, Secrets &amp; Environment Handling</a></li>
@@ -721,13 +723,16 @@ cx.Database.ExecuteSqlRaw(sql, new SqlParameter("@filePath", fn));</code></pre>
       </tbody>
     </table>
 
-    <h3>Image Pipeline (ImagesProcessAsync → 5 stages)</h3>
+    <h3>Image Pipeline (ImagesProcessAsync → 7 stages)</h3>
+    <p>See the complete detailed workflow in <a href="#imagesprocess">Section 18.1: Admin: Images Process – Complete Step-by-Step Workflow</a>.</p>
     <ol>
-      <li><strong>PhotosLocalUnzipAsync</strong> — extracts uploaded ZIP into dated Temp folder under photosLocal</li>
-      <li><strong>PhotosCopyRenameAsync</strong> — walks Temp, matches files to Photo.IntRef, copies to ClubPhotos/YYYY-MM/ with correct name</li>
-      <li><strong>PhotosGeneratePreviewsAsync</strong> — parallel ImageSharp pipeline: load, autorotate, resize (configurable width/height), save as high-quality JPEG</li>
-      <li><strong>PhotosZipAsync</strong> — zips the resized set for FTP upload</li>
-      <li><strong>UploadToHosting</strong> — HTTP POST login + multipart upload (or FTP path in some branches)</li>
+      <li><strong>FileUpload</strong> — user selects ZIP(s) via dialog → saved to Import folder</li>
+      <li><strong>PhotosLocalUnzipAsync</strong> — extracts into <code>D:\BKK\Inbox\Club\Photos\{month}\</code></li>
+      <li><strong>PhotosCopyRenameAsync</strong> — extracts 7-digit IntRef via regex, copies to <code>Temp\#######.jpg</code></li>
+      <li><strong>PhotosGeneratePreviewsAsync</strong> — parallel ImageSharp resize to 1365×768 → <code>WEB\</code> folder</li>
+      <li><strong>PhotosZipAsync</strong> — creates distribution zip + copies to local ClubPhotos and source website folders</li>
+      <li><strong>Login</strong> — obtains JWT Bearer token from live site</li>
+      <li><strong>UploadToHosting</strong> — POSTs the zip to <code>/FU/zip</code> on production (max 120 MB)</li>
     </ol>
 
     <h3>Other Admin Tools</h3>
@@ -791,16 +796,275 @@ cx.Database.ExecuteSqlRaw(sql, new SqlParameter("@filePath", fn));</code></pre>
     </ul>
   </div>
 
+  <!-- 18.1 DETAILED IMAGES PROCESS -->
+  <div class="section" id="imagesprocess">
+    <h2>18.1 Admin: Images Process – Complete Step-by-Step Workflow</h2>
+
+    <div class="note">
+      This is one of the most important (and longest-running) operations in the entire application. It is triggered when an administrator clicks <strong>Images Process</strong> in the Admin dropdown menu. It transforms raw competition photos received from PhotoVault into web-ready images and publishes them both locally and to the live production website.
+    </div>
+
+    <h3>How to Trigger It</h3>
+    <ol class="steps">
+      <li>Go to the top menu → <strong>Admin</strong> → <strong>Images Process</strong></li>
+      <li>The browser navigates to <code>/admin/images-import</code></li>
+      <li><code>OnParametersSetAsync()</code> in <code>Admin.razor.cs:221</code> immediately calls <code>ImagesProcessAsync()</code></li>
+      <li>A file upload dialog appears asking for "ZIPPED PHOTOS" from PhotoVault</li>
+    </ol>
+
+    <h3>Prerequisites (Very Important)</h3>
+    <ul>
+      <li>The monthly competition data (scores + results CSVs) must already have been imported for the target month. This creates the <code>Photo</code> records containing the 7-digit <code>IntRef</code> (PVID) numbers that will be used for matching.</li>
+      <li>You must have received one or more ZIP files from PhotoVault containing the high-resolution images for that month.</li>
+      <li>The ZIP filenames usually contain the month (e.g. something like "BCC 2025-11.zip").</li>
+    </ul>
+
+    <h3>The Complete 7-Stage Process</h3>
+
+    <h4>Stage 1: File Selection (FileUpload)</h4>
+    <p>Calls <code>state.ShowFileUpload("ZIPPED PHOTOS", "Upload Zipped Photos from PhotoVault", gData.ImportDirectory)</code>.</p>
+    <p>The selected ZIP file(s) are saved into <code>wwwroot\Import\</code>. The variable <code>Filename</code> is set to the base name chosen in the dialog (this becomes the month folder name, e.g. "2025-11" or "2026-03").</p>
+
+    <h4>Stage 2: Unzipping (PhotosLocalUnzipAsync)</h4>
+    <p>Location: <code>Admin.razor.cs:761</code></p>
+    <ul>
+      <li>Finds every <code>*.zip</code> file currently in <code>gData.ImportDirectory</code></li>
+      <li>Creates the destination folder: <code>D:\BKK\Inbox\Club\Photos\{Filename}\</code> (example: <code>D:\BKK\Inbox\Club\Photos\2026-03\</code>)</li>
+      <li>Extracts the contents of every ZIP into that folder using <code>ZipFile.ExtractToDirectory(..., overwriteFiles: true)</code></li>
+      <li>Live progress is reported for each ZIP file ("Extracting BCC-2026-03.zip (2/3)...")</li>
+    </ul>
+    <div class="tip">After this stage you will see a folder full of the original high-resolution JPGs with their original PhotoVault filenames (often containing the 7-digit ID somewhere in the name).</div>
+
+    <h4>Stage 3: Copy &amp; Rename to Temp (PhotosCopyRenameAsync)</h4>
+    <p>Location: <code>Admin.razor.cs:802</code></p>
+    <p>This is the critical matching step.</p>
+    <ul>
+      <li>Scans <code>D:\BKK\Inbox\Club\Photos\{Filename}\</code> for all <code>*.jpg</code></li>
+      <li>For each file, runs regex <code>\d{7}</code> against the original filename to extract the 7-digit internal reference number (this must match <code>Photo.IntRef</code> from the earlier CSV import)</li>
+      <li>If no 7-digit number is found → the file is skipped and logged in the <code>Errors</code> list</li>
+      <li>Valid files are copied (with overwrite) into a new subfolder: <code>...\{Filename}\Temp\</code> and renamed to simply <code>#######.jpg</code> (e.g. <code>1234567.jpg</code>)</li>
+      <li>Uses parallel <code>Task.Run</code> for performance</li>
+    </ul>
+    <div class="warn">If many files are skipped here, it almost always means the monthly Photo records were not yet imported, or the ZIPs contain images from a different month.</div>
+
+    <h4>Stage 4: Generate Web Previews (PhotosGeneratePreviewsAsync + GenerateImagesAsync)</h4>
+    <p>Location: <code>Admin.razor.cs:861</code> and <code>689</code></p>
+    <ul>
+      <li>Source: <code>...\{Filename}\Temp\</code></li>
+      <li>Destination: <code>D:\BKK\Inbox\Club\Photos\WEB\</code></li>
+      <li>Uses <strong>SixLabors.ImageSharp</strong> to process every image:</li>
+    </ul>
+    <pre><code>using (var image = await Image.LoadAsync(source))
+{
+    image.Mutate(x => x.Resize(new ResizeOptions
+    {
+        Mode = ResizeMode.Max,
+        Size = new Size(1365, 768)
+    }));
+    await image.SaveAsync(destination);
+}</code></pre>
+    <ul>
+      <li>Target size is hardcoded to <strong>1365 × 768</strong> pixels</li>
+      <li>ResizeMode.Max = maintains aspect ratio, fits inside the box</li>
+      <li>Extremely parallel: uses <code>Environment.ProcessorCount</code> (usually 8–16 threads)</li>
+      <li>Progress is reported after every single image</li>
+    </ul>
+
+    <h4>Stage 5: Zipping + Distribution (PhotosZipAsync)</h4>
+    <p>Location: <code>Admin.razor.cs:905</code></p>
+    <p>This stage does several important things at once:</p>
+    <ol>
+      <li>Creates a ZIP of everything in <code>D:\BKK\Inbox\Club\Photos\WEB\</code> → <code>C:\Users\lammie\Downloads\BKK\ZippedExport\BKK-{Filename}.zip</code></li>
+      <li>Copies every generated preview into the running app's own static folder:<br>
+          <code>wwwroot\ClubPhotos\{Filename}\</code> (so the local site immediately sees the new photos)</li>
+      <li>Also copies the same files to the "source of truth" local website folder:<br>
+          <code>D:\VS\VS Active\BCCBlazor\BCC\wwwroot\ClubPhotos\{Filename}\</code> (used when publishing the whole site)</li>
+      <li>Deletes the files from the temporary <code>WEB\</code> folder after copying</li>
+    </ol>
+
+    <h4>Stage 6: Authentication (Login)</h4>
+    <p>Location: <code>Admin.razor.cs:742</code></p>
+    <p>Before uploading, the app authenticates against the live site:</p>
+    <pre><code>POST https://bkk.co.za/Auth/login
+Body: { "username": "...", "password": "..." }</code></pre>
+    <p>Credentials come from <code>appsettings.json → "Auth"</code> section. Returns a JWT Bearer token.</p>
+
+    <h4>Stage 7: Upload to Production (UploadToHosting)</h4>
+    <p>Location: <code>Admin.razor.cs:953</code></p>
+    <ul>
+      <li>Only accepts <code>.zip</code> files</li>
+      <li>Hard limit: 120 MB maximum</li>
+      <li>Timeout: 15 minutes</li>
+      <li>Uses <code>MultipartFormDataContent</code></li>
+      <li>Endpoint: <code>POST https://bkk.co.za/FU/zip</code> with <code>Authorization: Bearer {token}</code></li>
+      <li>The production server receives the zip and is responsible for extracting it into its own <code>wwwroot/ClubPhotos/{month}/</code> folder</li>
+    </ul>
+
+    <h3>Final State After Successful Run</h3>
+    <ul>
+      <li>Original high-res photos remain in <code>D:\BKK\Inbox\Club\Photos\{Filename}\</code></li>
+      <li>Web-optimized 1365×768 images exist in:
+        <ul>
+          <li>Local running app: <code>wwwroot/ClubPhotos/{Filename}/</code></li>
+          <li>Source website folder (for future publishes)</li>
+          <li>Live production site (after the server extracts the uploaded zip)</li>
+        </ul>
+      </li>
+      <li>A backup zip is left in your Downloads folder</li>
+      <li>All messages from each stage are shown on the Admin page</li>
+    </ul>
+
+    <h3>Common Problems &amp; Troubleshooting</h3>
+    <table>
+      <thead><tr><th>Problem</th><th>Likely Cause</th><th>Solution</th></tr></thead>
+      <tbody>
+        <tr><td>Many files skipped in Stage 3</td><td>Monthly data not yet imported</td><td>Import the scores/results CSV first</td></tr>
+        <tr><td>Wrong month folder created</td><td>Filename chosen incorrectly in upload dialog</td><td>Be very deliberate when naming the upload</td></tr>
+        <tr><td>Upload fails with 401</td><td>Auth credentials wrong or expired token</td><td>Check appsettings.json "Auth" section</td></tr>
+        <tr><td>Images look distorted</td><td>ResizeMode.Max with very wide or tall originals</td><td>Current behavior is intentional (fit inside box)</td></tr>
+        <tr><td>Process hangs on large months</td><td>Very high image count + slow disk</td><td>Be patient – it is heavily parallelized</td></tr>
+      </tbody>
+    </table>
+
+    <div class="tip">
+      After running Images Process successfully, you should immediately test by going to <strong>Members → Awards</strong> for that month and verifying that the photos appear correctly.
+    </div>
+  </div>
+
+  <!-- 18.2 IMPORT CLUB DETAILED TRACE -->
+  <div class="section" id="importclub">
+    <h2>18.2 Admin: Import Club – Complete Method Call Trace &amp; Logic</h2>
+
+    <div class="note">
+      This is the <strong>primary data entry path</strong> for monthly club competition results. Clicking <strong>Admin → Import Club</strong> in the menu is the "Hoof Ingangsroete" (main entry route) for bringing Scoresheet.csv or Results.csv files into the system.
+    </div>
+
+    <h3>High-Level Trigger Path</h3>
+    <ol class="steps">
+      <li>User clicks <strong>Admin → Import Club</strong> in the gold menu bar</li>
+      <li>Navigation to <code>/admin/club-import</code></li>
+      <li><code>Admin.razor</code> loads with <code>Data = "club-import"</code></li>
+      <li><code>OnParametersSetAsync()</code> (line 213) executes the switch and calls <code>await ImportClub()</code></li>
+    </ol>
+
+    <h3>Complete Method Call Trace (in execution order)</h3>
+
+    <h4>1. OnParametersSetAsync() – Admin.razor.cs:213</h4>
+    <p><strong>Summary:</strong> Entry point for all Admin actions. Clears messages, sets title, then dispatches based on the URL parameter <code>Data</code>.</p>
+    <pre><code>string com = Data switch
+{
+    "club-import" => await ImportClub(),
+    ...
+};</code></pre>
+
+    <h4>2. ImportClub() – Admin.razor.cs:336 (Main Orchestrator)</h4>
+    <p><strong>Summary:</strong> The "Hoof Ingangsroete". Decides whether to do a normal import or special September/YearEnd handling. Shows the file upload dialog and routes to the correct importer based on filename prefix.</p>
+    <ul>
+      <li>If <code>gData.lastDateClubImported.Month == 9</code> → calls <code>YearEnd()</code> and returns early (no CSV import in October for September data).</li>
+      <li>Otherwise calls <code>state.ShowFileUpload("CLUB IMPORT", ...)</code> to let the user pick a file from <code>wwwroot/Import/</code>.</li>
+      <li>If filename starts with <strong>"Scoresheet"</strong> → <code>ImportScores(fn)</code></li>
+      <li>If filename starts with <strong>"Results"</strong> → <code>ImportResults(fn)</code></li>
+      <li>Otherwise throws "File Name is not correct".</li>
+    </ul>
+
+    <h4>3. YearEnd() → OctoberMonth() (Special September Path)</h4>
+    <p><strong>Summary:</strong> When the last imported month is September, the system does <strong>not</strong> expect a new CSV. Instead it just runs promotion calculations and advances the dates.</p>
+    <ul>
+      <li><code>OctoberMonth()</code> calls: <code>ds.LastDates()</code>, <code>ds.Promotion_Due()</code>, <code>DatesStoreInDb()</code></li>
+    </ul>
+
+    <h4>4. ImportScores(string filename) – Admin.razor.cs:365</h4>
+    <p><strong>Summary:</strong> Handles the <strong>Scoresheet*.csv</strong> path (raw scores before awards). This is usually the first file imported for a month.</p>
+
+    <h5>Detailed sub-calls inside ImportScores:</h5>
+    <ol>
+      <li><code>Import(filename)</code> → calls <code>ds.LastDates()</code>, then finds the actual file in Import directory.</li>
+      <li><code>TextFieldParserInitialize(p)</code> (club version at line 240) — reads first line, lowercases headers, splits on comma.</li>
+      <li><code>SetScoreIndices()</code> — maps known header names to private index fields (_si_cat, _si_intref, etc.).</li>
+      <li><code>HeadersCheckScores(p, fn)</code> — validates required headers + peeks first data line to check if this IntRef already exists for the current club year. If already imported → calls <code>UpdateScores(file)</code> and exits early.</li>
+      <li>Loop: <code>processLineScores(p.ReadFields())</code> for every row — creates Photo objects (with PVID, Score, Award detection via regex, Star_Group calculation, Winner flags).</li>
+      <li>Group photos by PVID → for each group:
+        <ul>
+          <li><code>GetMasterRow(phot)</code></li>
+          <li>Inside GetMasterRow: tries to find Master by PVID or Name. If not found → shows confirm dialog → possibly calls <code>AddNewMaster(phot)</code> + <code>repo.AddSaveAsync(master)</code></li>
+          <li><code>ds.GetLastMonthly(master)</code> — critical method (see below)</li>
+        </ul>
+      </li>
+      <li><code>PhotoQuantity(photos)</code> — enforces club rules: max 3 entries per member in Pictorial/Nature categories, max 2 in Set Subject.</li>
+      <li>Using <code>repo.CreateScope()</code>: <code>AddRange(photos)</code> + <code>SaveChangesDetachAsync()</code></li>
+      <li><code>MonthlyUpdate()</code></li>
+      <li><code>MonthlyCompute()</code></li>
+      <li><code>ds.Promotion_Due()</code></li>
+      <li><code>DatesStoreInDb()</code></li>
+      <li><code>ds.CleanImportDirectory()</code></li>
+    </ol>
+
+    <h4>5. ImportResults(string filename) – Admin.razor.cs:402</h4>
+    <p><strong>Summary:</strong> Handles the <strong>Results*.csv</strong> path (awards, winners, COMs after judging). Usually imported <strong>after</strong> Scoresheet.</p>
+    <p>Very similar structure to ImportScores, but:</p>
+    <ul>
+      <li>Uses <code>SetResultIndices()</code> and <code>processLineResults()</code></li>
+      <li>Has special logic to detect Club Winner (CW) and overall Winner across duplicate IntRef rows</li>
+      <li>Filters down to only rows where Award length == 1 after processing</li>
+      <li>Groups by Name instead of PVID</li>
+      <li>Still ends with the same <code>MonthlyUpdate → MonthlyCompute → Promotion_Due → DatesStoreInDb → CleanImportDirectory</code> sequence</li>
+    </ul>
+
+    <h4>6. Key Supporting Methods (called from above)</h4>
+
+    <table>
+      <thead><tr><th>Method</th><th>File</th><th>Summary</th></tr></thead>
+      <tbody>
+        <tr><td><code>ds.LastDates()</code></td><td>DataService.cs:47</td><td>Loads "clubYearStart" and "lastImport" from the Datum table into gData statics. Must be called early.</td></tr>
+        <tr><td><code>ds.GetLastMonthly(master)</code></td><td>DataService.cs:39</td><td><strong>Core lifecycle method.</strong> Gets the latest Monthly for a member. If it is older than last import date, it either creates a brand new Monthly or copies the previous one (carrying forward year accumulators). Advances the date by one month.</td></tr>
+        <tr><td><code>MonthlyCopy()</code> / <code>MonthlyNew()</code></td><td>DataService.cs:72, 100</td><td>Private helpers used by GetLastMonthly. Handle copying of Py, VOy, Saly, GMy etc. and resetting them at the November club year boundary.</td></tr>
+        <tr><td><code>processLineScores()</code></td><td>Admin.razor.cs:572</td><td>Parses one row of Scoresheet CSV into a Photo object. Calculates Star_Group, detects ~Winner~ flags via regex, normalizes Category (adds star suffix).</td></tr>
+        <tr><td><code>processLineResults()</code></td><td>Admin.razor.cs:531</td><td>Parses one row of Results CSV. Similar mapping + special handling for COM → "C".</td></tr>
+        <tr><td><code>PhotoQuantity()</code></td><td>Admin.razor.cs:519</td><td>Business rule enforcement. Keeps only the first 3 non-Set-Subject entries and first 2 Set-Subject entries per MonthlyID.</td></tr>
+        <tr><td><code>MonthlyUpdate()</code></td><td>Admin.razor.cs:482</td><td>After photos are saved, walks all photos for the current month and increments the award count columns on Monthly (Mm, Gm, Sm, Bm, VOm) based on Award letter and Category.</td></tr>
+        <tr><td><code>MonthlyCompute()</code></td><td>Admin.razor.cs:447</td><td>The big point calculator. For every Monthly in the current month, calculates Pm (club points), GMp, Pp, Py, VOy, GMy, group accumulators (Mg, Gg, etc.) using the AddNull extension.</td></tr>
+        <tr><td><code>ds.Promotion_Due()</code></td><td>DataService.cs:110</td><td>Runs the full promotion rules engine (see section on scoring thresholds). Sets Promotion=true where criteria are met, then calls Promote() which actually bumps the member's RatingID and clears accumulators.</td></tr>
+        <tr><td><code>DatesStoreInDb()</code></td><td>Admin.razor.cs:268</td><td>Updates the "lastImport" Datum row (and "clubYearStart" if crossing into November). Keeps gData in sync with the database.</td></tr>
+        <tr><td><code>HeadersCheckScores()</code></td><td>Admin.razor.cs:297</td><td>Validates CSV headers against the static ScoreHeaders/ResultHeaders classes + clever peek into first data row to detect re-imports.</td></tr>
+        <tr><td><code>UpdateScores()</code></td><td>Admin.razor.cs:637</td><td>Special path when a Scoresheet is re-uploaded: only updates the Score column on existing Photo rows.</td></tr>
+        <tr><td><code>AddNewMaster()</code></td><td>Admin.razor.cs:251</td><td>Creates a brand new Master record from data found in the import file (used when a new member appears in the CSV).</td></tr>
+        <tr><td><code>GetMasterRow()</code></td><td>Admin.razor.cs:284</td><td>Looks up (or interactively creates) the Master for a given photo row.</td></tr>
+    </tbody>
+    </table>
+
+    <h3>Important Side Effects</h3>
+    <ul>
+      <li>Every successful Import Club run ends with <strong>Promotion_Due()</strong> being called. This can promote members and update their star level in real time.</li>
+      <li>The <code>lastImport</code> date in the Datum table is advanced.</li>
+      <li>All processed files are deleted from <code>wwwroot/Import/</code> by <code>CleanImportDirectory()</code>.</li>
+      <li>Extensive use of <code>RepoScope</code> + <code>SaveChangesDetachAsync()</code> to keep EF change tracker clean during long imports.</li>
+    </ul>
+
+    <h3>Typical User Workflow</h3>
+    <ol class="steps">
+      <li>Receive Scoresheet.csv from club scoring system → place in Import folder or use dialog</li>
+      <li>Click Admin → Import Club → select the Scoresheet file</li>
+      <li>System creates/updates Masters, Monthlies, and Photo records with scores</li>
+      <li>Later, after judging: receive Results.csv → Import Club again with Results file</li>
+      <li>Awards, Winners, and final points are applied. Promotions are recalculated.</li>
+    </ol>
+
+    <div class="warn">
+      The order matters: Scoresheet (scores) should normally come before Results (awards). Importing Results first can cause issues because MonthlyUpdate and MonthlyCompute rely on having the base Photo records already present.
+    </div>
+  </div>
+
   <!-- 19. FLOWS -->
   <div class="section" id="flows">
     <h2>19. Key Data Flows &amp; Algorithms</h2>
     <h3>Typical Monthly Import Sequence</h3>
+    <p>See the full detailed method-by-method trace in <a href="#importclub">Section 18.2: Admin: Import Club – Complete Method Call Trace &amp; Logic</a>.</p>
     <ol class="steps">
-      <li>Admin uploads scores CSV → ImportScores → processLineScores → AddNewMaster if needed → Photo rows</li>
-      <li>Admin uploads results/awards CSV → ImportResults → processLineResults → update Award/Winner/Club_Winner/Score</li>
-      <li>MonthlyCompute + MonthlyUpdate for every affected member</li>
-      <li>ImagesProcessAsync (unzip → copy/rename → generate previews → zip → upload)</li>
-      <li>Promotion_Due() runs automatically</li>
+      <li>Admin uploads scores CSV → <code>ImportClub</code> → <code>ImportScores</code> → <code>processLineScores</code> → <code>GetMasterRow</code> / <code>AddNewMaster</code> → <code>ds.GetLastMonthly</code> → Photo rows saved</li>
+      <li>Admin uploads results/awards CSV → <code>ImportResults</code> → <code>processLineResults</code> → winner detection → same Monthly + Promotion pipeline</li>
+      <li><code>MonthlyUpdate</code> + <code>MonthlyCompute</code> recalculate all point columns</li>
+      <li><code>ds.Promotion_Due()</code> evaluates star promotions</li>
+      <li>ImagesProcessAsync (separate workflow) for the actual photo files</li>
     </ol>
 
     <h3>Salon Import Sequence</h3>
