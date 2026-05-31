@@ -1,0 +1,37 @@
+/* Sticky table headers for the Points Member page */
+
+.pointsMember table#members {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+/* Make the entire header (both rows) stick to the top when scrolling */
+.pointsMember table#members thead {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    background-color: #3a3f46;
+}
+
+/* Ensure all header cells have a solid background so content doesn't show through */
+.pointsMember table#members thead th {
+    background-color: #3a3f46;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+/* Preserve our colored vertical separator lines on the sticky headers */
+.pointsMember table#members thead .sep-month {
+    border-left: 3px solid #5b9bd5 !important;
+}
+
+.pointsMember table#members thead .sep-group {
+    border-left: 3px solid #70ad47 !important;
+}
+
+.pointsMember table#members thead .sep-promotion {
+    border-left: 3px solid #9b7fd1 !important;
+}
+
+.pointsMember table#members thead .sep-year {
+    border-left: 3px solid #d4a84b !important;
+}

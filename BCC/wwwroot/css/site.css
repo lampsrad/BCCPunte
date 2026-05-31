@@ -73,35 +73,7 @@ h1:focus {
     border-color: #929292;
 }
 
-#members {
-    background-color: bisque;
-    color: black;
-    margin: 0;
-}
-
-    #members th, #members td {
-        border: 1px solid;
-        border-collapse: collapse;
-        border-color: black;
-        padding-left: .3rem;
-        vertical-align: bottom;
-    }
-
-    #members thead {
-        background-color: #c29e87;
-        text-align: center;
-        padding: 1px;
-    }
-
-    #members th {
-        text-align: center;
-    }
-
-    #members tr:hover {
-        background-color: #ddd;
-    }
-
-
+/* #members dark theme styles are defined later in the file (after the BKK copy section) */
 
 /*NEW COPY FROM BKK*/
 
@@ -426,8 +398,8 @@ html, body {
     }
 
 .main .top-row {
-    background-color: #f7f7f7;
-    border-bottom: 1px solid #d6d5d5;
+    background-color: #1f2226;
+    border-bottom: 1px solid #3a3f46;
     justify-content: flex-end;
 }
 
@@ -454,10 +426,6 @@ html, body {
 
 .points .headerText {
     text-align: center;
-}
-
-.pointsMember body {
-    background-color: #e7ddd2;
 }
 
 .pointsMember .tdText {
@@ -540,33 +508,98 @@ html, body {
     }
 
 #members {
-    background-color: bisque;
-    color: black;
+    background-color: #25282c;
+    color: #e0dedb;
     margin: 0;
+    border-collapse: collapse;
 }
 
-    #members th, #members td {
-        border: 1px solid;
-        border-collapse: collapse;
-        border-color: black;
-        padding-left: .3rem;
+    #members th,
+    #members td {
+        border: 1px solid #3f444c;
+        padding: 3px 8px 3px 6px;
         vertical-align: bottom;
     }
 
     #members thead {
-        background-color: #c29e87;
+        background-color: #3a3f46;
         text-align: center;
-        padding: 1px;
+        padding: 2px 0;
+        color: #c8c6c3;
     }
 
     #members th {
         text-align: center;
+        font-weight: 600;
     }
 
     #members tr:hover {
-        background-color: dodgerblue;
+        background-color: #343b44;
     }
 
+    /* Support for Bootstrap table-striped used with id="members" */
+    #members.table-striped > tbody > tr:nth-of-type(odd) {
+        background-color: #2b2f35;
+    }
+
+    #members.table-striped > tbody > tr:nth-of-type(even) {
+        background-color: #25282c;
+    }
+
+
+/* Dark theme for salon member tables (used in Salons, MasterView, Admin salon pages) */
+#salonmembers {
+    background-color: #25282c;
+    color: #e0dedb;
+    margin: 0;
+    border-collapse: collapse;
+}
+
+    #salonmembers th,
+    #salonmembers td {
+        border: 1px solid #3f444c;
+        padding: 4px 10px 4px 8px;
+        vertical-align: middle;
+    }
+
+    #salonmembers thead {
+        background-color: #2e4a3a;
+        text-align: center;
+        color: #c8c6c3;
+    }
+
+    #salonmembers th {
+        text-align: center;
+        font-weight: 600;
+    }
+
+    #salonmembers tr:hover {
+        background-color: #2f3a4a;
+    }
+
+
+/* Precise vertical colored grid lines for column group separation.
+   Applied only at the specific boundaries the user requested. */
+
+/* Blue - between Grade and Set (start of Month block) */
+.sep-month {
+    border-left: 3px solid #5b9bd5 !important;
+}
+
+/* Green - between Sal (Month) and M (Group) */
+.sep-group {
+    border-left: 3px solid #70ad47 !important;
+}
+
+/* Purple - between B (Group) and GM (Promotion) */
+.sep-promotion {
+    border-left: 3px solid #9b7fd1 !important;
+}
+
+/* Amber/Gold - between Sal (Promotion) and GM (Year) */
+.sep-year {
+    border-left: 3px solid #d4a84b !important;
+}
 
 
 @media (max-width: 576px) {

@@ -8,6 +8,12 @@
 
 .threeColumnHeader {
     font-size: 140%;
+    background-color: #2f343b;
+    color: #c8c6c3;
+    padding: 2px 8px;
+    border-radius: 3px;
+    display: inline-block;
+    margin-bottom: 2px;
 }
 .container-fluid{
     padding-top:2em;
