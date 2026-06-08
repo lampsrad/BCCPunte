@@ -801,7 +801,14 @@ public partial class Admin
         };
         var loginContent = new StringContent(JsonSerializer.Serialize(loginData), Encoding.UTF8, "application/json");
         var loginResponse = await client.PostAsync($"{gData.Api}Auth/login", loginContent);
+        if (!loginResponse.IsSuccessStatusCode)
+        {
+            string err = await loginResponse.Content.ReadAsStringAsync();
+            throw new Exception($"Login failed ({loginResponse.StatusCode}): {err}");
+        }
         var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
+        if (loginResult == null || string.IsNullOrEmpty(loginResult.Token))
+            throw new Exception("Login succeeded but no token was returned.");
         return loginResult.Token;
     }
     /// <summary>
@@ -1020,15 +1027,10 @@ public partial class Admin
             Messages.Add($"❌ File too large (max 120 MB): {fileName}");
             return null;
         }
-        var handler = new HttpClientHandler();
+        var handler = gData.CreateUploadClientHandler();
         using HttpClient client = new HttpClient(handler);
         client.Timeout = TimeSpan.FromMinutes(15);
         string token = await Login(client);
-        if (string.IsNullOrEmpty(token))
-        {
-            Messages.Add("❌ Failed to obtain authentication token");
-            return null;
-        }
         using var content = new MultipartFormDataContent();
         var fileContent = new StreamContent(File.OpenRead(filePath));
         content.Add(fileContent, "file", fileName);

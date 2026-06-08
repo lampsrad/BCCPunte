@@ -30,12 +30,19 @@ namespace BCC.Pages
             };
             var loginContent = new StringContent(JsonSerializer.Serialize(loginData), Encoding.UTF8, "application/json");
             var loginResponse = await client.PostAsync($"{gData.Api}Auth/login", loginContent);
+            if (!loginResponse.IsSuccessStatusCode)
+            {
+                string err = await loginResponse.Content.ReadAsStringAsync();
+                throw new Exception($"Login failed ({loginResponse.StatusCode}): {err}");
+            }
             var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
+            if (loginResult == null || string.IsNullOrEmpty(loginResult.Token))
+                throw new Exception("Login succeeded but no token was returned.");
             return loginResult.Token;
         }
         private async Task UploadToHosting(IBrowserFile file)
         {
-            var handler = new HttpClientHandler();
+            var handler = gData.CreateUploadClientHandler();
             using HttpClient client = new HttpClient(handler);
             string token = await Login(client);
             using var content = new MultipartFormDataContent();
@@ -62,7 +69,8 @@ namespace BCC.Pages
             catch (Exception ex)
             {
                 status = $"Error: {ex.Message}";
-                status = status + ex.InnerException.Message;
+                if (ex.InnerException != null)
+                    status += " | " + ex.InnerException.Message;
             }
         }
         public class LoginResponse
