@@ -24,6 +24,63 @@
         </ul>
     }
 </div>
+
+@if (ShowPhotoRemovalChooser && PhotosForRemovalChoice != null && PhotosForRemovalChoice.Count > 0)
+{
+    <div style="border: 3px solid #ff6b6b; background: #1e1e1e; color: #ddd; padding: 1rem; margin: 1rem 0; border-radius: 4px;">
+        <h3 style="color: #ff6b6b; margin-top:0;">Photo limits exceeded — choose what to remove</h3>
+        <p style="color: #aaa; margin-bottom: 0.75rem;">
+            <strong>Rule:</strong> max 3 photos where Category != "S", max 2 where Category == "S" per member per month.<br />
+            These are the full photos from the member(s) who went over. Tick the ones you want to <strong>delete</strong> from this import. The code is waiting here.
+        </p>
+
+        <div style="margin-bottom: 0.75rem;">
+            <button type="button" @onclick="() => SetAllRemovalFlags(true)" style="background:#333; color:#ddd; border:1px solid #555; padding:4px 10px; margin-right:6px; cursor:pointer;">Tick all</button>
+            <button type="button" @onclick="() => SetAllRemovalFlags(false)" style="background:#333; color:#ddd; border:1px solid #555; padding:4px 10px; cursor:pointer;">Untick all</button>
+        </div>
+
+        @{
+            var groups = PhotosForRemovalChoice.GroupBy(p => p.Name ?? "Unknown").OrderBy(g => g.Key).ToList();
+        }
+        @foreach (var g in groups)
+        {
+            var nonS = g.Count(p => p.Category != "S");
+            var s = g.Count(p => p.Category == "S");
+            <div style="margin-bottom: 1rem; border:1px solid #444; background:#2a2a2a; padding:0.5rem; border-radius:3px;">
+                <strong style="color:#eee;">@g.Key</strong> <span style="color:#ff6b6b;">— non-S: @nonS (max 3), S: @s (max 2)</span>
+                <table style="width:100%; border-collapse: collapse; margin-top:0.4rem; color:#ccc;">
+                    <tr style="background:#333; color:#eee;">
+                        <th style="width:28px;"></th>
+                        <th style="text-align:left; padding:4px 6px;">Member</th>
+                        <th style="text-align:left; padding:4px 6px;">Title</th>
+                        <th style="width:70px; padding:4px 6px;">Category</th>
+                        <th style="width:60px; padding:4px 6px;">Score</th>
+                        <th style="width:70px; padding:4px 6px;">Awards</th>
+                    </tr>
+                    @foreach (var p in g.OrderBy(p => p.Category == "S").ThenBy(p => p.Title))
+                    {
+                        <tr style="border-top:1px solid #444;">
+                            <td style="padding:4px 6px;"><input type="checkbox" @bind="p.Flag" /></td>
+                            <td style="padding:4px 6px;">@(p.Name ?? "—")</td>
+                            <td style="padding:4px 6px;">@(p.Title ?? "—")</td>
+                            <td style="padding:4px 6px;"><code style="background:#1a1a1a; padding:1px 4px; border-radius:2px;">@p.Category</code></td>
+                            <td style="padding:4px 6px;">@(p.Score?.ToString() ?? "—")</td>
+                            <td style="padding:4px 6px;">@(p.Award ?? "—")</td>
+                        </tr>
+                    }
+                </table>
+            </div>
+        }
+
+        <button type="button" @onclick="() => ConfirmPhotoRemovals(true)" style="background:#0d6efd; color:white; padding:0.45rem 1rem; border:none; border-radius:3px; cursor:pointer; font-weight:500;">
+            Remove the ticked photos and continue import
+        </button>
+        <button type="button" @onclick="() => ConfirmPhotoRemovals(false)" style="margin-left:8px; background:#444; color:#ddd; padding:0.45rem 0.9rem; border:1px solid #666; border-radius:3px; cursor:pointer;">
+            Cancel this import
+        </button>
+    </div>
+}
+
 @if (filePick == true)
 {
     <Backup Data="@Title" ecbBackup="ecbBackup" ecbRestore="ecbRestore" />

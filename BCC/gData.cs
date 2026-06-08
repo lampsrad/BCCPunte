@@ -4,9 +4,9 @@ namespace BCC;
 
 public class gData
 {
-    public static string Api { get; set; } = "https://bkk.co.za/";
+    //public static string Api { get; set; } = "https://bkk.co.za/";
     //public static string Api { get; set; } = "https://oef.bkk.co.za/";
-    //public static string Api { get; set; } = "https://localhost:7265/";
+    public static string Api { get; set; } = "https://localhost:5125/";
     public static string backupPath { get; set; }= "C:\\Users\\Lamps\\OneDrive\\Database\\SQL16\\Backup\\BCC\\";   
     public static string ClubName { get; set; } = "Bloemfontein";
     public static string clubPhotos { get; set; } = "wwwroot\\ClubPhotos\\";
@@ -26,7 +26,7 @@ public class gData
     public static string photosLocal { get; set; } = "D:\\BKK\\Inbox\\Club\\Photos\\";
     public static string WordFiles { get; set; } = "D:\\VS\\VS Active\\BCCPunte\\BCC\\Wordfiles\\";
     public static Process process { get; set; }
-    public static string Downloads { get; set; } = "C:\\Users\\lammie\\Downloads\\BKK\\";
+    public static string Downloads { get; set; } = Environment.MachineName=="XPS"?  "C:\\Users\\lammie\\Downloads\\BKK\\" : "C:\\Users\\lamps\\Downloads\\BKK\\";
 
     public static void StartBrowser(string url)
     {
