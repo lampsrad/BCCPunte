@@ -29,6 +29,10 @@ public partial class Menu : IDisposable
     {
         state.Menu -= stateChanged;
     }
+    private void InterClub()
+    {
+
+    }
     protected override void OnAfterRender(bool firstRender)
     {
         if (firstRender)
