@@ -12,6 +12,7 @@ public class gData
     public static string ClubName { get; set; } = "Bloemfontein";
     public static string clubPhotos { get; set; } = "wwwroot\\ClubPhotos\\";
     public static string connectionKey { get; set; }
+    public static string Exports { get; set; } = "D:\\VS\\Exports\\";
     public static string machineName { get; set; }
     public static string dbName { get; set; } = "BCC";
     public static string FtpServer { get; set; } = "ftp.bkk.co.za";

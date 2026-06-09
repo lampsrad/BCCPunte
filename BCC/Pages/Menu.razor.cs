@@ -29,9 +29,49 @@ public partial class Menu : IDisposable
     {
         state.Menu -= stateChanged;
     }
-    private void InterClub()
+    private async Task InterClub()
     {
-
+        DateOnly cutoffDate = DateOnly.FromDateTime(DateTime.Today.AddMonths(-12));
+        var photos = await repo.GetEntitiesNTAsync<Photo>(x => x.Monthly.Date > cutoffDate && x.Score > 10);
+        var juniors = photos.Where(x => x.Club_Rating < 4).ToList();
+        var seniors = photos.Where(x => x.Club_Rating > 3)
+            .OrderByDescending(x => x.Score)
+            .Take(30)
+            .ToList();
+        foreach (var junior in juniors)
+        {
+            SetPhotoFilename(junior);
+            ExportInterClubPhoto(junior, "Juniors");
+        }
+        foreach (var senior in seniors)
+        {
+            SetPhotoFilename(senior);
+            ExportInterClubPhoto(senior, "Seniors");
+        }
+    }
+    private static void SetPhotoFilename(Photo photo)
+    {
+        if (!photo.IntRef.HasValue)
+            return;
+        string yearMonth = photo.Monthly.Date.toYear_Month_Digits();
+        string photoDir = Path.Combine(gData.photosLocal, yearMonth);
+        string intRef = photo.IntRef.Value.ToString("D7");
+        photo.Filename = Directory.Exists(photoDir)
+            ? Directory.GetFiles(photoDir, "*.jpg")
+                .FirstOrDefault(f => Path.GetFileName(f).Contains(intRef))
+            : null;
+    }
+    private static void ExportInterClubPhoto(Photo photo, string subDir)
+    {
+        if (string.IsNullOrEmpty(photo.Filename) || !File.Exists(photo.Filename))
+            return;
+        string exportDir = Path.Combine(gData.Exports, subDir);
+        Directory.CreateDirectory(exportDir);
+        var master = photo.Monthly.Master;
+        string destName = $"{master.Lastname} {master.Firstname} {photo.Title} [{photo.Score}].jpg";
+        foreach (char c in Path.GetInvalidFileNameChars())
+            destName = destName.Replace(c, '_');
+        File.Copy(photo.Filename, Path.Combine(exportDir, destName), overwrite: true);
     }
     protected override void OnAfterRender(bool firstRender)
     {
