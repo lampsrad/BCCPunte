@@ -33,10 +33,12 @@ public partial class Menu : IDisposable
     {
         DateOnly cutoffDate = DateOnly.FromDateTime(DateTime.Today.AddMonths(-12));
         var photos = await repo.GetEntitiesNTAsync<Photo>(x => x.Monthly.Date > cutoffDate && x.Score > 10);
-        var juniors = photos.Where(x => x.Club_Rating < 4).ToList();
-        var seniors = photos.Where(x => x.Club_Rating > 3)
+        var juniors = photos.Where(x => x.Club_Rating < 4).OrderByDescending(x => x.Score).ToList();
+        var seniors = photos.Where(x => x.Club_Rating > 3&& x.Score>11&&x.Monthly.Master.Firstname!="Trix")
             .OrderByDescending(x => x.Score)
-            .Take(30)
+            .ToList();
+        var seniors11 = photos.Where(x => x.Club_Rating > 3 && x.Score == 11 && x.Monthly.Master.Firstname != "Trix")
+            .OrderByDescending(x => x.Score)
             .ToList();
         foreach (var junior in juniors)
         {
@@ -47,6 +49,11 @@ public partial class Menu : IDisposable
         {
             SetPhotoFilename(senior);
             ExportInterClubPhoto(senior, "Seniors");
+        }
+        foreach (var senior in seniors11)
+        {
+            SetPhotoFilename(senior);
+            ExportInterClubPhoto(senior, "Seniors_11");
         }
     }
     private static void SetPhotoFilename(Photo photo)
