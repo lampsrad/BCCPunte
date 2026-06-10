@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BCCPunte — Admin Menu: Underlying Methods Help</title>
+<style>
+    :root {
+        --gold: #bf9f00;
+        --bg: #1a1a1a;
+        --panel: #242424;
+        --panel2: #2d2d2d;
+        --text: #d8d8d8;
+        --muted: #9a9a9a;
+        --accent: #6ea8fe;
+        --red: #ff6b6b;
+        --green: #6fd38a;
+        --border: #444;
+    }
+    * { box-sizing: border-box; }
+    body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Segoe UI", Tahoma, sans-serif;
+        margin: 0;
+        padding: 0 0 4rem 0;
+        line-height: 1.55;
+    }
+    header {
+        border-top: 4px solid var(--gold);
+        border-bottom: 1px solid var(--border);
+        background: var(--panel);
+        padding: 1.4rem 2rem;
+    }
+    header h1 { margin: 0; color: var(--gold); font-size: 1.7rem; }
+    header p { margin: .4rem 0 0 0; color: var(--muted); }
+    main { max-width: 1100px; margin: 0 auto; padding: 0 2rem; }
+    nav.toc {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 1rem 1.5rem;
+        margin: 1.5rem 0;
+    }
+    nav.toc h2 { margin-top: 0; }
+    nav.toc ol { margin: 0; padding-left: 1.4rem; columns: 2; }
+    nav.toc a { color: var(--accent); text-decoration: none; }
+    nav.toc a:hover { text-decoration: underline; }
+    h2 {
+        color: var(--gold);
+        border-bottom: 2px solid var(--gold);
+        padding-bottom: .3rem;
+        margin-top: 3rem;
+    }
+    h3 { color: #e8e8e8; margin-top: 1.8rem; }
+    h4 { color: var(--accent); margin-bottom: .4rem; }
+    code {
+        background: #111;
+        color: #e3c567;
+        padding: 1px 5px;
+        border-radius: 3px;
+        font-family: Consolas, "Courier New", monospace;
+        font-size: .92em;
+    }
+    pre {
+        background: #111;
+        border: 1px solid var(--border);
+        border-left: 4px solid var(--gold);
+        border-radius: 4px;
+        padding: .9rem 1.1rem;
+        overflow-x: auto;
+        color: #cfcfcf;
+        font-size: .88rem;
+    }
+    pre code { background: none; padding: 0; }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+        background: var(--panel);
+        font-size: .92rem;
+    }
+    th, td { border: 1px solid var(--border); padding: .45rem .7rem; text-align: left; vertical-align: top; }
+    th { background: var(--panel2); color: var(--gold); }
+    tr:nth-child(even) td { background: #202020; }
+    .route {
+        display: inline-block;
+        background: #143153;
+        color: #9ec9ff;
+        border: 1px solid #2b5384;
+        border-radius: 4px;
+        padding: 1px 8px;
+        font-family: Consolas, monospace;
+        font-size: .9em;
+    }
+    .file {
+        color: var(--green);
+        font-family: Consolas, monospace;
+        font-size: .92em;
+    }
+    .pipeline {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: .8rem 1.2rem;
+        margin: 1rem 0;
+    }
+    .pipeline ol { margin: .3rem 0; }
+    .warn {
+        background: #3a1f1f;
+        border: 1px solid var(--red);
+        border-radius: 4px;
+        padding: .7rem 1rem;
+        margin: 1rem 0;
+        color: #f0b9b9;
+    }
+    .note {
+        background: #1f2a3a;
+        border: 1px solid #2b5384;
+        border-radius: 4px;
+        padding: .7rem 1rem;
+        margin: 1rem 0;
+        color: #b9d3f0;
+    }
+    .sig { color: var(--muted); font-style: italic; font-size: .9em; }
+    footer { margin-top: 4rem; text-align: center; color: var(--muted); font-size: .85rem; }
+    hr.sep { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+    #toTop {
+        position: fixed;
+        bottom: 1.5rem;
+        right: 1.5rem;
+        width: 42px;
+        height: 42px;
+        border: 1px solid var(--border);
+        border-radius: 50%;
+        background: var(--panel2);
+        color: var(--gold);
+        font-size: 1.2rem;
+        line-height: 1;
+        cursor: pointer;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity .3s ease, visibility .3s ease;
+    }
+    #toTop.show { opacity: .55; visibility: visible; }
+    #toTop:hover { opacity: 1; }
+</style>
+</head>
+<body>
+
+<header>
+    <h1>BCCPunte — Admin Menu Help</h1>
+    <p>A comprehensive technical reference for every <strong>Admin</strong> submenu item and the underlying methods that power it.</p>
+</header>
+
+<main>
+
+<nav class="toc">
+    <h2>Admin Submenu Items</h2>
+    <ol>
+        <li><a href="#images-process">Images Process</a></li>
+        <li><a href="#import-club">Import Club</a></li>
+        <li><a href="#import-salon">Import Salon</a></li>
+        <li><a href="#word">Word</a></li>
+        <li><a href="#upload-abs">Upload to AbsHosting</a></li>
+        <li><a href="#backup">Backup DB</a></li>
+        <li><a href="#restore">Restore DB</a></li>
+        <li><a href="#excel">Excel</a></li>
+        <li><a href="#delete-month">Delete Month</a></li>
+        <li><a href="#infrastructure">Shared Infrastructure</a></li>
+    </ol>
+</nav>
+
+<section>
+    <h2>How the Admin Page Routes Work</h2>
+    <p>
+        Most Admin submenu items navigate to <span class="route">/admin/{Data}</span>, which is handled by a single page:
+        <span class="file">Adm/Club/Admin.razor</span> + <span class="file">Adm/Club/Admin.razor.cs</span>.
+        The route parameter <code>Data</code> selects the operation inside <code>OnParametersSetAsync()</code> via a switch expression:
+    </p>
+<pre><code>string com = Data switch
+{
+    "backup"        =&gt; Backup(),
+    "images-import" =&gt; await ImagesProcessAsync(),
+    "club-import"   =&gt; await ImportClub(),
+    "restore"       =&gt; Restore(),
+    "excel"         =&gt; await Excel(),
+    "deletemonth"   =&gt; await DeleteMonth(),
+    _               =&gt; null
+};</code></pre>
+    <p>
+        On every visit, <code>OnInitialized()</code> calls <code>DirectoryPrepare(gData.ImportDirectory)</code>, which creates
+        <code>wwwroot\Import\</code> if missing and <strong>deletes every file in it</strong> — the staging area always starts clean.
+        The page renders a <code>ProgressBar</code>, a white <code>Messages</code> list, and a red <code>Errors</code> list, plus two
+        conditional UI blocks: the <em>photo-removal chooser</em> (used by Import Club) and the <code>&lt;Backup&gt;</code> file-pick
+        component (used by Backup/Restore).
+    </p>
+</section>
+
+<hr class="sep">
+
+<section id="images-process">
+    <h2>1. Images Process — In-Depth Analysis</h2>
+    <p>
+        <span class="route">/admin/images-import</span> &nbsp;→&nbsp; <code>Admin.ImagesProcessAsync()</code> in
+        <span class="file">Adm/Club/Admin.razor.cs</span> (region <code>ImagesProcess</code>, the second half of the file).
+    </p>
+    <p>
+        This is the monthly photo-publishing pipeline: it takes the zipped photo exports from <strong>PhotoVault</strong> and turns them
+        into web-ready club photos, published in two places at once — the local website copy on disk and the remote Absolute
+        Hosting server. The whole feature is five sequential stages orchestrated by one driver method, with live progress
+        reporting and per-file error collection along the way.
+    </p>
+
+<pre><code>FileUpload (dialog)                 wwwroot\Import\*.zip
+        │ unzip
+        ▼
+D:\BKK\Inbox\Club\Photos\{yyyy-MM}\*.jpg          (originals, any filename)
+        │ copy + rename to 7-digit ID
+        ▼
+D:\BKK\Inbox\Club\Photos\{yyyy-MM}\Temp\#######.jpg
+        │ resize (max 1365×768, aspect kept)
+        ▼
+D:\BKK\Inbox\Club\Photos\WEB\#######.jpg          (web previews)
+        │ zip ──────────────►  {Downloads}\ZippedExport\BKK-{yyyy-MM}.zip ──► POST {Api}FU/zip
+        │ copy + delete
+        ▼
+{LocalWebsitePath}wwwroot\ClubPhotos\{yyyy-MM}\#######.jpg   (local website)</code></pre>
+
+    <h3>The driver — <code>ImagesProcessAsync()</code></h3>
+    <p>
+        Wires up progress, runs the five stages strictly in sequence (each one <code>await</code>ed), and appends the completed
+        stage name to the white <code>Messages</code> list as it goes:
+    </p>
+<pre><code>IProgress&lt;ProgressInfo&gt; progress = new Progress&lt;ProgressInfo&gt;(value =&gt;
+{
+    Info = value;
+    StateHasChanged();
+});
+Filename = await PhotosLocalUnzipAsync(progress);   // null ⇒ user cancelled ⇒ abort, no error
+await PhotosCopyRenameAsync(progress, Filename);
+await PhotosGeneratePreviewsAsync(progress, Filename, 1365, 768);
+await PhotosZipAsync(progress);
+await UploadToHosting(progress, $"{gData.Downloads}ZippedExport\\BKK-{Filename}.zip");</code></pre>
+    <ul>
+        <li><strong>Progress plumbing:</strong> <code>Progress&lt;T&gt;</code> captures the Blazor synchronization context at construction,
+            so worker threads can call <code>progress.Report(...)</code> from <code>Task.Run</code> / <code>Parallel.ForEachAsync</code> and the
+            callback still runs on the UI thread — that's why a bare <code>StateHasChanged()</code> (no <code>InvokeAsync</code>) is safe here.
+            Each report carries a <code>ProgressInfo</code> with <code>CurrentStage</code>, <code>Current</code>, <code>Total</code>,
+            <code>Percentage</code> and <code>Message</code>, rendered by the <code>&lt;ProgressBar&gt;</code> component at the top of the page.</li>
+        <li><strong>Cancellation path:</strong> if you close the upload dialog, <code>PhotosLocalUnzipAsync</code> returns <code>null</code>
+            and the run ends silently — nothing has been written yet at that point.</li>
+        <li><strong>Error path:</strong> the body is wrapped in <code>try/catch</code> that <em>rethrows</em>
+            (<code>throw new Exception($"Error during image processing: ...", ex)</code>). Because the caller is
+            <code>OnParametersSetAsync</code>'s switch, which has no catch of its own, a mid-pipeline failure surfaces as an unhandled
+            circuit exception (Blazor's yellow error bar) rather than in the page's red <code>Errors</code> list. The
+            <code>finally</code> block always hides the progress bar.</li>
+        <li><strong>State used across stages:</strong> the chosen name is kept in the component-level <code>Filename</code> property —
+            stages 2–5 all derive their paths from it.</li>
+    </ul>
+
+    <div class="warn">
+        <strong>The folder name matters.</strong> The name you enter in the upload dialog becomes the photo folder name and the
+        zip name. It must be the year-month in <code>YYYY-MM</code> form, because the rest of the app builds photo URLs as
+        <code>ClubPhotos/{date.toYear_Month_Digits()}/{IntRef}.jpg</code> (see <code>Extensions.toPhotosView</code>) — e.g.
+        <code>ClubPhotos/2026-06/1234567.jpg</code>. A differently-named folder uploads fine but the site will not find the images.
+    </div>
+
+    <h3>Stage 1 — <code>PhotosLocalUnzipAsync(IProgress&lt;ProgressInfo&gt;)</code></h3>
+    <p class="sig">returns Task&lt;string&gt; — the chosen folder/zip name, or null on cancel</p>
+    <ol>
+        <li>Calls <code>FileUpload()</code> → <code>state.ShowFileUpload("ZIPPED PHOTOS", "Upload Zipped Photos from PhotoVault", gData.ImportDirectory)</code>.
+            The shared <span class="file">FileUpload</span> component (hosted in <span class="file">MainLayout</span>) handles the dialog;
+            the selected .zip files (typically 3 — one per PhotoVault export part) are saved into <code>wwwroot\Import\</code>,
+            which <code>OnInitialized()</code> had already wiped via <code>DirectoryPrepare</code>, so <em>only this run's zips</em> are present.</li>
+        <li>Enumerates <code>Directory.GetFiles(gData.ImportDirectory, "*.zip")</code> — note it processes <strong>every</strong> zip in the
+            staging folder, not just the ones the dialog returned (safe only because the folder was cleaned).</li>
+        <li>Creates the destination <code>{gData.photosLocal}{Filename}</code> (= <code>D:\BKK\Inbox\Club\Photos\2026-06</code>) and turns the
+            progress bar on (<code>progressBar.IsVisible = true</code>).</li>
+        <li>Extracts each zip with <code>ZipFile.ExtractToDirectory(zipPath, dest, overwriteFiles: true)</code> inside
+            <code>Task.Run</code> (keeps the UI thread responsive), reporting <code>i+1 / totalZips</code> between files. The
+            <code>overwriteFiles: true</code> makes re-runs of the same month idempotent — extracting again just overwrites.</li>
+    </ol>
+
+    <h3>Stage 2 — <code>PhotosCopyRenameAsync(IProgress&lt;ProgressInfo&gt;, string fn)</code></h3>
+    <p class="sig">source: {photosLocal}{fn}\*.jpg → dest: {photosLocal}{fn}\Temp\#######.jpg</p>
+    <p>
+        PhotoVault filenames embed the photo's <strong>7-digit internal reference</strong>. This stage normalises every file to
+        exactly <code>{IntRef}.jpg</code> — the contract the whole site depends on, since <code>Photo.IntRef</code> from the club import
+        is what links a database row to its image file.
+    </p>
+    <ul>
+        <li>Extraction: <code>Regex.Match(originalName, @"\d{7}")</code> — the <em>first</em> run of exactly 7 digits anywhere in the
+            name. A file with no 7-digit run is <strong>skipped, not fatal</strong>: a "Skipped — no 7-digit ID in filename" entry is
+            added to the red <code>Errors</code> list and the run continues.</li>
+        <li>Concurrency: one <code>Task.Run</code> per file, awaited together with <code>Task.WhenAll</code>. The shared progress counter
+            uses <code>Interlocked.Increment</code>, so the "Processed n/total" numbers are race-free. <code>Errors.Add</code> is called from
+            worker threads (a <code>List&lt;string&gt;</code> is not thread-safe — in practice collisions are rare since errors are the
+            exception, but it is the one spot in the stage that isn't synchronised).</li>
+        <li><code>File.Copy(..., overwrite: true)</code> — the originals stay behind in the month folder as the archive copy;
+            <code>Temp\</code> is the working set for the next stage. Per-file failures are caught and logged, never thrown.</li>
+        <li>Subtlety: <code>GetFiles(sourceDir, "*.jpg")</code> is top-level only and case-insensitive on Windows (<code>.JPG</code> works),
+            but a zip that nests its images one folder deeper would yield 0 files here — the stage would report
+            "Found 0 files" and the pipeline would continue with nothing.</li>
+    </ul>
+
+    <h3>Stage 3 — <code>PhotosGeneratePreviewsAsync(IProgress&lt;ProgressInfo&gt;, string fn, int width, int height, int degreeOfParallelism = 0)</code></h3>
+    <p class="sig">source: {photosLocal}{fn}\Temp\ → dest: {photosLocal}WEB\ &nbsp;•&nbsp; called with 1365×768</p>
+    <ul>
+        <li>CPU-bound image work is parallelised with <code>Parallel.ForEachAsync</code>;
+            <code>MaxDegreeOfParallelism</code> defaults to <code>Environment.ProcessorCount</code> (the optional parameter lets a caller
+            throttle it, but the pipeline call leaves it at 0 ⇒ CPU count).</li>
+        <li>Each file goes through <code>GenerateImagesAsync(source, destination, width, height)</code>:
+<pre><code>using var image = await Image.LoadAsync(source);          // SixLabors.ImageSharp
+image.Mutate(x =&gt; x.Resize(new ResizeOptions
+{
+    Mode = ResizeMode.Max,                                  // fit inside 1365×768, keep aspect
+    Size = new Size(width, height)
+}));
+await image.SaveAsync(destination);                         // format inferred from .jpg extension</code></pre>
+            <code>ResizeMode.Max</code> never crops and never upsizes the proportions wrongly: a 6000×4000 landscape becomes
+            1152×768 (height-bound); a portrait 3000×4500 becomes 512×768. The original full-resolution file in
+            <code>Temp\</code>/month folder is untouched — only the web copy is reduced.</li>
+        <li><strong>Error semantics differ from stage 2:</strong> here a single bad image (corrupt file, unsupported format)
+            <em>throws</em>, <code>Parallel.ForEachAsync</code> cancels its remaining work, and the exception bubbles up through
+            <code>ImagesProcessAsync</code> — the run stops. Stage 2 tolerates bad files; stage 3 does not.</li>
+        <li><code>WEB\</code> is a <em>shared</em> folder (not per-month). It is normally empty at this point because stage 4 of the
+            previous run deleted everything it copied — but if an earlier run died between stages 3 and 4, leftovers from that
+            run would be swept into this month's zip and website copy.</li>
+    </ul>
+
+    <h3>Stage 4 — <code>PhotosZipAsync(IProgress&lt;ProgressInfo&gt;)</code></h3>
+    <p class="sig">returns "Successfully zipped {n} photos to {zipPath}"</p>
+    <ol>
+        <li>Computes its four paths from <code>Filename</code>:
+            <table>
+                <tr><th>Variable</th><th>Value</th><th>Role</th></tr>
+                <tr><td><code>sourceDir</code></td><td><code>{photosLocal}WEB\</code></td><td>previews from stage 3</td></tr>
+                <tr><td><code>zipPath</code></td><td><code>{Downloads}ZippedExport\BKK-{Filename}.zip</code></td><td>upload artifact for stage 5</td></tr>
+                <tr><td><code>rootdest</code></td><td><code>wwwroot\ClubPhotos\{Filename}\</code> (relative)</td><td>created in the <em>running app's</em> folder</td></tr>
+                <tr><td><code>localWebDest</code></td><td><code>{LocalWebsitePath}wwwroot\ClubPhotos\{Filename}\</code></td><td>= <code>D:\VS\VS Active\BCCBlazor\BCC\wwwroot\ClubPhotos\{Filename}\</code></td></tr>
+            </table>
+        </li>
+        <li>Deletes any existing <code>BKK-{Filename}.zip</code>, then <code>ZipFile.CreateFromDirectory(sourceDir, zipPath)</code> on a
+            background task — the zip is created <em>before</em> the copy loop, so it always contains the complete WEB set.</li>
+        <li>Then loops the previews one by one: <code>File.Copy</code> to <code>localWebDest</code> (overwrite) followed immediately by
+            <code>File.Delete</code> of the WEB copy — so a fully successful stage leaves <code>WEB\</code> empty, which is what makes the
+            shared folder safe for the next month's run.</li>
+    </ol>
+    <div class="note">
+        <strong>Two destinations, one copy.</strong> Note that <code>rootdest</code> (the relative <code>wwwroot\ClubPhotos\{Filename}\</code>
+        inside <em>this</em> BCCPunte app) is created with <code>Directory.CreateDirectory</code> but <strong>no files are copied into
+        it</strong> — the copy loop only targets <code>localWebDest</code>, i.e. the separate <strong>BCCBlazor</strong> website project. The
+        BCCPunte app itself gets an empty month folder; its own photo display relies on whatever populates its
+        <code>ClubPhotos</code> separately. Keep this in mind if local photos ever appear missing for a new month.
+    </div>
+
+    <h3>Stage 5 — <code>UploadToHosting(IProgress&lt;ProgressInfo&gt;, string filePath)</code></h3>
+    <p>Pushes the zip to the live server, which (per the menu tooltip) lands it in <code>\wwwroot\Import\yyyy.mm.zip</code> on Absolute Hosting for the remote site to unpack.</p>
+    <ol>
+        <li><strong>Pre-flight checks</strong> (each fails soft — a ❌ line in <code>Messages</code>, return, no exception):
+            must end in <code>.zip</code>, must exist on disk, must be ≤ <strong>120&nbsp;MB</strong>
+            (<code>fileInfo.Length &gt; 120L * 1024 * 1024</code>). 120&nbsp;MB is the matching server-side limit — if a month's previews
+            exceed it the upload is refused locally and you would need to split the month or upload manually.</li>
+        <li><strong>HTTP setup:</strong> <code>gData.CreateUploadClientHandler()</code> returns a plain <code>HttpClientHandler</code> in
+            production; only when <code>gData.Api</code> contains "localhost" does it accept self-signed certificates (dev convenience).
+            <code>client.Timeout = TimeSpan.FromMinutes(15)</code> — sized for a 100&nbsp;MB+ upload on a slow uplink.</li>
+        <li><strong>Authentication — <code>Login(HttpClient)</code>:</strong> reads <code>Auth:Username</code> / <code>Auth:Password</code> from
+            configuration (<span class="file">appsettings.json</span>; no user secrets in this project), POSTs them as JSON to
+            <code>{Api}Auth/login</code>, and expects a <code>LoginResponse {{ Token }}</code>. A non-success status or missing token throws
+            with the server's error text — and because this throw happens <em>inside</em> stage 5's outer try only covers the POST,
+            a login failure propagates up and ends the run via the driver's catch.</li>
+        <li><strong>Upload:</strong> <code>MultipartFormDataContent</code> with one part named <code>"file"</code> wrapping a
+            <code>StreamContent(File.OpenRead(filePath))</code>, sent with <code>Authorization: Bearer {token}</code> to
+            <code>{gData.Api}FU/zip</code>. The result is reported verbatim: ✅ with the server's response body on success, ❌ with
+            status code + reason + body on failure; transport exceptions are caught and logged with their inner exception.
+            This stage shares its <code>Login</code>/upload logic pattern with the standalone
+            <a href="#upload-abs">Upload to AbsHosting</a> page, which adds the <code>FU/html</code> route for .html files.</li>
+    </ol>
+
+    <h3>Failure-mode summary</h3>
+    <table>
+        <tr><th>Stage</th><th>Single bad file</th><th>Whole-stage failure</th><th>Safe to re-run?</th></tr>
+        <tr><td>1. Unzip</td><td>n/a</td><td>Exception ends run (e.g. corrupt zip)</td><td>Yes — <code>overwriteFiles: true</code></td></tr>
+        <tr><td>2. Copy/Rename</td><td>Logged to Errors, skipped</td><td>Only if directory enumeration fails</td><td>Yes — copy with overwrite</td></tr>
+        <tr><td>3. Previews</td><td><strong>Throws — ends the run</strong></td><td>Exception ends run</td><td>Yes — but check WEB\ for leftovers first</td></tr>
+        <tr><td>4. Zip + publish</td><td>Exception ends run</td><td>Exception ends run</td><td>Yes — old zip deleted first; copies overwrite</td></tr>
+        <tr><td>5. Upload</td><td>n/a</td><td>❌ message (soft) — except login failure, which throws</td><td>Yes — server overwrites the month zip</td></tr>
+    </table>
+    <p>
+        Practical recovery rule: because every stage is overwrite-safe and stage 1 re-extracts from the original zips, the
+        simplest fix after any mid-pipeline failure is to resolve the cause (e.g. delete the corrupt jpg from the month
+        folder) and run <strong>Images Process again from the top</strong> with the same name. The only cleanup worth checking
+        manually is <code>D:\BKK\Inbox\Club\Photos\WEB\</code> — it should be empty before a fresh run.</p>
+
+    <h3>Dependencies &amp; configuration touched by this feature</h3>
+    <table>
+        <tr><th>Dependency</th><th>Where used</th></tr>
+        <tr><td><strong>SixLabors.ImageSharp</strong></td><td><code>GenerateImagesAsync</code> — load, <code>Mutate/Resize(ResizeMode.Max)</code>, save.</td></tr>
+        <tr><td><code>System.IO.Compression.ZipFile</code></td><td>Extract (stage 1) and create (stage 4).</td></tr>
+        <tr><td><code>State.ShowFileUpload</code> + <span class="file">FileUpload</span> component</td><td>The zip-selection dialog; writes into <code>wwwroot\Import\</code>.</td></tr>
+        <tr><td><code>ProgressBar</code> / <code>ProgressInfo</code></td><td>Stage-by-stage progress UI (<code>CurrentStage, Current, Total, Percentage, Message</code>).</td></tr>
+        <tr><td><code>gData</code></td><td><code>ImportDirectory, photosLocal, clubPhotos, LocalWebsitePath, Downloads, Api, CreateUploadClientHandler</code>.</td></tr>
+        <tr><td><code>IConfiguration</code></td><td><code>Auth:Username</code> / <code>Auth:Password</code> for the JWT login.</td></tr>
+    </table>
+
+    <div class="note">
+        The menu tooltip on <strong>Admin → Images Process</strong> summarises the same six steps: unzip → copy/rename to 7-digit ID →
+        generate 1365×768 → copy to LocalWebsite → zip to Downloads\ZippedExport → upload to AbsoluteHost API.
+    </div>
+</section>
+
+<hr class="sep">
+
+<section id="import-club">
+    <h2>2. Import Club</h2>
+    <p>
+        <span class="route">/admin/club-import</span> &nbsp;→&nbsp; <code>Admin.ImportClub()</code> in
+        <span class="file">Adm/Club/Admin.razor.cs</span> (region <code>ClubImport</code>). This is the main entry route for monthly
+        club competition imports — the most involved feature in the app.
+    </p>
+
+    <h3>Entry logic — <code>ImportClub()</code></h3>
+    <div class="pipeline">
+        <ol>
+            <li>If <code>gData.lastDateClubImported.Month == 9</code> (September was last imported) → it's <strong>year-end</strong>: calls <code>YearEnd()</code> → <code>OctoberMonth()</code>, which runs <code>ds.LastDates()</code>, <code>ds.Promotion_Due()</code> and <code>DatesStoreInDb()</code> with <em>no file import</em> ("October month with no Imports, but Promotions succesfully done").</li>
+            <li>Otherwise opens the upload dialog (<code>state.ShowFileUpload("CLUB IMPORT", ...)</code>). The filename decides the path:
+                <ul>
+                    <li>starts with <code>Scoresheet</code> → <code>ImportScores(fn)</code></li>
+                    <li>starts with <code>Results</code> → <code>ImportResults(fn)</code></li>
+                    <li>anything else → exception: "File Name is not correct".</li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+
+    <h3>CSV parsing infrastructure</h3>
+    <table>
+        <tr><th>Method</th><th>What it does</th></tr>
+        <tr><td><code>Import(fn)</code></td><td>Refreshes <code>gData</code> dates via <code>ds.LastDates()</code>, then finds the uploaded file in <code>wwwroot\Import\</code> by wildcard match.</td></tr>
+        <tr><td><code>TextFieldParserInitialize(p)</code></td><td>Reads the header line (lower-cased) into <code>Headers</code>, configures the VB <code>TextFieldParser</code> as comma-delimited with whitespace trimming.</td></tr>
+        <tr><td><code>SetScoreIndices()</code> / <code>SetResultIndices()</code></td><td>Pre-computes the column index of every required header once (e.g. <code>_si_score = Headers.IndexOf(ScoreHeaders.ScoreTotal)</code>) so row parsing is index-based, not name-based.</td></tr>
+        <tr><td><code>HeadersCheckScores(p, fn)</code></td><td>Validates that all required <code>ScoreHeaders</code>/<code>ResultHeaders</code> columns are present (throws "Headers of Import File is Incorrect" otherwise). Then peeks the first data row, extracts the 7-digit <code>IntRef</code>, and returns whether that photo already exists for the current club year — i.e. <strong>"has this month already been imported?"</strong></td></tr>
+    </table>
+
+    <h3>Path A — <code>ImportScores(filename)</code></h3>
+    <div class="pipeline">
+        <ol>
+            <li>Parse all rows with <code>processLineScores(fields)</code> (see below).</li>
+            <li>If <code>HeadersCheckScores</code> says the month was already imported → switch to <strong>score-update mode</strong>: <code>UpdateScores(file)</code> instead (matches each row by <code>IntRef</code> and fills in <code>Photo.Score</code>; throws "Scores already Present" if the first photo already has a score &gt; 0).</li>
+            <li>Group photos by <code>PVID</code> (PhotoVault member ID). For each member: <code>GetMasterRow(photo)</code> finds the <code>Master</code>, and <code>ds.GetLastMonthly(master)</code> finds/creates the month's <code>Monthly</code> row; all of that member's photos get its <code>MonthlyID</code>.</li>
+            <li><code>PhotoQuantity(photos)</code> — enforces entry limits (see below) with an interactive chooser.</li>
+            <li>Bulk-insert via <code>repo.CreateScope()</code> → <code>scope.AddRange(photos)</code> → <code>SaveChangesDetachAsync()</code>.</li>
+            <li>Post-processing: <code>MonthlyUpdate()</code> → <code>MonthlyCompute()</code> → <code>ds.Promotion_Due()</code> → <code>DatesStoreInDb()</code> → <code>ds.CleanImportDirectory()</code>.</li>
+        </ol>
+    </div>
+
+    <h4><code>processLineScores(string[] data)</code> — one CSV row → one <code>Photo</code></h4>
+    <ul>
+        <li>Reads Category, PVID, Honours, Email, Title, IntRef, Score from the pre-computed indices.</li>
+        <li><strong>Rating map:</strong> "Golden Honours"→6, "Galaxy"→7, otherwise the numeric value.</li>
+        <li><strong>Star group:</strong> rating 1–2 → group 1, 3 → 2, 4–5 → 3, else 4.</li>
+        <li><strong>Winner flags from the Awards column:</strong> <code>~word~</code> → both <code>Winner</code> and <code>Club_Winner</code>; a single <code>~</code> → <code>Club_Winner</code> if the text contains "IC", else <code>Winner</code>.</li>
+        <li><code>Award</code> = first word character of the awards string (C/G/S/B).</li>
+        <li><code>Category</code> stays "S" (Set Subject) as-is; otherwise it becomes <code>{Category}{Star_Group}</code> (e.g. <code>P3</code>, <code>N1</code>).</li>
+    </ul>
+
+    <h3>Path B — <code>ImportResults(filename)</code></h3>
+    <div class="pipeline">
+        <ol>
+            <li>Parse all rows with <code>processLineResults(fields, photos)</code> — same rating/star-group mapping; "com" award is normalised to "C"; lastname "DeBeer" is fixed to "De Beer"; no PVID/Score columns in this format.</li>
+            <li>If already imported → just reports "Already Imported Scoresheet into DB".</li>
+            <li><strong>Winner reconciliation:</strong> rows are grouped by <code>IntRef</code>; when a photo appears more than once the duplicate rows carry the winner codes — <code>Award == "CW"</code> sets <code>Club_Winner</code>, any other multi-char award sets <code>Winner</code> on the single-char base row. Then only base rows (<code>Award.Length == 1</code>) are kept.</li>
+            <li>Members are resolved by <strong>Name</strong> (no PVID in this file) via <code>GetMasterRow</code> + <code>ds.GetLastMonthly</code>, then the same <code>PhotoQuantity</code> → bulk insert → post-processing chain as Path A.</li>
+        </ol>
+    </div>
+
+    <h3>Member resolution</h3>
+    <table>
+        <tr><th>Method</th><th>What it does</th></tr>
+        <tr><td><code>GetMasterRow(Photo)</code></td><td>Looks the member up by <code>IdVault == PVID</code> (Scoresheet) or by <code>Name</code> (Results). If not found, asks via <code>state.ShowConfirmAsync("{name}", "Add New Master??")</code> — Yes creates the member.</td></tr>
+        <tr><td><code>AddNewMaster(Photo)</code></td><td>Splits the photo's Name with regex <code>^(.*)\s+(\S+)$</code> into Lastname/Firstname (last word = first name), copies rating, honours title, PVID and email, sets <code>Active = true</code>, saves via <code>repo.AddSaveAsync</code>.</td></tr>
+    </table>
+
+    <h3>Entry limits — <code>PhotoQuantity(IList&lt;Photo&gt;)</code></h3>
+    <p>
+        Rule: per member per month, max <strong>3</strong> photos where Category ≠ "S" and max <strong>2</strong> where Category = "S".
+        Members over the limit have <em>all</em> their photos shown in the on-page chooser (the red-bordered panel in
+        <span class="file">Admin.razor</span>). The import code literally <strong>pauses on a
+        <code>TaskCompletionSource&lt;bool&gt;</code></strong> until you tick the photos to delete and click
+        "Remove the ticked photos and continue import" (<code>ConfirmPhotoRemovals(true)</code>) or cancel
+        (<code>ConfirmPhotoRemovals(false)</code> → empty list, "Import cancelled by user"). <code>SetAllRemovalFlags(bool)</code>
+        backs the Tick all / Untick all buttons.
+    </p>
+
+    <h3>Points engine</h3>
+    <h4><code>MonthlyUpdate()</code> — award counts from this month's photos</h4>
+    <p>For every photo of the latest month (Category not "S"/"PH"): award C → <code>Mm</code>+1 (Com), G → <code>Gm</code>+1, S → <code>Sm</code>+1, B → <code>Bm</code>+1. For Set Subject photos ("S") the award goes straight to <strong>VO points</strong> (<code>VOm</code>): C=5, G=3, S=2, B=1.</p>
+
+    <h4><code>MonthlyCompute()</code> — running totals</h4>
+    <table>
+        <tr><th>Field</th><th>Computation</th></tr>
+        <tr><td><code>Pm</code> (points/month)</td><td>Mm×5 + Gm×3 + Sm×2 + Bm×1</td></tr>
+        <tr><td><code>Mg, Gg, Sg, Bg</code></td><td>Cumulative award counts per grade (since last promotion)</td></tr>
+        <tr><td><code>GMp</code></td><td>Mg + Gg (Gold-or-better count toward promotion)</td></tr>
+        <tr><td><code>Pp</code></td><td>Cumulative promotion points (Pp + Pm)</td></tr>
+        <tr><td><code>GMy</code>, <code>Py</code>, <code>VOy</code></td><td>Club-year running totals (year starts <strong>1 November</strong>)</td></tr>
+    </table>
+    <p class="sig">All additions use the <code>AddNull()</code> extension — nullable ints where 0 collapses back to <code>null</code>.</p>
+
+    <h4><code>DatesStoreInDb()</code></h4>
+    <p>
+        Writes the newest <code>Monthly</code> date into the <code>Datum</code> row <code>lastImport</code> (a September date is bumped
+        to October), updates <code>gData.lastDateClubImported</code>, and when the new month is <strong>November</strong> also resets the
+        <code>clubYearStart</code> Datum / <code>gData.lastDateClubYear</code>.
+    </p>
+</section>
+
+<hr class="sep">
+
+<section id="import-salon">
+    <h2>3. Import Salon</h2>
+    <p>
+        <span class="route">/salonMasMain</span> (menu item "Import Salon"; also "Salons Current", <span class="route">/salonMasMain/prev</span>
+        "Salons Previous" and <span class="route">/salonMasMain/importlist</span> "Import Salons") →
+        <span class="file">Adm/Salonne/SalonMasMain.razor.cs</span>. One page hosts the whole salon admin workflow by toggling view
+        flags (<code>salonMasShow</code>, <code>createShow</code>, <code>editShow</code>, <code>salonsShow</code>, <code>salonCreateShow</code>, <code>salonEditShow</code>)
+        and embedding the <span class="file">SalonCreate / SalonEdit / SalonMasCreate / SalonMasEdit / SalonMasIndex / SalonIndex</span> components.
+    </p>
+
+    <h3><code>OnParametersSetAsync()</code> — salon-year window</h3>
+    <p>
+        Lists <code>SalonMaster</code> rows for the salon year <strong>1 July {clubYearStart.Year} → 30 June {+1}</strong>;
+        with <code>Data == "prev"</code> both bounds shift one year back. <code>Data == "importlist"</code> first runs <code>ImportSalonList()</code>.
+    </p>
+
+    <h3><code>ImportSalonList()</code> — yearly PSSA salon calendar</h3>
+    <div class="pipeline">
+        <ol>
+            <li><code>state.ShowFilePicker()</code> → pick a .csv (converted from the PSSA website PDF) in your <code>Downloads\BKK\</code> folder.</li>
+            <li>Each row becomes a <code>SalonMaster</code>: column 1 = Club, 2 = SalonName, 3 = Date (<code>dd-MM-yyyy</code>).</li>
+            <li>Rows whose <strong>Date already exists</strong> in the table are skipped (<code>repo.AnyAsync&lt;SalonMaster&gt;(x =&gt; x.Date == sm.Date)</code>); the rest are added in one <code>RepoScope</code> save.</li>
+        </ol>
+    </div>
+
+    <h3>Salon entry CRUD + points</h3>
+    <table>
+        <tr><th>Method</th><th>What it does</th></tr>
+        <tr><td><code>salonShow(ID)</code></td><td>Loads a SalonMaster and its member entries (<code>Salon</code> rows), ordered by member name.</td></tr>
+        <tr><td><code>CreateSalon(ID)</code> / <code>EditSalon(sal)</code></td><td>Open the entry editor; member list = all Masters with a PhotoVault ID.</td></tr>
+        <tr><td><code>Delete(ID)</code></td><td>Deletes a SalonMaster — refused with a message if it still contains entries.</td></tr>
+        <tr><td><code>salonClose(Salon)</code></td><td><strong>The save path.</strong> Computes the entry's points, links it to the right <code>Monthly</code> (creating one via <code>Ds.GetLastMonthly</code> when needed, re-activating the member), saves, then triggers the rollup.</td></tr>
+    </table>
+
+    <h4>Points formula (in <code>salonClose</code>)</h4>
+    <table>
+        <tr><th>Component</th><th>National</th><th>International</th></tr>
+        <tr><td>Acceptance</td><td>×1</td><td>×2</td></tr>
+        <tr><td>COM</td><td>×2</td><td>×4</td></tr>
+        <tr><td>Judge</td><td>×1</td><td>×1</td></tr>
+    </table>
+
+    <h4><code>monthlyUpdate(salon)</code> / <code>monthliesUpdate(salon)</code> — rollups</h4>
+    <p>
+        For a current-month salon: <code>Salm</code> = sum of the month's salon points, <code>Salp</code> = previous <code>Salp</code> + <code>Salm</code>
+        (cumulative), <code>Saly</code> resets in November else accumulates — using <code>repo.monthlyPrevNTAsync(mon)</code> to find the
+        member's previous Monthly. It then re-evaluates the <strong>promotion pattern switch</strong> (same thresholds as
+        <code>DataService.Promotion_Due()</code>, see <a href="#infrastructure">Shared Infrastructure</a>) and pops
+        "PROMOTION DUE" via <code>state.ShowMessageAsync</code> when a member qualifies.
+        For a <em>back-dated</em> salon (date before <code>lastDateClubImported</code>) <code>monthliesUpdate</code> instead patches
+        <code>Salp</code>/<code>Saly</code> forward through every later Monthly of that member.
+    </p>
+</section>
+
+<hr class="sep">
+
+<section id="word">
+    <h2>4. Word</h2>
+    <p>
+        <span class="route">/worddoc</span> → <span class="file">Pages/WordDoc.razor.cs</span>, method <code>OnFileSelected(InputFileChangeEventArgs)</code>.
+        Converts a chosen Microsoft Word document to HTML and publishes it under the Info menu.
+    </p>
+    <div class="pipeline">
+        <ol>
+            <li>Validates the upload: must be <code>.docx</code>, max <strong>25&nbsp;MB</strong> (<code>MaxUploadBytes</code>).</li>
+            <li>Copies the browser stream into a <code>MemoryStream</code> and opens it with <strong>DocumentFormat.OpenXml</strong> (<code>WordprocessingDocument.Open</code>).</li>
+            <li>Converts to HTML with <strong>OpenXmlPowerTools</strong> <code>HtmlConverter.ConvertToHtml</code> (CSS classes prefixed <code>docx-</code>, fabricated automatically).</li>
+            <li>Wraps the result in a full HTML page linked to <code>/styles.css</code>. Special case: files named <code>Program (Afr).docx</code> / <code>Program (Eng).docx</code> get the Venue + Program images injected above the content.</li>
+            <li>Saves to <code>wwwroot/html/{name}.html</code> and navigates to <span class="route">/info/{name}</span> — which is also how the converted document appears in the <strong>Info</strong> menu (built from the files in that folder).</li>
+        </ol>
+    </div>
+    <p>Errors surface through <code>state.ShowMessageAsync("Word conversion failed", ...)</code>.</p>
+</section>
+
+<hr class="sep">
+
+<section id="upload-abs">
+    <h2>5. Upload to AbsHosting</h2>
+    <p>
+        <span class="route">/upload-to-abs</span> → <span class="file">Pages/FileUploadAbs.razor.cs</span>.
+        Manually pushes .html files (e.g. converted Word docs) or .zip image bundles to the Absolute Hosting server.
+    </p>
+    <table>
+        <tr><th>Method</th><th>What it does</th></tr>
+        <tr><td><code>HandleFileSelected(e)</code></td><td>Grabs the chosen <code>IBrowserFile</code> and hands it to <code>UploadToHosting</code>.</td></tr>
+        <tr><td><code>Login(HttpClient)</code></td><td>Same JWT login as Images Process: POSTs <code>Auth:Username/Password</code> to <code>{gData.Api}Auth/login</code>, returns <code>LoginResponse.Token</code>.</td></tr>
+        <tr><td><code>UploadToHosting(IBrowserFile)</code></td><td>Builds an authenticated <code>HttpClient</code> (<code>gData.CreateUploadClientHandler()</code> accepts self-signed certs for localhost), streams the file (max <strong>120&nbsp;MB</strong>) as multipart form data to <code>{Api}FU/html</code> for .html or <code>{Api}FU/zip</code> for .zip, and reports ✅/❌ in <code>status</code>.</td></tr>
+    </table>
+    <div class="note">The API base is <code>gData.Api</code> = <code>https://bkk.co.za/</code> (switchable in <span class="file">gData.cs</span> to the test or localhost endpoint).</div>
+</section>
+
+<hr class="sep">
+
+<section id="backup">
+    <h2>6. Backup DB</h2>
+    <p>
+        <span class="route">/admin/backup</span> → <code>Admin.Backup()</code> sets <code>Title = "Backup"</code> and <code>filePick = true</code>,
+        which renders the <span class="file">Adm/Club/Backup.razor</span> component inside the Admin page.
+    </p>
+    <div class="pipeline">
+        <ol>
+            <li>The Backup component's <code>OnInitialized()</code> lists all <code>*.bak</code> files in <code>gData.backupPath</code> (<code>C:\Users\Lamps\OneDrive\Database\SQL16\Backup\BCC\</code>).</li>
+            <li>You either pick an existing file name or type a new one; <code>Submit()</code> fires the <code>ecbBackup</code> EventCallback with <code>{name}.bak</code>. (Pressing Enter in the textbox turns the button red via <code>keyDownText</code> as a "you're about to overwrite/act" cue.)</li>
+            <li>Back in Admin, <code>ecbBackup(file)</code> deletes any existing file of that name, then calls <code>repo.SqlBackupAsync(fn)</code>.</li>
+        </ol>
+    </div>
+    <h4><code>Repo.SqlBackupAsync(fn)</code></h4>
+<pre><code>Use BCC Backup Database BCC to Disk = {fn} with init</code></pre>
+    <p>Executed via <code>ExecuteSqlInterpolated</code> on a background task. <code>WITH INIT</code> overwrites the backup set. Success adds "Success in Backingup DB" to Messages; exceptions land in the red Errors list with stack trace.</p>
+</section>
+
+<hr class="sep">
+
+<section id="restore">
+    <h2>7. Restore DB</h2>
+    <p>
+        <span class="route">/admin/restore</span> → <code>Admin.Restore()</code>: if <code>{Downloads}bcc.bak</code> exists it is first moved
+        into <code>gData.backupPath</code> (so a freshly-downloaded production backup is immediately offered), then the same
+        <span class="file">Backup.razor</span> component is shown in Restore mode.
+    </p>
+    <p>Choosing a file fires <code>ecbRestore(file)</code> → <code>repo.SqlRestoreAsync(fn)</code>:</p>
+<pre><code>USE master;
+ALTER DATABASE [BCC] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+RESTORE DATABASE [BCC] FROM DISK = @filePath WITH REPLACE;
+USE master;
+ALTER DATABASE [BCC] SET MULTI_USER;</code></pre>
+    <div class="warn">
+        <strong>Destructive:</strong> <code>WITH REPLACE</code> overwrites the live database and
+        <code>SINGLE_USER WITH ROLLBACK IMMEDIATE</code> kicks out all other connections. Make sure you picked the right .bak.
+    </div>
+</section>
+
+<hr class="sep">
+
+<section id="excel">
+    <h2>8. Excel</h2>
+    <p>
+        <span class="route">/admin/excel</span> → <code>Admin.Excel()</code>. Despite the name it writes <strong>CSV archives</strong>
+        (openable in Excel) — one snapshot file per month from <strong>2013-11-01</strong> to today.
+    </p>
+    <div class="pipeline">
+        <ol>
+            <li>Loads all Masters and all Monthlies in the range once, groups Monthlies per member and sorts by date.</li>
+            <li>Walks month by month, advancing a per-member index (amortised O(1)) so that for each month every member contributes their <em>latest Monthly on or before that date</em>.</li>
+            <li>Each month's snapshot goes to <code>CsvWrite(ms, dat)</code>; progress is shown via <code>state.ShowProgress("EXCEL")</code> / <code>UpdateProgress</code>.</li>
+        </ol>
+    </div>
+    <h4><code>CsvWrite(IList&lt;Monthly&gt;, DateOnly)</code></h4>
+    <p>
+        Writes <code>D:\BKK\ARCHIVES\Ou punte rekords\{Year}\{date}.csv</code> with header
+        <code>Date,Name,Grade,VOm,Mm,Gm,Sm,Bm,Pm,Salm,Mg,Gg,Sg,Bg,GMp,Pp,Salp,GMy,Py,VOy,Saly</code> —
+        creating the year folder as needed and <strong>skipping files that already exist</strong> (so re-runs only fill gaps).
+    </p>
+</section>
+
+<hr class="sep">
+
+<section id="delete-month">
+    <h2>9. Delete Month</h2>
+    <p>
+        <span class="route">/admin/deletemonth</span> → <code>Admin.DeleteMonth()</code>. Rolls back the last imported month from the
+        database while leaving the image files on disk intact (per the menu tooltip).
+    </p>
+    <div class="pipeline">
+        <ol>
+            <li>Cutoff = <code>gData.lastDateClubImported.AddMonths(-1)</code>; everything dated <em>after</em> the cutoff goes.</li>
+            <li>Inside a single <code>RepoScope</code> <strong>transaction</strong> (<code>BeginTransactionAsync</code>):
+                deletes the month's <code>Photo</code> rows, then the <code>Monthly</code> rows, then <code>Salon</code> entries belonging to
+                <code>SalonMaster</code>s after the cutoff, then those <code>SalonMaster</code>s — each batch followed by <code>SaveChangesDetachAsync()</code>.</li>
+            <li><code>DatesStoreInDb()</code> recomputes <code>lastImport</code> from what is now the newest Monthly.</li>
+            <li>Re-syncs each member's current grade: for the (new) last month, <code>Master.RatingID = Monthly.RatingID</code> — undoing any promotions the deleted import had applied.</li>
+            <li><code>CommitAsync()</code> on success; any exception triggers <code>RollbackAsync()</code> and returns the error message, leaving the database untouched.</li>
+        </ol>
+    </div>
+</section>
+
+<hr class="sep">
+
+<section id="infrastructure">
+    <h2>10. Shared Infrastructure</h2>
+
+    <h3><span class="file">Repo.cs</span> — data access</h3>
+    <p>All database work goes through the scoped <code>Repo</code> service (no direct EF queries in pages). The methods the Admin features rely on:</p>
+    <table>
+        <tr><th>Method</th><th>Purpose</th></tr>
+        <tr><td><code>CreateScope()</code></td><td>Returns a <code>RepoScope</code> — a unit-of-work wrapper around one <code>BKKEntities</code> DbContext with <code>AddAsync / AddRange / Delete / GetEntityAsync / GetEntitiesAsync / SaveChangesAsync / SaveChangesDetachAsync / BeginTransactionAsync</code>. Used for batch inserts, multi-step updates and the Delete Month transaction.</td></tr>
+        <tr><td><code>GetEntityNTAsync&lt;T&gt;</code> / <code>GetEntitiesNTAsync&lt;T&gt;</code></td><td>No-tracking single/list queries. <code>BuildQuery&lt;T&gt;</code> auto-attaches the standard <code>Include</code>s per entity type (e.g. Monthly → Master, Rating, Photos, Salons→SalonMaster) and default ordering.</td></tr>
+        <tr><td><code>AddSaveAsync</code> / <code>UpdateSaveDetachAsync</code> / <code>DeleteSave</code></td><td>Single-entity add / update (with change-tracker clear) / delete.</td></tr>
+        <tr><td><code>AnyAsync&lt;T&gt;(filter)</code></td><td>Existence checks — duplicate-import detection (Photos by IntRef, SalonMasters by Date).</td></tr>
+        <tr><td><code>Datum(filter)</code> / <code>lastDateAsync(filter)</code></td><td>Reads the <code>Datums</code> metadata rows (<code>lastImport</code>, <code>clubYearStart</code>).</td></tr>
+        <tr><td><code>monthlyLastDateAsync()</code> / <code>monthlyLastNTAsync(filter)</code> / <code>monthlyPrevNTAsync(mon)</code></td><td>Latest month date overall, a member's latest Monthly, and a member's previous Monthly (for cumulative rollups).</td></tr>
+        <tr><td><code>SqlBackupAsync</code> / <code>SqlRestoreAsync</code></td><td>Raw T-SQL BACKUP / RESTORE (see sections 6–7).</td></tr>
+    </table>
+
+    <h3><span class="file">Services/DataService.cs</span> — monthly business logic</h3>
+    <table>
+        <tr><th>Method</th><th>Purpose</th></tr>
+        <tr><td><code>GetLastMonthly(master)</code></td><td><strong>The pivotal method of every import.</strong> Gets the member's latest Monthly; if none exists creates one (<code>MonthlyNew</code>, dated <code>lastDateClubImported + 1 month</code>); if the latest is ≤ <code>lastDateClubImported</code> it clones it forward (<code>MonthlyCopy</code> — carries the cumulative fields, and zeroes the year fields when the new month is November or the source predates the club year).</td></tr>
+        <tr><td><code>LastDates()</code></td><td>Loads <code>clubYearStart</code> and <code>lastImport</code> Datums into <code>gData.lastDateClubYear</code> / <code>gData.lastDateClubImported</code>.</td></tr>
+        <tr><td><code>Promotion_Due()</code></td><td>Flags <code>Monthly.Promotion</code> for the latest month using the threshold table below, then <code>Promote()</code> bumps qualifying members one grade (<code>ratings</code> enum +1), updates <code>Master.RatingID</code>, and resets the promotion counters (<code>GMp, Pp, Mg, Gg, Sg, Bg → null</code>).</td></tr>
+        <tr><td><code>CleanImportDirectory()</code></td><td>Deletes every file in <code>wwwroot\Import\</code> after a successful import.</td></tr>
+    </table>
+
+    <h4>Promotion thresholds (used in <code>Promotion_Due</code> and <code>SalonMasMain.monthlyUpdate</code>)</h4>
+    <table>
+        <tr><th>From grade (RatingID)</th><th>Gold-or-better (GMp)</th><th>Points (Pp)</th><th>Salon points (Salp)</th><th>Honours title</th></tr>
+        <tr><td>1 star</td><td>≥ 4</td><td>≥ 20</td><td>—</td><td>—</td></tr>
+        <tr><td>2 star</td><td>≥ 6</td><td>≥ 35</td><td>—</td><td>—</td></tr>
+        <tr><td>3 star</td><td>≥ 8</td><td>≥ 50</td><td>≥ 18</td><td>—</td></tr>
+        <tr><td>4 star</td><td>≥ 12</td><td>≥ 80</td><td>≥ 50</td><td>—</td></tr>
+        <tr><td>5 star → Golden Honours</td><td>—</td><td>≥ 150</td><td>≥ 200</td><td>APSSA</td></tr>
+        <tr><td>Golden Honours → Galaxy</td><td>—</td><td>≥ 150</td><td>≥ 400</td><td>FPSSA</td></tr>
+    </table>
+
+    <h3><span class="file">State.cs</span> — UI event bus (singleton)</h3>
+    <table>
+        <tr><th>Method</th><th>Used by Admin for</th></tr>
+        <tr><td><code>ShowFileUpload(title, message, destination)</code></td><td>The upload dialogs in Images Process and Import Club (files land in <code>wwwroot\Import\</code>). Backed by the <code>FileUpload</code> event handled in <span class="file">Shared/FileUpload</span> component.</td></tr>
+        <tr><td><code>ShowFilePicker()</code></td><td>Salon list import file selection.</td></tr>
+        <tr><td><code>ShowMessageAsync(title, message, button)</code> / <code>ShowConfirmAsync(title, message)</code></td><td>Messages ("PROMOTION DUE", delete refusals) and Yes/No prompts ("Add New Master??") via the <code>MessageBox</code>/<code>DialogBox</code> components in MainLayout.</td></tr>
+        <tr><td><code>ShowProgress / UpdateProgress / Hide</code></td><td>The Excel export progress bar (value clamped 0–100).</td></tr>
+    </table>
+
+    <h3><span class="file">gData.cs</span> — paths &amp; constants used by Admin</h3>
+    <table>
+        <tr><th>Member</th><th>Value / role</th></tr>
+        <tr><td><code>Api</code></td><td><code>https://bkk.co.za/</code> — upload/login API base.</td></tr>
+        <tr><td><code>backupPath</code></td><td><code>C:\Users\Lamps\OneDrive\Database\SQL16\Backup\BCC\</code> — .bak files.</td></tr>
+        <tr><td><code>ImportDirectory</code></td><td><code>wwwroot\Import\</code> — staging area, wiped before/after imports.</td></tr>
+        <tr><td><code>photosLocal</code></td><td><code>D:\BKK\Inbox\Club\Photos\</code> — unzip/rename/resize work area.</td></tr>
+        <tr><td><code>clubPhotos</code> / <code>LocalWebsitePath</code></td><td><code>wwwroot\ClubPhotos\</code> under <code>D:\VS\VS Active\BCCBlazor\BCC\</code> — local website publish target.</td></tr>
+        <tr><td><code>Downloads</code></td><td><code>...\Downloads\BKK\</code> (per machine: XPS vs others) — zip export + restore source.</td></tr>
+        <tr><td><code>lastDateClubImported</code> / <code>lastDateClubYear</code></td><td>In-memory copies of the <code>Datum</code> dates; drive all import/rollup logic. Club year starts <strong>1 November</strong>.</td></tr>
+        <tr><td><code>CreateUploadClientHandler()</code></td><td><code>HttpClientHandler</code> that accepts self-signed certificates when <code>Api</code> points at localhost.</td></tr>
+    </table>
+
+    <h3><span class="file">Extensions.cs</span> — helpers the Admin code leans on</h3>
+    <table>
+        <tr><th>Extension</th><th>Behaviour</th></tr>
+        <tr><td><code>AddNull(int?, int?)</code></td><td>Null-safe addition where a result of 0 becomes <code>null</code> — the convention for all points fields.</td></tr>
+        <tr><td><code>toClubDate(DateOnly)</code></td><td>Returns the club-year start (1 Nov) for any date.</td></tr>
+        <tr><td><code>toDateFirstDay(DateOnly)</code></td><td>Normalises to the first of the month (used by <code>LastDates</code>).</td></tr>
+        <tr><td><code>toAward(string)</code></td><td>C→Com, G→Gold, S→Silver, B→Bronz (display).</td></tr>
+        <tr><td><code>toStarGroup(int)</code></td><td>Rating → category text ("1 &amp; 2 Star", "3 Star", "4 &amp; 5 Star", "Golden Honours and Galaxy").</td></tr>
+    </table>
+</section>
+
+<footer>
+    Generated by Claude — BCCPunte Admin menu technical help. Sources: Adm/Club/Admin.razor(.cs), Adm/Club/Backup.razor(.cs),
+    Adm/Salonne/SalonMasMain.razor.cs, Pages/WordDoc.razor.cs, Pages/FileUploadAbs.razor.cs, Repo.cs, Services/DataService.cs,
+    State.cs, gData.cs, Extensions.cs, Pages/Menu.razor.
+</footer>
+
+</main>
+
+<button id="toTop" title="Back to top" aria-label="Scroll back to top">&#9650;</button>
+
+<script>
+    const toTop = document.getElementById('toTop');
+    window.addEventListener('scroll', () => {
+        toTop.classList.toggle('show', window.scrollY > 400);
+    }, { passive: true });
+    toTop.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+</script>
+</body>
+</html>
