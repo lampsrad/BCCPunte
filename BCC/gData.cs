@@ -15,6 +15,7 @@ public class gData
     public static string Exports { get; set; } = "D:\\VS\\Exports\\";
     public static string machineName { get; set; }
     public static string dbName { get; set; } = "BCC";
+    public static string ServerName { get; set; } = "SQL16";
     public static string FtpServer { get; set; } = "ftp.bkk.co.za";
     public static string FtpUsername { get; set; } = "bkkcoza";
     public static string FtpPassword { get; set; } = "ftxIOo]J376L!4";

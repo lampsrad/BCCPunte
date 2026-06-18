@@ -25,7 +25,7 @@ public class DbContextFactory : IDbContextFactory
             con = configuration.GetConnectionString("Abshost");
         else
             con = configuration.GetConnectionString(gData.connectionKey)
-                ?.Replace("[ServerName]", $"{machineName}\\SQL")
+                ?.Replace("[ServerName]", $"{machineName}\\{gData.ServerName}")
                 ?.Replace("[DatabaseName]", gData.dbName)
                 ?? throw new InvalidOperationException($"Connection String for {gData.dbName} not Found.");
         var opsbuilder = new DbContextOptionsBuilder<BKKEntities>();
@@ -40,7 +40,7 @@ public class DbContextFactory : IDbContextFactory
             con = configuration.GetConnectionString("Abshost");
         else
             con = configuration.GetConnectionString(gData.connectionKey)
-                ?.Replace("[ServerName]", $"{machineName}\\SQL")
+                ?.Replace("[ServerName]", $"{machineName}\\{gData.ServerName}")
                 ?.Replace("[DatabaseName]", gData.dbName)
                 ?? throw new InvalidOperationException($"Connection String for {gData.dbName} not Found.");
         var opsbuilder = new DbContextOptionsBuilder<BKKEntities>();
