@@ -185,22 +185,41 @@ public class Repo
         var list = await query.ToListAsync();
         return list;
     }
-    public async Task SqlBackupAsync(string fn)
+    public async Task SqlBackupAsync(string fileName)
     {
+        gData.EnsureSqlStagingPath();
+        string stagePath = Path.Combine(gData.sqlStagingPath, fileName);
+
+        if (File.Exists(stagePath))
+            File.Delete(stagePath);
+
         using var cx = await dbFactory.CreateDbContextAsync();
-        Task T = Task.Run(() =>
-        {
-            cx.Database.ExecuteSqlInterpolated($"Use BCC Backup Database BCC to Disk = {fn} with init");
-        });
-        await T;
+        string sql = $"BACKUP DATABASE [{gData.dbName}] TO DISK = @filePath WITH INIT";
+        await cx.Database.ExecuteSqlRawAsync(sql, new SqlParameter("@filePath", stagePath));
+
+        Directory.CreateDirectory(gData.backupPath);
+        string destPath = Path.Combine(gData.backupPath, fileName);
+        File.Copy(stagePath, destPath, true);
+
+        try { File.Delete(stagePath); } catch { }
     }
-    public async Task SqlRestoreAsync(string fn)
+    public async Task SqlRestoreAsync(string fileName)
     {
+        gData.EnsureSqlStagingPath();
+        string sourcePath = Path.Combine(gData.backupPath, fileName);
+        if (!File.Exists(sourcePath))
+            throw new FileNotFoundException("Backup file not found.", sourcePath);
+
+        string stagePath = Path.Combine(gData.sqlStagingPath, fileName);
+        File.Copy(sourcePath, stagePath, true);
+
         using var cx = await dbFactory.CreateDbContextAsync();
         string sql = $"USE master; ALTER DATABASE [{gData.dbName}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; RESTORE DATABASE [{gData.dbName}] FROM DISK = @filePath WITH REPLACE;";
-        cx.Database.ExecuteSqlRaw(sql, new SqlParameter("@filePath", fn));
-        var sqlMultiUser = $"USE master; ALTER DATABASE [{gData.dbName}] SET MULTI_USER;";
-        cx.Database.ExecuteSqlRaw(sqlMultiUser);
+        await cx.Database.ExecuteSqlRawAsync(sql, new SqlParameter("@filePath", stagePath));
+        string sqlMultiUser = $"USE master; ALTER DATABASE [{gData.dbName}] SET MULTI_USER;";
+        await cx.Database.ExecuteSqlRawAsync(sqlMultiUser);
+
+        try { File.Delete(stagePath); } catch { }
     }
     internal static IQueryable<T> BuildQuery<T>(IQueryable<T> query) where T : class
     {

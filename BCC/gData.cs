@@ -8,7 +8,10 @@ public class gData
     //public static string Api { get; set; } = "https://oef.bkk.co.za/";
     //public static string Api { get; set; } = "http://localhost:5125/";
 
-    public static string backupPath { get; set; }= "C:\\Users\\Lamps\\OneDrive\\Database\\SQL16\\Backup\\BCC\\";   
+    public static string backupPath { get; set; }= "C:\\Users\\Lamps\\OneDrive\\Database\\SQL16\\Backup\\BCC\\";
+    public static string sqlStagingPath { get; } = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+        "BCC", "SqlBackup");
     public static string ClubName { get; set; } = "Bloemfontein";
     public static string clubPhotos { get; set; } = "wwwroot\\ClubPhotos\\";
     public static string connectionKey { get; set; }
@@ -30,6 +33,31 @@ public class gData
     public static string WordFiles { get; set; } = "D:\\VS\\VS Active\\BCCPunte\\BCC\\Wordfiles\\";
     public static Process process { get; set; }
     public static string Downloads { get; set; } = Environment.MachineName=="XPS"?  "C:\\Users\\lammie\\Downloads\\BKK\\" : "C:\\Users\\lamps\\Downloads\\BKK\\";
+
+    public static void EnsureSqlStagingPath()
+    {
+        Directory.CreateDirectory(sqlStagingPath);
+        string[] sqlAccounts =
+        [
+            $@"NT SERVICE\MSSQL${ServerName}",
+            @"NT SERVICE\MSSQLSERVER"
+        ];
+        foreach (string account in sqlAccounts)
+        {
+            try
+            {
+                using Process p = Process.Start(new ProcessStartInfo
+                {
+                    FileName = "icacls",
+                    Arguments = $"\"{sqlStagingPath}\" /grant \"{account}:(OI)(CI)M\"",
+                    CreateNoWindow = true,
+                    UseShellExecute = false,
+                });
+                p?.WaitForExit(5000);
+            }
+            catch { }
+        }
+    }
 
     public static void StartBrowser(string url)
     {

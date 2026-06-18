@@ -128,14 +128,19 @@ public partial class Admin
             File.Delete(file);
         }
     }
-    private async void ecbBackup(string file)
+    private async Task ecbBackup(string file)
     {
-        string fn = Path.Combine(gData.backupPath, file);
-        if (File.Exists(fn))
-            File.Delete(fn);
+        if (string.IsNullOrWhiteSpace(file))
+        {
+            Errors.Clear();
+            Errors.Add("No backup file name selected.");
+            filePick = false;
+            StateHasChanged();
+            return;
+        }
         try
         {
-            await repo.SqlBackupAsync(fn);
+            await repo.SqlBackupAsync(file);
             Messages.Add("Success in Backingup DB");
         }
         catch (Exception ex)
@@ -147,13 +152,12 @@ public partial class Admin
         filePick = false;
         StateHasChanged();
     }
-    private async void ecbRestore(string file)
+    private async Task ecbRestore(string file)
     {
-        string fn = Path.Combine(gData.backupPath, file);
         filePick = false;
         try
         {
-            await repo.SqlRestoreAsync(fn);
+            await repo.SqlRestoreAsync(file);
             Messages.Add("Success in Restoring DB");
         }
         catch (Exception ex)

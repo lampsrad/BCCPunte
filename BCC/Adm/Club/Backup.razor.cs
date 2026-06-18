@@ -41,16 +41,15 @@ public partial class Backup
     {
         Title = Data;
     }
-    private void Submit()
+    private async Task Submit()
     {
         if (Title == "Backup")
         {
-            if(string.IsNullOrEmpty(InputText))
-                ecbBackup.InvokeAsync($"{Model}");
-            else
-                ecbBackup.InvokeAsync($"{InputText}.bak");
+            string file = string.IsNullOrEmpty(InputText) ? Model : $"{InputText}.bak";
+            if (!string.IsNullOrWhiteSpace(file))
+                await ecbBackup.InvokeAsync(file);
         }
-        if (Title == "Restore")
-            ecbRestore.InvokeAsync($"{Model}");
+        if (Title == "Restore" && !string.IsNullOrWhiteSpace(Model))
+            await ecbRestore.InvokeAsync(Model);
     }
 }
