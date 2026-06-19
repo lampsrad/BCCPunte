@@ -54,6 +54,7 @@ ul {
 
 ul li {
     display: inline-block;
+    position: relative;
 }
 
     ul li:hover {
@@ -62,10 +63,23 @@ ul li {
 
     ul li ul {
         position: absolute;
+        top: 100%;
+        left: 0;
         display: none;
+        z-index: 101;
+        white-space: nowrap;
     }
 
-    ul li:hover ul {
+        ul li ul::before {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+    ul li:hover > ul {
         display: block;
     }
 
