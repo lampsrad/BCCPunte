@@ -63,7 +63,7 @@ public class gData
     {
         Process g = new Process();
         process = g;
-        g.StartInfo.FileName = Environment.MachineName == "XPS" ? @"C:\Program Files\Google\Chrome\Application\chrome.exe" : @"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe";
+        g.StartInfo.FileName = @"C:\Program Files\Google\Chrome\Application\chrome.exe";
         g.StartInfo.Arguments = url;
         g.Start();
     }
