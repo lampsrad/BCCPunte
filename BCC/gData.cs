@@ -6,7 +6,7 @@ public class gData
 {
     //public static string Api { get; set; } = "https://bkk.co.za/";
     //public static string Api { get; set; } = "https://oef.bkk.co.za/";
-    //public static string Api { get; set; } = "http://localhost:5125/";
+    public static string Api { get; set; } = "http://localhost:5125/";
 
     public static string backupPath { get; set; }= "C:\\Users\\Lamps\\OneDrive\\Database\\SQL16\\Backup\\BCC\\";
     public static string sqlStagingPath { get; } = Path.Combine(
@@ -28,7 +28,7 @@ public class gData
     public static DateOnly lastDateClubYear { get; set; }
     public static DateOnly lastDateClubImported { get; set; }
     public static readonly object locked = new object();
-    public static string LocalWebsitePath { get; set; } = "D:\\VS\\VS Active\\BCCBlazor\\BCC\\";
+    public static string LocalWebsitePath { get; set; } = "D:\\VS\\VS Active\\BCC\\BCC\\";
     public static string photosLocal { get; set; } = "D:\\BKK\\Inbox\\Club\\Photos\\";
     public static string WordFiles { get; set; } = "D:\\VS\\VS Active\\BCCPunte\\BCC\\Wordfiles\\";
     public static Process process { get; set; }

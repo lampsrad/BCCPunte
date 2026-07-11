@@ -730,10 +730,6 @@ public partial class Admin
     #endregion
 
     #region ImagesProcess
-    /// <summary>
-    /// FileChooser to select multiple .zips; Copy these to wwwroot/Import/
-    /// </summary>
-    /// <returns></returns>
     private async Task<string> FileUpload()
     {
         Filename = await state.ShowFileUpload("ZIPPED PHOTOS", "Upload Zipped Photos from PhotoVault", gData.ImportDirectory);
@@ -775,12 +771,18 @@ public partial class Admin
             if (Filename == null)
                 return null;
             Messages.Add(Info.CurrentStage); StateHasChanged();
+            //Copies from D:\BKK\Inbox\Club\Photos\\YYYY-MM\ to Same\Temp\ and renames to #######.jpg
             await PhotosCopyRenameAsync(progress, Filename);
             Messages.Add(Info.CurrentStage); StateHasChanged();
+            //Generate Previews from D:\BKK\Inbox\Club\Photos\\YYYY-MM\Temp\ to D:\BKK\Inbox\Club\Photos\WEB\
             await PhotosGeneratePreviewsAsync(progress, Filename, 1365, 768);
             Messages.Add(Info.CurrentStage); StateHasChanged();
+            //Zip files from D:\BKK\Inbox\Club\Photos\WEB\ to C:\Users\lamps\Downloads\BKK\ZippedExport\BKK-2026-07.zip as example
+            //Copy files from D:\BKK\Inbox\Club\Photos\WEB\ to D:\VS\VS Active\BCC\BCC\wwwroot\ClubPhotos\YYYY-MM\
+            //Deletes all files in  D:\BKK\Inbox\Club\Photos\WEB\
             await PhotosZipAsync(progress);
             Messages.Add("UPLOAD TO ABS HOST"); StateHasChanged();
+            //Login to API. Uploads the zipped file in C:\Users\lamps\Downloads\BKK\ZippedExport\BKK-2026-07.zip to API  FU/zip
             await UploadToHosting(progress, $"{gData.Downloads}ZippedExport\\BKK-{Filename}.zip");
             Messages.Add(Info.CurrentStage); StateHasChanged();
             return null;
@@ -815,11 +817,6 @@ public partial class Admin
             throw new Exception("Login succeeded but no token was returned.");
         return loginResult.Token;
     }
-    /// <summary>
-    /// Calls FileUpload; Unzip to D:\\BKK\\Inbox\\Club\\Photos\\Date\\
-    /// </summary>
-    /// <param name="progress"></param>
-    /// <returns></returns>
     public async Task<string> PhotosLocalUnzipAsync(IProgress<ProgressInfo> progress)
     {
         await FileUpload();
@@ -855,12 +852,6 @@ public partial class Admin
         }
         return Filename;
     }
-    /// <summary>
-    /// Copies all .jpg files from photosLocal\{fn}\ to a Temp\ subfolder, renaming each to its embedded 7-digit ID
-    /// </summary>
-    /// <param name="progress"></param>
-    /// <param name="fn"></param>
-    /// <returns></returns>
     public async Task PhotosCopyRenameAsync(IProgress<ProgressInfo> progress, string fn)
     {
         int processed = 0;
@@ -911,15 +902,6 @@ public partial class Admin
         })).ToArray();
         await Task.WhenAll(copyTasks);
     }
-    /// <summary>
-    /// Resizes all .jpg files from Temp\ to photosLocal\WEB\, generating web previews at the given width/height
-    /// </summary>
-    /// <param name="progress"></param>
-    /// <param name="fn"></param>
-    /// <param name="width"></param>
-    /// <param name="height"></param>
-    /// <param name="degreeOfParallelism"></param>
-    /// <returns></returns>
     public async Task PhotosGeneratePreviewsAsync(IProgress<ProgressInfo> progress, string fn, int width, int height, int degreeOfParallelism = 0)
     {
         string sourceDir = $"{gData.photosLocal}{fn}\\Temp\\";
@@ -961,9 +943,6 @@ public partial class Admin
             });
         });
     }
-    /// <summary>
-    /// Zips all web previews from photosLocal\WEB\ into \\Downloads\BKK\\ZippedExport\BKK-{Filename}.zip, then copies each file to the local website path
-    /// </summary>>
     public async Task<string> PhotosZipAsync(IProgress<ProgressInfo> progress)
     {
         string sourceDir = $"{gData.photosLocal}WEB\\";
@@ -987,6 +966,7 @@ public partial class Admin
         if (File.Exists(zipPath))
             File.Delete(zipPath);
         await Task.Run(() => ZipFile.CreateFromDirectory(sourceDir, zipPath));
+
         for (int i = 0; i < filesToCopy.Length; i++)
         {
             string file = filesToCopy[i];
@@ -1009,9 +989,6 @@ public partial class Admin
         }
         return $"Successfully zipped {total} photos to {zipPath}";
     }
-    /// <summary>
-    /// Authenticates and uploads the zipped photo file to the remote hosting server via HTTP multipart POST (max 120 MB)
-    /// </summary>
     private async Task<string> UploadToHosting(IProgress<ProgressInfo> progress, string filePath)
     {
         string fileName = Path.GetFileName(filePath);
