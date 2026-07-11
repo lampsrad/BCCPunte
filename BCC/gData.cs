@@ -4,8 +4,8 @@ namespace BCC;
 
 public class gData
 {
-    public static string Api { get; set; } = "https://bkk.co.za/";
-    //public static string Api { get; set; } = "https://oef.bkk.co.za/";
+    //public static string Api { get; set; } = "https://bkk.co.za/";
+    public static string Api { get; set; } = "https://oef.bkk.co.za/";
     //public static string Api { get; set; } = "http://localhost:5125/";
 
     public static string backupPath { get; set; }= "C:\\Users\\Lamps\\OneDrive\\Database\\SQL16\\Backup\\BCC\\";
@@ -67,11 +67,6 @@ public class gData
         g.StartInfo.Arguments = url;
         g.Start();
     }
-
-    /// <summary>
-    /// Creates an HttpClientHandler suitable for calling the remote upload API.
-    /// For localhost targets, accepts self-signed certificates (dev convenience).
-    /// </summary>
     public static HttpClientHandler CreateUploadClientHandler()
     {
         var handler = new HttpClientHandler();
