@@ -723,17 +723,16 @@ cx.Database.ExecuteSqlRaw(sql, new SqlParameter("@filePath", fn));</code></pre>
       </tbody>
     </table>
 
-    <h3>Image Pipeline (ImagesProcessAsync → 7 stages)</h3>
-    <p>See the complete detailed workflow in <a href="#imagesprocess">Section 18.1: Admin: Images Process – Complete Step-by-Step Workflow</a>.</p>
+    <h3>Image Pipeline (<code>ImagesProcessAsync</code> → 5 orchestrated stages)</h3>
+    <p>Full walkthrough with paths, failure rules, and diagram: <a href="#imagesprocess">Section 18.1</a>. Summary of the call chain in <code>Admin.razor.cs</code>:</p>
     <ol>
-      <li><strong>FileUpload</strong> — user selects ZIP(s) via dialog → saved to Import folder</li>
-      <li><strong>PhotosLocalUnzipAsync</strong> — extracts into <code>D:\BKK\Inbox\Club\Photos\{month}\</code></li>
-      <li><strong>PhotosCopyRenameAsync</strong> — extracts 7-digit IntRef via regex, copies to <code>Temp\#######.jpg</code></li>
-      <li><strong>PhotosGeneratePreviewsAsync</strong> — parallel ImageSharp resize to 1365×768 → <code>WEB\</code> folder</li>
-      <li><strong>PhotosZipAsync</strong> — creates distribution zip + copies to local ClubPhotos and source website folders</li>
-      <li><strong>Login</strong> — obtains JWT Bearer token from live site</li>
-      <li><strong>UploadToHosting</strong> — POSTs the zip to <code>/FU/zip</code> on production (max 120 MB)</li>
+      <li><strong>PhotosLocalUnzipAsync</strong> — file dialog + extract all <code>*.zip</code> from Import into <code>D:\BKK\Inbox\Club\Photos\{yyyy-MM}\</code></li>
+      <li><strong>PhotosCopyRenameAsync</strong> — regex <code>\d{7}</code> → <code>Temp\#######.jpg</code> (skips missing IDs)</li>
+      <li><strong>PhotosGeneratePreviewsAsync</strong> — ImageSharp resize max <strong>1365×768</strong> → <code>WEB\</code> (fatal on bad image)</li>
+      <li><strong>PhotosZipAsync</strong> — zip to Downloads + copy previews to <code>{LocalWebsitePath}wwwroot\ClubPhotos\{month}\</code>; clear <code>WEB\</code></li>
+      <li><strong>UploadToHosting</strong> — JWT login then POST zip to <code>{gData.Api}FU/zip</code> (max 120 MB)</li>
     </ol>
+    <p>This path only moves and resizes photo files. Competition scores/members are imported separately via <strong>Admin → Import Club</strong>.</p>
 
     <h3>Other Admin Tools</h3>
     <ul>
@@ -785,15 +784,56 @@ cx.Database.ExecuteSqlRaw(sql, new SqlParameter("@filePath", fn));</code></pre>
 
   <!-- 18. IMAGE PIPE -->
   <div class="section" id="imagepipe">
-    <h2>18. Image Processing Pipeline — Detailed Flow</h2>
-    <p>Triggered from Admin page "Images Process" button. Uses <code>IProgress&lt;ProgressInfo&gt;</code> for live UI updates via State.UpdateProgress.</p>
-    <p>Key transformations:</p>
+    <h2>18. Image Processing Pipeline — Overview</h2>
+    <p>
+      Triggered from <strong>Admin → Images Process</strong> (menu href <code>admin/images-import</code>).
+      Implemented entirely in <code>Adm/Club/Admin.razor.cs</code> region <code>ImagesProcess</code>, with the file dialog in
+      <code>Pages/FileUpload.razor</code> and paths from <code>gData.cs</code>.
+    </p>
+    <p>
+      Progress is driven by <code>IProgress&lt;ProgressInfo&gt;</code> bound to the Admin page <code>ProgressBar</code>
+      (not <code>State.UpdateProgress</code>). Stage labels reported in the UI include
+      <strong>UNZIPPING</strong>, <strong>COPYING &amp; RENAMING</strong>, <strong>GENERATING PREVIEWS</strong>,
+      <strong>PHOTOS ZIP</strong>, and the message <strong>UPLOAD TO ABS HOST</strong>.
+    </p>
+
+    <h3>What this pipeline is (and is not)</h3>
     <ul>
-      <li>Original filenames from camera or download service are ignored.</li>
-      <li>Matching is done purely on numeric IntRef (PVID) extracted during CSV import.</li>
-      <li>High IntRef numbers (&gt;10M) are treated as "Censored" and mapped to images/Censored.jpg.</li>
-      <li>Final published images live under <code>/photos/2025-11/12345.jpg</code> (served from physical gData.photosLocal via static file middleware).</li>
+      <li><strong>Is:</strong> Unzip PhotoVault packages → rename by embedded 7-digit ID → resize to web previews →
+          publish to local ClubPhotos folders → zip → upload zip to hosting API.</li>
+      <li><strong>Is not:</strong> Database import. It does <em>not</em> create or update <code>Photo</code> / <code>Monthly</code> rows.
+          That is <strong>Admin → Import Club</strong> (<code>club-import</code>). Display of awards still needs those DB rows
+          to know which <code>#######.jpg</code> belongs to which member.</li>
+      <li>Rename matching is <strong>filename-only</strong> (regex <code>\d{7}</code> on the original JPG name). No EF lookup.</li>
+      <li>Final local URL shape: <code>/ClubPhotos/{yyyy-MM}/{7digit}.jpg</code> (static files under <code>wwwroot\ClubPhotos\</code>).</li>
+      <li>Censored / high-IntRef display mapping (if used elsewhere in UI) is separate from this pipeline.</li>
     </ul>
+
+    <h3>End-to-end diagram</h3>
+    <pre><code>Admin → Images Process
+        │
+        ▼
+  /admin/images-import   →  OnParametersSetAsync  →  ImagesProcessAsync()
+        │
+        ▼
+  Upload PhotoVault .zip(s)  →  wwwroot\Import\
+        │
+        ▼
+  Unzip  →  D:\BKK\Inbox\Club\Photos\{yyyy-MM}\
+        │
+        ▼
+  Rename (7-digit ID)  →  ...\{yyyy-MM}\Temp\#######.jpg
+        │
+        ▼
+  Resize max 1365×768  →  ...\WEB\#######.jpg
+        │
+        ├─► Zip  →  {Downloads}\ZippedExport\BKK-{yyyy-MM}.zip
+        │              └─► POST {gData.Api}FU/zip  (Bearer JWT)
+        │
+        └─► Copy each preview to {LocalWebsitePath}wwwroot\ClubPhotos\{yyyy-MM}\
+            (also creates this app's wwwroot\ClubPhotos\{yyyy-MM}\ directory)</code></pre>
+
+    <p>Menu tooltip (Admin → Images Process) summarises the same path as six operator steps: unzip → copy/rename → generate web images → copy local → zip → upload to Abs host.</p>
   </div>
 
   <!-- 18.1 DETAILED IMAGES PROCESS -->
@@ -801,133 +841,172 @@ cx.Database.ExecuteSqlRaw(sql, new SqlParameter("@filePath", fn));</code></pre>
     <h2>18.1 Admin: Images Process – Complete Step-by-Step Workflow</h2>
 
     <div class="note">
-      This is one of the most important (and longest-running) operations in the entire application. It is triggered when an administrator clicks <strong>Images Process</strong> in the Admin dropdown menu. It transforms raw competition photos received from PhotoVault into web-ready images and publishes them both locally and to the live production website.
+      One of the longest-running Admin operations. It turns raw PhotoVault competition photos into web-ready JPEGs
+      and publishes them both locally and via the Absolute Hosting API. Source of truth for behaviour:
+      <code>ImagesProcessAsync</code> and helpers in <code>Adm/Club/Admin.razor.cs</code> (region <code>ImagesProcess</code>).
     </div>
 
-    <h3>How to Trigger It</h3>
+    <h3>0. Menu click → route → orchestrator</h3>
     <ol class="steps">
-      <li>Go to the top menu → <strong>Admin</strong> → <strong>Images Process</strong></li>
-      <li>The browser navigates to <code>/admin/images-import</code></li>
-      <li><code>OnParametersSetAsync()</code> in <code>Admin.razor.cs:221</code> immediately calls <code>ImagesProcessAsync()</code></li>
-      <li>A file upload dialog appears asking for "ZIPPED PHOTOS" from PhotoVault</li>
+      <li>Top menu → <strong>Admin</strong> → <strong>Images Process</strong> (<code>Menu.razor</code> → href <code>admin/images-import</code>)</li>
+      <li>Route <code>@page "/admin/{Data}"</code> on <code>Admin.razor</code> with <code>Data = "images-import"</code></li>
+      <li><code>OnInitialized</code> runs <code>DirectoryPrepare(gData.ImportDirectory)</code> — ensures <code>wwwroot\Import\</code> exists and <strong>deletes all files already in it</strong></li>
+      <li><code>OnParametersSetAsync</code> switch calls <code>await ImagesProcessAsync()</code></li>
+      <li>Admin UI shows title, <code>ProgressBar</code>, then message/error lists as stages complete</li>
     </ol>
 
-    <h3>Prerequisites (Very Important)</h3>
+    <h3>Orchestrator: <code>ImagesProcessAsync()</code></h3>
+    <p>Clears messages, builds <code>IProgress&lt;ProgressInfo&gt;</code> that sets <code>Info</code> and calls <code>StateHasChanged</code>, then runs stages in order. Hides the progress bar in <code>finally</code>. Any exception is rethrown as <code>"Error during image processing: ..."</code>.</p>
+    <table>
+      <thead><tr><th>#</th><th>Method</th><th>Progress / message</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td><code>PhotosLocalUnzipAsync</code></td><td>UNZIPPING (+ prior file dialog)</td></tr>
+        <tr><td>2</td><td><code>PhotosCopyRenameAsync</code></td><td>COPYING &amp; RENAMING</td></tr>
+        <tr><td>3</td><td><code>PhotosGeneratePreviewsAsync(..., 1365, 768)</code></td><td>GENERATING PREVIEWS</td></tr>
+        <tr><td>4</td><td><code>PhotosZipAsync</code></td><td>PHOTOS ZIP</td></tr>
+        <tr><td>5</td><td><code>UploadToHosting</code> (calls <code>Login</code> internally)</td><td>UPLOAD TO ABS HOST</td></tr>
+      </tbody>
+    </table>
+    <p>If the file dialog is cancelled (<code>Filename == null</code>), the method returns immediately — no unzip, zip, or upload.</p>
+
+    <h3>Prerequisites</h3>
     <ul>
-      <li>The monthly competition data (scores + results CSVs) must already have been imported for the target month. This creates the <code>Photo</code> records containing the 7-digit <code>IntRef</code> (PVID) numbers that will be used for matching.</li>
-      <li>You must have received one or more ZIP files from PhotoVault containing the high-resolution images for that month.</li>
-      <li>The ZIP filenames usually contain the month (e.g. something like "BCC 2025-11.zip").</li>
+      <li>One or more PhotoVault <strong>.zip</strong> packages of high-res JPGs for the competition month (names should parse — see Stage 1).</li>
+      <li>Each JPG filename must embed a <strong>7-digit</strong> PhotoVault / IntRef id somewhere (e.g. <code>...-2771380-....jpg</code>).</li>
+      <li>To <em>view</em> photos on Awards/Results, Import Club for that month should already have written <code>Photo</code> rows with matching IntRefs — but Images Process itself does not read the database.</li>
+      <li>Paths on disk must exist or be creatable: <code>gData.photosLocal</code>, Downloads export folder, <code>gData.LocalWebsitePath</code>, network/API for upload.</li>
+      <li><code>appsettings.json</code> <code>Auth:Username</code> / <code>Auth:Password</code> valid against <code>{gData.Api}Auth/login</code>.</li>
     </ul>
 
-    <h3>The Complete 7-Stage Process</h3>
+    <h3>Key path constants (<code>gData.cs</code>)</h3>
+    <table>
+      <thead><tr><th>Constant</th><th>Typical value</th><th>Role in pipeline</th></tr></thead>
+      <tbody>
+        <tr><td><code>ImportDirectory</code></td><td><code>wwwroot\Import\</code></td><td>Upload landing; all <code>*.zip</code> unzipped</td></tr>
+        <tr><td><code>photosLocal</code></td><td><code>D:\BKK\Inbox\Club\Photos\</code></td><td>Working tree: month folder, <code>Temp\</code>, <code>WEB\</code></td></tr>
+        <tr><td><code>clubPhotos</code></td><td><code>wwwroot\ClubPhotos\</code></td><td>This app’s static photo folder</td></tr>
+        <tr><td><code>LocalWebsitePath</code></td><td><code>D:\VS\VS Active\BCCBlazor\BCC\</code></td><td>Second local site copy target</td></tr>
+        <tr><td><code>Downloads</code></td><td>machine-dependent under <code>...\Downloads\BKK\</code></td><td>Export zip root (<code>ZippedExport\</code>)</td></tr>
+        <tr><td><code>Api</code></td><td>e.g. <code>https://oef.bkk.co.za/</code> (see current <code>gData.Api</code>)</td><td>Login + <code>FU/zip</code> upload</td></tr>
+      </tbody>
+    </table>
 
-    <h4>Stage 1: File Selection (FileUpload)</h4>
-    <p>Calls <code>state.ShowFileUpload("ZIPPED PHOTOS", "Upload Zipped Photos from PhotoVault", gData.ImportDirectory)</code>.</p>
-    <p>The selected ZIP file(s) are saved into <code>wwwroot\Import\</code>. The variable <code>Filename</code> is set to the base name chosen in the dialog (this becomes the month folder name, e.g. "2025-11" or "2026-03").</p>
-
-    <h4>Stage 2: Unzipping (PhotosLocalUnzipAsync)</h4>
-    <p>Location: <code>Admin.razor.cs:761</code></p>
+    <h3>Stage 1 — Upload dialog &amp; unzip (<code>PhotosLocalUnzipAsync</code> → <code>FileUpload</code>)</h3>
+    <p><strong>Dialog</strong> via <code>state.ShowFileUpload("ZIPPED PHOTOS", "Upload Zipped Photos from PhotoVault", gData.ImportDirectory)</code> (<code>FileUpload.razor</code> in MainLayout).</p>
     <ul>
-      <li>Finds every <code>*.zip</code> file currently in <code>gData.ImportDirectory</code></li>
-      <li>Creates the destination folder: <code>D:\BKK\Inbox\Club\Photos\{Filename}\</code> (example: <code>D:\BKK\Inbox\Club\Photos\2026-03\</code>)</li>
-      <li>Extracts the contents of every ZIP into that folder using <code>ZipFile.ExtractToDirectory(..., overwriteFiles: true)</code></li>
-      <li>Live progress is reported for each ZIP file ("Extracting BCC-2026-03.zip (2/3)...")</li>
+      <li>Clears and recreates the Import folder, then accepts multiple files (max 10, <strong>100 MB</strong> each in the uploader).</li>
+      <li><code>ExtractName</code> parses PhotoVault-style names with regex <code>photos-([a-z]+)_(\d{4})-([a-z]+)</code> (month EN/AF → <code>01</code>–<code>12</code>), producing a label like <code>2026-03 Set</code>.</li>
+      <li>Each file is saved as that label + original extension under Import. The returned month key is the year-month token only: <code>Ym = Filename.Split(' ')[0]</code> (e.g. <code>2026-03</code>). That becomes Admin’s <code>Filename</code> for all later folders and the export zip name.</li>
+      <li>Cancel closes the dialog with <code>null</code> → whole process stops.</li>
     </ul>
-    <div class="tip">After this stage you will see a folder full of the original high-resolution JPGs with their original PhotoVault filenames (often containing the 7-digit ID somewhere in the name).</div>
+    <p><strong>Unzip:</strong> <code>Directory.GetFiles(Import, "*.zip")</code> for <em>every</em> zip now in Import (folder was wiped then refilled by the uploader). Creates <code>D:\BKK\Inbox\Club\Photos\{Filename}\</code> and <code>ZipFile.ExtractToDirectory(..., overwriteFiles: true)</code> for each zip. Progress: <strong>UNZIPPING</strong>.</p>
+    <div class="tip">After this stage the month folder holds original high-res JPGs with PhotoVault filenames (the 7-digit id is usually embedded in the name).</div>
 
-    <h4>Stage 3: Copy &amp; Rename to Temp (PhotosCopyRenameAsync)</h4>
-    <p>Location: <code>Admin.razor.cs:802</code></p>
-    <p>This is the critical matching step.</p>
+    <h3>Stage 2 — Copy &amp; rename (<code>PhotosCopyRenameAsync</code>)</h3>
     <ul>
-      <li>Scans <code>D:\BKK\Inbox\Club\Photos\{Filename}\</code> for all <code>*.jpg</code></li>
-      <li>For each file, runs regex <code>\d{7}</code> against the original filename to extract the 7-digit internal reference number (this must match <code>Photo.IntRef</code> from the earlier CSV import)</li>
-      <li>If no 7-digit number is found → the file is skipped and logged in the <code>Errors</code> list</li>
-      <li>Valid files are copied (with overwrite) into a new subfolder: <code>...\{Filename}\Temp\</code> and renamed to simply <code>#######.jpg</code> (e.g. <code>1234567.jpg</code>)</li>
-      <li>Uses parallel <code>Task.Run</code> for performance</li>
+      <li>Source: <code>{photosLocal}{fn}\*.jpg</code> (top-level of the month folder only).</li>
+      <li>Dest: <code>{photosLocal}{fn}\Temp\</code>.</li>
+      <li>For each file: <code>Regex.Match(name, @"\d{7}")</code>. Success → copy to <code>Temp\{digits}.jpg</code> (overwrite). Failure → skip and append to <code>Errors</code> (<em>non-fatal</em>). Copy exceptions also logged; processing continues.</li>
+      <li>Parallel via <code>Task.WhenAll</code> of <code>Task.Run</code> workers. Progress: <strong>COPYING &amp; RENAMING</strong>.</li>
     </ul>
-    <div class="warn">If many files are skipped here, it almost always means the monthly Photo records were not yet imported, or the ZIPs contain images from a different month.</div>
+    <div class="warn">
+      Many skips almost always mean filenames lack a 7-digit id, or the wrong month’s zip was used.
+      This stage does <strong>not</strong> query the database — it never “checks” whether Import Club ran first.
+    </div>
 
-    <h4>Stage 4: Generate Web Previews (PhotosGeneratePreviewsAsync + GenerateImagesAsync)</h4>
-    <p>Location: <code>Admin.razor.cs:861</code> and <code>689</code></p>
+    <h3>Stage 3 — Generate web previews (<code>PhotosGeneratePreviewsAsync</code> + <code>GenerateImagesAsync</code>)</h3>
     <ul>
-      <li>Source: <code>...\{Filename}\Temp\</code></li>
-      <li>Destination: <code>D:\BKK\Inbox\Club\Photos\WEB\</code></li>
-      <li>Uses <strong>SixLabors.ImageSharp</strong> to process every image:</li>
+      <li>Source: <code>...\{fn}\Temp\*.jpg</code> → Dest: <code>{photosLocal}WEB\</code>.</li>
+      <li><strong>SixLabors.ImageSharp</strong>: load, <code>ResizeMode.Max</code> into <strong>1365 × 768</strong>, save (same base name).</li>
+      <li>Parallelism: <code>Parallel.ForEachAsync</code> with <code>MaxDegreeOfParallelism = Environment.ProcessorCount</code> by default.</li>
+      <li>A failure on one image <strong>throws</strong> and aborts the whole run (unlike Stage 2). Progress: <strong>GENERATING PREVIEWS</strong>.</li>
     </ul>
     <pre><code>using (var image = await Image.LoadAsync(source))
 {
     image.Mutate(x => x.Resize(new ResizeOptions
     {
         Mode = ResizeMode.Max,
-        Size = new Size(1365, 768)
+        Size = new Size(width, height)   // 1365, 768 from orchestrator
     }));
     await image.SaveAsync(destination);
 }</code></pre>
-    <ul>
-      <li>Target size is hardcoded to <strong>1365 × 768</strong> pixels</li>
-      <li>ResizeMode.Max = maintains aspect ratio, fits inside the box</li>
-      <li>Extremely parallel: uses <code>Environment.ProcessorCount</code> (usually 8–16 threads)</li>
-      <li>Progress is reported after every single image</li>
-    </ul>
 
-    <h4>Stage 5: Zipping + Distribution (PhotosZipAsync)</h4>
-    <p>Location: <code>Admin.razor.cs:905</code></p>
-    <p>This stage does several important things at once:</p>
+    <h3>Stage 4 — Zip + distribute locally (<code>PhotosZipAsync</code>)</h3>
+    <p>Progress stage label remains <strong>PHOTOS ZIP</strong> for both zip creation and local copies. Code comment: zip previews, then copy each file to the local website path.</p>
     <ol>
-      <li>Creates a ZIP of everything in <code>D:\BKK\Inbox\Club\Photos\WEB\</code> → <code>C:\Users\lammie\Downloads\BKK\ZippedExport\BKK-{Filename}.zip</code></li>
-      <li>Copies every generated preview into the running app's own static folder:<br>
-          <code>wwwroot\ClubPhotos\{Filename}\</code> (so the local site immediately sees the new photos)</li>
-      <li>Also copies the same files to the "source of truth" local website folder:<br>
-          <code>D:\VS\VS Active\BCCBlazor\BCC\wwwroot\ClubPhotos\{Filename}\</code> (used when publishing the whole site)</li>
-      <li>Deletes the files from the temporary <code>WEB\</code> folder after copying</li>
+      <li>Zip entire <code>{photosLocal}WEB\</code> → <code>{Downloads}ZippedExport\BKK-{Filename}.zip</code> (deletes existing zip first). Example: <code>...\Downloads\BKK\ZippedExport\BKK-2026-03.zip</code>.</li>
+      <li><code>Directory.CreateDirectory</code> on both <code>wwwroot\ClubPhotos\{Filename}\</code> (<code>gData.clubPhotos</code>) and <code>{LocalWebsitePath}wwwroot\ClubPhotos\{Filename}\</code>.</li>
+      <li>For each preview file: <strong>copy only</strong> to <code>localWebDest = {LocalWebsitePath}{clubPhotos}{Filename}\</code> (BCCBlazor site), then <strong>delete</strong> the file from <code>WEB\</code>. Progress message: <em>Copied N/total to local website</em>.</li>
     </ol>
+    <div class="warn">
+      As written, the loop destination is always <code>localWebDest</code> — files are not copied into this app’s relative <code>wwwroot\ClubPhotos\{Filename}\</code>
+      (that folder is only created). Serving photos from the running BCCPunte instance depends on that path being populated by another means,
+      or on <code>LocalWebsitePath</code> / deployment layout matching how you browse the site.
+    </div>
+    <div class="tip">After Stage 4 the working <code>WEB\</code> folder is emptied; high-res originals remain under the month folder and renamed copies remain under <code>Temp\</code>.</div>
 
-    <h4>Stage 6: Authentication (Login)</h4>
-    <p>Location: <code>Admin.razor.cs:742</code></p>
-    <p>Before uploading, the app authenticates against the live site:</p>
-    <pre><code>POST https://bkk.co.za/Auth/login
-Body: { "username": "...", "password": "..." }</code></pre>
-    <p>Credentials come from <code>appsettings.json → "Auth"</code> section. Returns a JWT Bearer token.</p>
-
-    <h4>Stage 7: Upload to Production (UploadToHosting)</h4>
-    <p>Location: <code>Admin.razor.cs:953</code></p>
+    <h3>Stage 5 — Upload to hosting (<code>UploadToHosting</code> + <code>Login</code>)</h3>
+    <p>Called with <code>{Downloads}ZippedExport\BKK-{Filename}.zip</code>. Message list gets <strong>UPLOAD TO ABS HOST</strong> before the call.</p>
     <ul>
-      <li>Only accepts <code>.zip</code> files</li>
-      <li>Hard limit: 120 MB maximum</li>
-      <li>Timeout: 15 minutes</li>
-      <li>Uses <code>MultipartFormDataContent</code></li>
-      <li>Endpoint: <code>POST https://bkk.co.za/FU/zip</code> with <code>Authorization: Bearer {token}</code></li>
-      <li>The production server receives the zip and is responsible for extracting it into its own <code>wwwroot/ClubPhotos/{month}/</code> folder</li>
+      <li>Validates extension <code>.zip</code>, file exists, size ≤ <strong>120 MB</strong> (larger → message and return, no throw).</li>
+      <li><code>HttpClient</code> via <code>gData.CreateUploadClientHandler()</code>, timeout <strong>15 minutes</strong>.</li>
+      <li><strong>Login:</strong> POST JSON <code>{ username, password }</code> from config <code>Auth:*</code> to <code>{gData.Api}Auth/login</code> → JWT <code>LoginResponse.Token</code>.</li>
+      <li><strong>Upload:</strong> multipart form field <code>file</code>, header <code>Authorization: Bearer {token}</code>, POST <code>{gData.Api}FU/zip</code>.</li>
+      <li>Success/failure text appended to Admin <code>Messages</code> (errors are caught and listed rather than always rethrown from this method).</li>
     </ul>
+    <pre><code>POST {gData.Api}Auth/login
+Body: { "username": "...", "password": "..." }
 
-    <h3>Final State After Successful Run</h3>
+POST {gData.Api}FU/zip
+Authorization: Bearer {token}
+Content-Type: multipart/form-data  (file = BKK-{yyyy-MM}.zip)</code></pre>
+    <p>The remote host is expected to accept the zip (and place images for the public site). Local copies already live under <code>ClubPhotos</code> from Stage 4.</p>
+
+    <h3>Final state after a successful run</h3>
     <ul>
-      <li>Original high-res photos remain in <code>D:\BKK\Inbox\Club\Photos\{Filename}\</code></li>
-      <li>Web-optimized 1365×768 images exist in:
+      <li>High-res originals: <code>D:\BKK\Inbox\Club\Photos\{yyyy-MM}\</code> (+ <code>Temp\#######.jpg</code>)</li>
+      <li>Web previews (1365×768) at:
         <ul>
-          <li>Local running app: <code>wwwroot/ClubPhotos/{Filename}/</code></li>
-          <li>Source website folder (for future publishes)</li>
-          <li>Live production site (after the server extracts the uploaded zip)</li>
+          <li>BCCBlazor local website: <code>{LocalWebsitePath}wwwroot\ClubPhotos\{yyyy-MM}\#######.jpg</code> (actual <code>File.Copy</code> target)</li>
+          <li>This app’s <code>wwwroot\ClubPhotos\{yyyy-MM}\</code> directory is created but not filled by the copy loop</li>
+          <li>Remote site after successful <code>FU/zip</code> handling on the host</li>
         </ul>
       </li>
-      <li>A backup zip is left in your Downloads folder</li>
-      <li>All messages from each stage are shown on the Admin page</li>
+      <li>Export zip retained: <code>{Downloads}ZippedExport\BKK-{yyyy-MM}.zip</code></li>
+      <li>Admin page lists stage messages; skipped-rename files appear under the red <code>Errors</code> list</li>
     </ul>
 
-    <h3>Common Problems &amp; Troubleshooting</h3>
+    <h3>Failure &amp; cancel semantics</h3>
     <table>
-      <thead><tr><th>Problem</th><th>Likely Cause</th><th>Solution</th></tr></thead>
+      <thead><tr><th>Situation</th><th>Behaviour</th></tr></thead>
       <tbody>
-        <tr><td>Many files skipped in Stage 3</td><td>Monthly data not yet imported</td><td>Import the scores/results CSV first</td></tr>
-        <tr><td>Wrong month folder created</td><td>Filename chosen incorrectly in upload dialog</td><td>Be very deliberate when naming the upload</td></tr>
-        <tr><td>Upload fails with 401</td><td>Auth credentials wrong or expired token</td><td>Check appsettings.json "Auth" section</td></tr>
-        <tr><td>Images look distorted</td><td>ResizeMode.Max with very wide or tall originals</td><td>Current behavior is intentional (fit inside box)</td></tr>
-        <tr><td>Process hangs on large months</td><td>Very high image count + slow disk</td><td>Be patient – it is heavily parallelized</td></tr>
+        <tr><td>Cancel upload dialog</td><td><code>Filename == null</code> → return; no further stages</td></tr>
+        <tr><td>JPG without 7-digit id</td><td>Skipped; error string added; pipeline continues</td></tr>
+        <tr><td>Corrupt image in preview stage</td><td>Throws → orchestrator wraps as image-processing error; progress bar hidden</td></tr>
+        <tr><td>Zip missing / too large for upload</td><td>Message on page; upload returns without throwing</td></tr>
+        <tr><td>Login or HTTP upload exception</td><td>Caught in <code>UploadToHosting</code>; messages only</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Common problems &amp; troubleshooting</h3>
+    <table>
+      <thead><tr><th>Problem</th><th>Likely cause</th><th>Solution</th></tr></thead>
+      <tbody>
+        <tr><td>Many files skipped in rename</td><td>No <code>\d{7}</code> in JPG names, or wrong zips</td><td>Check PhotoVault naming; re-export with IDs in filenames</td></tr>
+        <tr><td>Wrong month folder (e.g. odd name)</td><td><code>ExtractName</code> did not match <code>photos-month_year-category</code></td><td>Use standard PhotoVault zip names so <code>Ym</code> becomes <code>yyyy-MM</code></td></tr>
+        <tr><td>Awards page shows members but blank photos</td><td>Images Process OK but Import Club not run (or IntRef mismatch)</td><td>Import scores/results; confirm IntRef equals 7-digit filename</td></tr>
+        <tr><td>Upload 401 / login failed</td><td>Wrong Auth credentials or API base</td><td>Check <code>appsettings.json</code> Auth and <code>gData.Api</code></td></tr>
+        <tr><td>Upload “file too large”</td><td>Zip &gt; 120 MB</td><td>Split categories / reduce count, or raise limit in code if intentional</td></tr>
+        <tr><td>Process dies mid-previews</td><td>Bad/corrupt JPG (Stage 3 is fatal)</td><td>Find the file named in the exception; fix or remove; re-run</td></tr>
+        <tr><td>Import folder had unexpected zips</td><td>Unzip processes <em>all</em> <code>*.zip</code> in Import after upload</td><td>Normal after dialog wipe+upload; avoid leaving extra zips mid-run</td></tr>
+        <tr><td>Slow large months</td><td>High image count + disk I/O</td><td>Expected — rename/preview are heavily parallelised</td></tr>
       </tbody>
     </table>
 
     <div class="tip">
-      After running Images Process successfully, you should immediately test by going to <strong>Members → Awards</strong> for that month and verifying that the photos appear correctly.
+      After a successful run, confirm previews under <code>{LocalWebsitePath}wwwroot\ClubPhotos/{yyyy-MM}/</code>
+      and (if upload succeeded) on the host. Open <strong>Members → Awards</strong> / Results for that month —
+      Images Process alone does not create awards data; Import Club must have matching IntRefs.
     </div>
   </div>
 
