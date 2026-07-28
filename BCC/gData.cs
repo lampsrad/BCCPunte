@@ -4,11 +4,11 @@ namespace BCC;
 
 public class gData
 {
-    //public static string Api { get; set; } = "https://bkk.co.za/";
+    public static string Api { get; set; } = "https://bkk.co.za/";
     //public static string Api { get; set; } = "https://oef.bkk.co.za/";
-    public static string Api { get; set; } = "http://localhost:5125/";
+    //public static string Api { get; set; } = "http://localhost:5125/";
 
-    public static string backupPath { get; set; }= "C:\\Users\\Lamps\\OneDrive\\Database\\SQL16\\Backup\\BCC\\";
+    public static string backupPath { get; set; }= "D:\\Database\\SQL16\\Backup\\BCC\\";
     public static string sqlStagingPath { get; } = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
         "BCC", "SqlBackup");
@@ -18,7 +18,7 @@ public class gData
     public static string Exports { get; set; } = "D:\\VS\\Exports\\";
     public static string machineName { get; set; }
     public static string dbName { get; set; } = "BCC";
-    public static string ServerName { get; set; } = "SQL16";
+    public static string ServerName { get; set; } = "SQL";
     public static string FtpServer { get; set; } = "ftp.bkk.co.za";
     public static string FtpUsername { get; set; } = "bkkcoza";
     public static string FtpPassword { get; set; } = "ftxIOo]J376L!4";
