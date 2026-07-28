@@ -103,3 +103,72 @@ ul li {
             color: black;
             padding-inline: 10px;
         }
+
+/* Help — click opens Help; mouseover only shows Help_Merge side flyout (not focus, not a nested submenu) */
+ul li ul li.menu-item-help {
+    position: relative;
+    overflow: visible;
+}
+
+ul li ul li.menu-item-help > .menu-item-help-main {
+    display: block !important;
+    text-align: left;
+    color: black;
+    padding-inline: 10px;
+}
+
+/* Floating panel — same pattern as Viewer .grid-menu--flyout; hidden until mouseover */
+ul li ul li.menu-item-help > .menu--flyout {
+    display: none !important;
+    position: absolute;
+    left: 100%;
+    top: 0;
+    width: max-content;
+    z-index: 200;
+    padding: 4px;
+    margin: 0;
+    list-style: none;
+    background-color: #1e1e2e;
+    border: 1px solid #444466;
+    border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+    /* do not inherit Admin dropdown list styling */
+}
+
+/* Bridge so the pointer can move onto the flyout without closing it */
+ul li ul li.menu-item-help > .menu--flyout::before {
+    content: "";
+    position: absolute;
+    left: -4px;
+    top: 0;
+    width: 4px;
+    height: 100%;
+}
+
+/* Mouse over Help only — not :focus-within */
+ul li ul li.menu-item-help:hover > .menu--flyout {
+    display: block !important;
+}
+
+ul li ul li.menu-item-help .menu--flyout-link {
+    display: block;
+    min-height: 30px;
+    line-height: 26px;
+    padding: 2px 10px;
+    color: #ddd;
+    text-decoration: none;
+    font-size: 14px;
+    white-space: nowrap;
+    text-align: left;
+    background-color: #2a2a40;
+    border: 1px solid #444466;
+    border-radius: 4px;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+ul li ul li.menu-item-help .menu--flyout-link:hover {
+    background-color: #3355aa;
+    color: #fff;
+    outline: none;
+}

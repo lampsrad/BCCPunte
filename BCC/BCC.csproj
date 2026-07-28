@@ -8,9 +8,12 @@
 
   <ItemGroup>
     <Content Remove="Pages\FileChoose.razor" />
+    <Content Remove="wwwroot\Help.html" />
+    <Content Remove="wwwroot\Helpie.html" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="HtmlAgilityPack" Version="1.12.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.7" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.3" />
     <PackageReference Include="OpenXmlPowerTools" Version="4.5.3.2" />

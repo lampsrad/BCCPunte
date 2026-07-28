@@ -66,7 +66,12 @@
                 <li><a href="admin/restore">Restore DB</a></li>
                 <li><a href="admin/excel" title="Export Monthlies to D:\\BKK\\ARCHIVES\\Ou punte rekords\Year\">Excel</a></li>
                 <li><a href="admin/deletemonth" title="Delete Last Month from Db but leave Images intact">Delete Month</a></li>
-                <li><a href="/Help.html" target="_blank" title="Complete technical deep-dive of the entire BCCPunte codebase">Help</a></li>
+                <li class="menu-item-help">
+                    <a class="menu-item-help-main" href="/Help.html" target="_blank" rel="noopener" title="Every menubar item — description and code flow">Help</a>
+                    <div class="menu--flyout" role="menu">
+                        <div class="menu--flyout-link" role="menuitem" @onclick="Help_Merge" @onclick:stopPropagation title="Merge Help-flows.json edits into Help.html and sync Help-flows.js">Help_Merge</div>
+                    </div>
+                </li>
             </ul>
         </li>
 

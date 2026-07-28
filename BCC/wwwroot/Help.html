@@ -1,0 +1,1546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>BCCPunte — Menu Help</title>
+<style>
+  :root {
+    --bg: #1a1a1a;
+    --panel: #232323;
+    --panel-2: #2c2c2c;
+    --fg: wheat;
+    --muted: #b8b8b8;
+    --accent: #ffd479;
+    --yellow: #ffd479;
+    --red: #e57373;
+    --green: #81c784;
+    --blue: #64b5f6;
+    --border: #3a3a3a;
+    --link: #8ec5ff;
+    --scrollbar-track: #1e1e1e;
+    --scrollbar-thumb: #4a4a4a;
+    --scrollbar-thumb-hover: #626262;
+  }
+  html {
+    scroll-behavior: smooth;
+    color-scheme: dark;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+    scrollbar-width: thin;
+  }
+  html::-webkit-scrollbar { width: 12px; }
+  html::-webkit-scrollbar-track { background: var(--scrollbar-track); }
+  html::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border: 3px solid var(--scrollbar-track);
+    border-radius: 6px;
+  }
+  html::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--muted);
+    font-family: Segoe UI, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  nav.toc {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 36px 12px;
+  }
+  nav.toc .toc-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  nav.toc .toc-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 18px;
+    margin-bottom: 8px;
+  }
+  nav.toc h2 {
+    margin: 0;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--accent);
+  }
+  .toc-group { margin: 8px 0 4px; }
+  .toc-group-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--accent);
+    margin: 0 0 4px;
+  }
+  nav.toc ol {
+    list-style: none;
+    padding-left: 0;
+    margin: 0 0 6px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+  }
+  nav.toc ol li { list-style: none; }
+  nav.toc a { color: var(--link); text-decoration: none; font-size: 13px; }
+  nav.toc a:hover { text-decoration: underline; }
+  .toc-inner--search {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+  }
+  .help-search-label {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--accent);
+    margin: 0;
+  }
+  .help-search {
+    position: relative;
+    flex: 1 1 280px;
+    min-width: 200px;
+  }
+  #helpSearch {
+    width: 100%;
+    padding: 8px 72px 8px 12px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--fg);
+    font-size: 14px;
+    outline: none;
+  }
+  #helpSearch:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(255, 212, 121, 0.15);
+  }
+  #helpSearch::placeholder { color: #777; }
+  .help-search-kbd {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 11px;
+    color: var(--muted);
+    pointer-events: none;
+    user-select: none;
+  }
+  #helpSearchStatus {
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  #helpSearchResults {
+    display: none;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% + 4px);
+    margin: 0;
+    padding: 4px 0;
+    list-style: none;
+    max-height: min(50vh, 360px);
+    overflow-y: auto;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    z-index: 160;
+  }
+  #helpSearchResults.open { display: block; }
+  #helpSearchResults li {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(58, 58, 58, 0.6);
+  }
+  #helpSearchResults li:last-child { border-bottom: none; }
+  #helpSearchResults li:hover,
+  #helpSearchResults li.active {
+    background: rgba(255, 212, 121, 0.12);
+  }
+  .search-result-title {
+    display: block;
+    font-weight: 600;
+    color: var(--link);
+    margin-bottom: 2px;
+  }
+  .search-result-meta {
+    display: block;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+  .search-result-snippet {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.35;
+  }
+  mark[class*="search-hit"] {
+    border-radius: 3px;
+    padding: 1px 5px;
+    color: #141414;
+    font-weight: 700;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+  }
+  .search-hit, mark.search-hit-t0 { background: #ffeb3b; }
+  mark.search-hit-t1 { background: #76ff03; }
+  mark.search-hit-t2 { background: #40c4ff; }
+  mark.search-hit-t3 { background: #ff6e40; color: #fff; }
+  mark.search-hit-t4 { background: #e040fb; color: #fff; }
+  tr.search-no-match { display: none; }
+  section.search-section-empty { display: none; }
+  tr.search-flash td {
+    animation: searchFlash 1.4s ease;
+  }
+  @keyframes searchFlash {
+    0%, 100% { background: inherit; }
+    25% { background: rgba(255, 212, 121, 0.22); }
+  }
+  main {
+    padding: 24px 36px 80px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  #toTop {
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255,212,121,0.18);
+    color: var(--accent);
+    border: 1px solid rgba(255,212,121,0.45);
+    font-size: 15px;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, background 0.2s ease;
+    z-index: 100;
+  }
+  #toTop.show { opacity: 0.85; pointer-events: auto; }
+  #toTop.show:hover { opacity: 1; background: rgba(255,212,121,0.35); }
+  h1 { margin: 0 0 8px; color: var(--accent); font-size: 28px; }
+  .lede { color: var(--muted); margin-bottom: 28px; }
+  section {
+    padding-top: 16px;
+    margin-bottom: 28px;
+    border-top: 1px solid var(--border);
+  }
+  section:first-of-type { border-top: none; }
+  h2 { color: var(--accent); margin-top: 0; margin-bottom: 6px; }
+  h3 {
+    color: #f1d7a6;
+    margin: 16px 0 8px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .route {
+    display: inline-block;
+    background: var(--panel-2);
+    color: var(--link);
+    padding: 1px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-family: Consolas, monospace;
+  }
+  .menu-path {
+    display: inline-block;
+    background: var(--panel-2);
+    color: var(--link);
+    padding: 2px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: Consolas, monospace;
+    margin: 0 0 4px;
+  }
+  code, kbd {
+    background: #111;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 6px;
+    font-family: Consolas, monospace;
+    font-size: 13px;
+  }
+  kbd { color: var(--accent); }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 10px 0;
+    background: var(--panel);
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th { background: var(--panel-2); color: var(--accent); font-weight: 600; }
+  .col-hint {
+    display: block;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  a.section-jump { color: var(--link); text-decoration: none; }
+  a.section-jump:hover { text-decoration: underline; }
+
+  /* Control name = same visual language as TOC links */
+  .ctrl-name {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--link);
+    cursor: pointer;
+    text-align: left;
+    text-decoration: none;
+  }
+  .ctrl-name:hover { text-decoration: underline; }
+  .ctrl-name.active { color: var(--accent); text-decoration: underline; }
+
+  .effect-cell.flow-mode {
+    background: #1e1e1e;
+    border-left: 3px solid var(--accent);
+  }
+  .flow-steps {
+    margin: 0;
+    padding-left: 0;
+    max-height: 420px;
+    overflow-y: auto;
+    list-style: none;
+    counter-reset: flow-step;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+    scrollbar-width: thin;
+  }
+  .flow-steps::-webkit-scrollbar { width: 10px; }
+  .flow-steps::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+    border-radius: 4px;
+  }
+  .flow-steps::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border: 2px solid var(--scrollbar-track);
+    border-radius: 5px;
+  }
+  .flow-steps::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
+  .flow-steps li {
+    margin: 2px 0;
+    counter-increment: flow-step;
+    position: relative;
+    padding-left: 2.5em;
+  }
+  .flow-steps li::before {
+    content: counter(flow-step) ".";
+    position: absolute;
+    left: 0;
+    width: 2.25em;
+    text-align: right;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .flow-steps code { font-size: 12px; }
+  .flow-steps .flow-branch {
+    counter-increment: none;
+    margin: 6px 0 2px;
+    padding-left: 0;
+    color: var(--accent);
+    font-size: 12px;
+    font-style: italic;
+  }
+  .flow-steps .flow-branch::before { content: none; }
+  .flow-steps li.flow-editable { cursor: text; }
+  body.edit-mode-on .page-editable { cursor: text; }
+  body.edit-mode-on .page-editable:hover {
+    outline: 1px dashed rgba(255,212,121,0.45);
+    outline-offset: 2px;
+  }
+  body.edit-mode-on .flow-steps li:not(.flow-branch):hover {
+    background: rgba(255,212,121,0.06);
+    border-radius: 3px;
+  }
+  .page-editing, .flow-steps li.flow-editing {
+    background: #2a2a2a !important;
+    border-radius: 3px;
+    outline: 1px solid var(--accent) !important;
+    outline-offset: 1px;
+  }
+  .flow-steps li.flow-editing code { background: transparent; border: none; padding: 0; }
+  #editToolbar {
+    position: fixed;
+    top: 12px;
+    right: 16px;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 12px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.45);
+  }
+  #editFlowsBtn, #mergeFlowsBtn {
+    padding: 5px 14px;
+    background: var(--panel-2);
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  #editFlowsBtn:hover, #mergeFlowsBtn:hover { background: rgba(255,212,121,0.15); }
+  #editFlowsBtn.active {
+    background: rgba(255,212,121,0.25);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  #mergeFlowsBtn:disabled {
+    opacity: 0.5;
+    cursor: wait;
+  }
+  #saveStatus {
+    font-size: 12px;
+    color: var(--muted);
+    min-width: 4.5em;
+    white-space: nowrap;
+  }
+  #saveStatus.ok { color: var(--green); }
+  #saveStatus.err { color: var(--red); }
+</style>
+</head>
+<body>
+
+<nav class="toc">
+  <div class="toc-inner">
+    <div class="toc-head">
+      <h2>Menu — every item</h2>
+    </div>
+
+    <div class="toc-group">
+      <div class="toc-group-title">Status strip</div>
+      <ol>
+        <li><a href="#status-strip">Status strip</a></li>
+      </ol>
+    </div>
+    <div class="toc-group">
+      <div class="toc-group-title">Members</div>
+      <ol>
+        <li><a href="#members">Members</a></li>
+      </ol>
+    </div>
+    <div class="toc-group">
+      <div class="toc-group-title">Honours</div>
+      <ol>
+        <li><a href="#honours-sec">Honours</a></li>
+      </ol>
+    </div>
+    <div class="toc-group">
+      <div class="toc-group-title">Salons (admin)</div>
+      <ol>
+        <li><a href="#salons-admin">Salons admin</a></li>
+      </ol>
+    </div>
+    <div class="toc-group">
+      <div class="toc-group-title">Info</div>
+      <ol>
+        <li><a href="#info-sec">Info documents</a></li>
+      </ol>
+    </div>
+    <div class="toc-group">
+      <div class="toc-group-title">Admin</div>
+      <ol>
+        <li><a href="#admin-sec">Admin</a></li>
+      </ol>
+    </div>
+    <div class="toc-group">
+      <div class="toc-group-title">DB &amp; Close</div>
+      <ol>
+        <li><a href="#db-close">DB &amp; Close</a></li>
+      </ol>
+    </div>
+
+    <div class="toc-inner--search">
+      <label class="help-search-label" for="helpSearch">Search</label>
+      <div class="help-search" id="helpSearchBox">
+        <input type="search" id="helpSearch" placeholder="Controls, effects, flow ids…" autocomplete="off" spellcheck="false" aria-autocomplete="list" aria-controls="helpSearchResults" aria-expanded="false">
+        <span class="help-search-kbd" aria-hidden="true">Ctrl+K</span>
+        <ul id="helpSearchResults" role="listbox" aria-label="Search results"></ul>
+      </div>
+      <span id="helpSearchStatus" aria-live="polite"></span>
+    </div>
+  </div>
+</nav>
+
+<div id="editToolbar">
+  <span id="saveStatus" aria-live="polite"></span>
+  <button type="button" id="mergeFlowsBtn" title="Bake Help-flows.json edits into Help.html and Help-flows.js (same as Admin → Help_Merge)">Help_Merge</button>
+  <button type="button" id="editFlowsBtn" title="Click any highlighted text to edit; saves to Help-flows.json">Edit page</button>
+</div>
+
+<main>
+  <h1>BCCPunte — Menu Help</h1>
+  <p class="lede" data-edit-id="lede">
+    Every item in the gold menubar (<code>Menu.razor</code> / <code>Menu.razor.cs</code>).
+    <strong>Click a control name</strong> (blue, like the TOC) to swap its Effect for the full <strong>code flow</strong> — every method called, in order.
+    Turn on <strong>Edit page</strong> (top right), then <strong>click any highlighted text</strong> to change it; edits are saved to <code>Help-flows.json</code> and restored on reload.
+    After editing, run <strong>Help_Merge</strong> (this page toolbar, or hover Admin → Help for the flyout) to bake changes into <code>Help.html</code> / <code>Help-flows.js</code> and clear the JSON overlay — same as Project Viewer.
+    Fiscal year: <strong>1 November – 31 October</strong>.
+  </p>
+
+  <!-- ═══════════════ STATUS ═══════════════ -->
+  <section id="status-strip">
+    <h2>Status strip</h2>
+    <table>
+      <tr><th style="width:22%">Control</th><th>Effect <span class="col-hint">/ Code flow (click control)</span></th></tr>
+      <tr>
+        <td><button type="button" class="ctrl-name" data-flow-id="db-key">DB key</button></td>
+        <td class="effect-cell">
+          <span class="menu-path">Status strip · left</span><br>
+          Red label showing <code>gData.connectionKey</code> — which SQL connection string is active
+          (<code>Local</code>, machine key, or <code>Abshost</code>). Tooltip: “The Database in use”. Not clickable; changes when you use
+          <a class="section-jump" href="#db-close">DB → Local</a> or Absolute Hosting.
+        </td>
+      </tr>
+      <tr>
+        <td><button type="button" class="ctrl-name" data-flow-id="month-title">Month title</button></td>
+        <td class="effect-cell">
+          <span class="menu-path">Status strip · centre</span><br>
+          Shows the current competition month as full month name + year from <code>state.DatePhoto</code>
+          (via <code>state.Title</code>). Updates whenever the menu state event fires after a date change on Awards / Scores / Salons.
+        </td>
+      </tr>
+      <tr>
+        <td><button type="button" class="ctrl-name" data-flow-id="bcc">BCC</button></td>
+        <td class="effect-cell">
+          <span class="menu-path">Status strip · home · <span class="route">/</span></span><br>
+          Home link. Index loads last import dates from Datum and shows category winners
+          (Winner / Club_Winner) for the newest photos folder that contains a <code>Temp\</code> subfolder.
+        </td>
+      </tr>
+    </table>
+  </section>
+
+  <!-- ═══════════════ MEMBERS ═══════════════ -->
+  <section id="members">
+    <h2>Members</h2>
+    <table>
+      <tr><th style="width:22%">Control</th><th>Effect <span class="col-hint">/ Code flow (click control)</span></th></tr>
+      <tr>
+        <td><button type="button" class="ctrl-name" data-flow-id="awards">Awards</button></td>
+        <td class="effect-cell">
+          <span class="menu-path">Members → Awards · <span class="route">/results</span></span><br>
+          Monthly competition results. DateChange month picker drives which month is shown. Displays a Winners table plus
+          tables for each category / star group (nature, pictorial, set subject, phone).
+        </td>
+      </tr>
+      <tr>
+        <td><button type="button" class="ctrl-name" data-flow-id="scores">Scores</button></td>
+        <td class="effect-cell">
+          <span class="menu-path">Members → Scores · <span class="route">/points</span></span><br>
+          Year-to-date scoring dashboard for the club fiscal year. Top-ten leaderboards (Club Points, Set Subject, Salons),
+          promotions list, and star-level grids (1★ through Galaxy) with red threshold cells. Row button <strong>All</strong>
+          opens a member’s full monthly history.
+        </td>
+      </tr>
+      <tr>
+        <td><button type="button" class="ctrl-name" data-flow-id="salons-view">Salons</button></td>
+        <td class="effect-cell">
+          <span class="menu-path">Members → Salons · <span class="route">/salons</span></span><br>
+          Member-facing salon participation view (not admin CRUD). Lists salon results for the selected scope:
+          month buttons, plus PSY (PSSA year), BCY (BCC year), NEW. Columns: SalonName (alias preferred), Name, Coms, Acc, Judge, Points, Award.
+        </td>
+      </tr>
+      <tr>
+        <td><button type="button" class="ctrl-name" data-flow-id="interclub">InterClub</button></td>
+        <td class="effect-cell">
+          <span class="menu-path">Members → InterClub · no page</span><br>
+          Does not open a page. Exports high-scoring photos from the last 12 months into export folders for inter-club selection:
+          <code>Exports\Juniors</code> (rating &lt; 4), <code>Exports\Seniors</code> (rating &gt; 3 and score &gt; 11),
+          <code>Exports\Seniors_11</code> (score = 11). Files named <code>{Lastname} {Firstname} {Title} [{Score}].jpg</code>.
+        </td>
+      </tr>
+      <tr>
+        <td><button type="button" class="ctrl-name" data-flow-id="members-list">Members List</button></td>
+        <td class="effect-cell">
+          <span class="menu-path">Members → Members List · <span class="route">/masterview</span></span><br>
+          Full master roster. Buttons: <strong>Update</strong> (import <code>*Ledelys*.csv</code> from Downloads — sets Paid/email/mobile/bday),
+          <strong>Paid</strong> / <strong>All</strong> filters, <strong>List</strong> (write paid members to <code>Downloads\Members.csv</code>).
+          Name column header sorts the table.
+        </td>
+      </tr>
+    </table>
+  </section>
+
+  <!-- ═══════════════ HONOURS ═══════════════ -->
+  <section id="honours-sec">
+    <h2>Honours</h2>
+    <table>
+      <tr><th style="width:22%">Control</th><th>Effect <span class="col-hint">/ Code flow (click control)</span></th></tr>
+      <tr>
+        <td><button type="button" class="ctrl-name" data-flow-id="honours">Honours</button></td>
+        <td class="effect-cell">
+          <span class="menu-path">Honours → Honours · <span class="route">/honours</span></span><br>
+          Adjust a member’s PSSA / club honours title. Page loads masters that have an IdVault, focuses the dropdown.
+          Choose member (shows previous title), type new title (e.g. APSSA, FPSSA), <strong>Submit</strong> appends it to
+          <code>Master.Title</code> (uppercased). If title is APSSA or FPSSA and points thresholds are met, promotes the member
+          (5★ + Pp≥150 + Salp≥200 + APSSA → Golden Honours; 6★ + Pp≥150 + Salp≥400 + FPSSA → Galaxy), clears promotion
+          accumulators, saves Master + Monthly, navigates home. <strong>Cancel</strong> returns home without saving.
+        </td>
+      </tr>
+    </table>
+  </section>
+
+  <!-- ═══════════════ SALONS ADMIN ═══════════════ -->
+  <section id="salons-admin">
+    <h2>Salons (admin)</h2>
+    <table>
+      <tr><th style="width:22%">Control</th><th>Effect <span class="col-hint">/ Code flow (click control)</span></th></tr>
+      <tr>
+        <td><button type="button" class="ctrl-name" data-flow-id="salons-current">Salons Current</button></td>
+        <td class="effect-cell">
+          <span class="menu-path">Salons → Salons Current · <span class="route">/salonMasMain</span></span><br>
+          Salon administration for the current period. Index of salon masters: Create, Edit, Show participants, Delete
+          (only if no child rows). Click salon name to import that event’s PSSA CSV (if not already imported).
+        </td>
+      </tr>
+      <tr>
+        <td><button type="button" class="ctrl-name" data-flow-id="salons-previous">Salons Previous</button></td>
+        <td class="effect-cell">
+          <span class="menu-path">Salons → Salons Previous · <span class="route">/salonMasMain/prev</span></span><br>
+          Same salon-admin UI as Salons Current, scoped to the previous period’s salon masters.
+        </td>
+      </tr>
+      <tr>
+        <td><button type="button" class="ctrl-name" data-flow-id="import-salons">Import Salons</button></td>
+        <td class="effect-cell">
+          <span class="menu-path">Salons → Import Salons · <span class="route">/salonMasMain/importlist</span></span><br>
+          Bulk-import the year’s salon list. Tooltip: get PDF from PSSA website, convert to CSV, then import.
+          File picker reads club, salon name, and date (dd-MM-yyyy) and creates <code>SalonMaster</code> rows.
+        </td>
+      </tr>
+    </table>
+  </section>
+
+  <!-- ═══════════════ INFO ═══════════════ -->
+  <section id="info-sec">
+    <h2>Info documents</h2>
+    <table>
+      <tr><th style="width:22%">Control</th><th>Effect <span class="col-hint">/ Code flow (click control)</span></th></tr>
+      <tr>
+        <td><button type="button" class="ctrl-name" data-flow-id="info">Info menu</button></td>
+        <td class="effect-cell">
+          <span class="menu-path">Info → {each wwwroot/Html/*.html} · <span class="route">/info/{name}</span></span><br>
+          The Info submenu is built at menu startup: every <code>.html</code> file in <code>wwwroot/Html/</code> becomes a link.
+          Clicking a name opens that document in <code>Info.razor</code>. New documents appear after Admin → Word converts a
+          <code>.docx</code> into <code>wwwroot/Html/</code>. Documents include About, Grading, Judging, Program, PSSA, Constitution, etc.
+        </td>
+      </tr>
+    </table>
+  </section>
+
+  <!-- ═══════════════ ADMIN ═══════════════ -->
+  <section id="admin-sec">
+    <h2>Admin</h2>
+    <table>
+      <tr><th style="width:22%">Control</th><th>Effect <span class="col-hint">/ Code flow (click control)</span></th></tr>
+      <tr>
+        <td><button type="button" class="ctrl-name" data-flow-id="images-process">Images Process</button></td>
+        <td class="effect-cell">
+          <span class="menu-path">Admin → Images Process · <span class="route">/admin/images-import</span></span><br>
+          Full photo pipeline for the monthly club competition images (does not import scores). Unzip Photovault zips →
+          rename by 7-digit IntRef → generate 1365×768 previews → zip + copy to local ClubPhotos → upload zip to Absolute Hosting.
+        </td>
+      </tr>
+      <tr>
+        <td><button type="button" class="ctrl-name" data-flow-id="import-club">Import Club</button></td>
+        <td class="effect-cell">
+          <span class="menu-path">Admin → Import Club · <span class="route">/admin/club-import</span></span><br>
+          Main monthly data import (“Hoof Ingangsroete”). Imports Scoresheet and/or Results CSVs from the Import folder
+          (or year-end path when last import month is October). Creates/updates masters and photos, aggregates monthlies,
+          stores dates, runs <code>Promotion_Due</code>. May pause for interactive photo-limit chooser (max 3 non-S + 2 S per member).
+        </td>
+      </tr>
+      <tr>
+        <td><button type="button" class="ctrl-name" data-flow-id="import-salon">Import Salon</button></td>
+        <td class="effect-cell">
+          <span class="menu-path">Admin → Import Salon · <span class="route">/salonMasMain</span></span><br>
+          Opens the salon admin shell (same as Salons Current). Import a single salon by clicking its name on the index
+          (CSV must contain the salon name token).
+        </td>
+      </tr>
+      <tr>
+        <td><button type="button" class="ctrl-name" data-flow-id="word">Word</button></td>
+        <td class="effect-cell">
+          <span class="menu-path">Admin → Word · <span class="route">/worddoc</span></span><br>
+          Convert a Microsoft Word <code>.docx</code> (max 25 MB) to HTML and save under <code>wwwroot/Html/</code> so it appears
+          under Info. Program (Afr)/(Eng) get Venue + Program header images. After conversion, navigates to the Info page.
+        </td>
+      </tr>
+      <tr>
+        <td><button type="button" class="ctrl-name" data-flow-id="upload-abs">Upload to AbsHosting</button></td>
+        <td class="effect-cell">
+          <span class="menu-path">Admin → Upload to AbsHosting · <span class="route">/upload-to-abs</span></span><br>
+          Upload chosen <code>.html</code> files or image zips to Absolute Hosting’s wwwroot via the club API.
+        </td>
+      </tr>
+      <tr>
+        <td><button type="button" class="ctrl-name" data-flow-id="backup">Backup DB</button></td>
+        <td class="effect-cell">
+          <span class="menu-path">Admin → Backup DB · <span class="route">/admin/backup</span></span><br>
+          Opens backup file picker (type a new name or choose existing <code>.bak</code>). Runs SQL Server backup via repository.
+        </td>
+      </tr>
+      <tr>
+        <td><button type="button" class="ctrl-name" data-flow-id="restore">Restore DB</button></td>
+        <td class="effect-cell">
+          <span class="menu-path">Admin → Restore DB · <span class="route">/admin/restore</span></span><br>
+          Restores the database from a <code>.bak</code> file. If <code>Downloads\bcc.bak</code> exists, moves it into the backup folder first, then shows the picker.
+        </td>
+      </tr>
+      <tr>
+        <td><button type="button" class="ctrl-name" data-flow-id="excel">Excel</button></td>
+        <td class="effect-cell">
+          <span class="menu-path">Admin → Excel · <span class="route">/admin/excel</span></span><br>
+          Archives Monthly score snapshots as CSV files under
+          <code>D:\BKK\ARCHIVES\Ou punte rekords\{year}\</code>, walking every month from November 2013 to today.
+        </td>
+      </tr>
+      <tr>
+        <td><button type="button" class="ctrl-name" data-flow-id="delete-month">Delete Month</button></td>
+        <td class="effect-cell">
+          <span class="menu-path">Admin → Delete Month · <span class="route">/admin/deletemonth</span></span><br>
+          Deletes last-imported month data from the database so you can re-import: Photos, Monthlies, Salons, SalonMasters.
+          Disk images are left intact. Restores master ratings from remaining monthlies and updates Datum dates.
+        </td>
+      </tr>
+      <tr>
+        <td><button type="button" class="ctrl-name" data-flow-id="help">Help</button></td>
+        <td class="effect-cell">
+          <span class="menu-path">Admin → Help · <span class="route">/Help.html</span> · new tab</span><br>
+          Opens this static help page in a new browser tab. Hover (or focus) the Help item to open a flyout with <em>Help_Merge</em> — same layout as Project Viewer.
+        </td>
+      </tr>
+      <tr>
+        <td><button type="button" class="ctrl-name" data-flow-id="help-merge">Help_Merge</button></td>
+        <td class="effect-cell">
+          <span class="menu-path">Admin → Help → flyout · also on this page toolbar</span><br>
+          Flyout under Help — merges <code>Help-flows.json</code> edits into <code>Help.html</code> (effects + editable content) and syncs flow steps into <code>Help-flows.js</code>, then clears the JSON overlay.
+          Use after editing Help so source files (and git) hold the permanent text. Creates <code>.bak</code> backups first.
+        </td>
+      </tr>
+    </table>
+  </section>
+
+  <!-- ═══════════════ DB & CLOSE ═══════════════ -->
+  <section id="db-close">
+    <h2>DB &amp; Close</h2>
+    <table>
+      <tr><th style="width:22%">Control</th><th>Effect <span class="col-hint">/ Code flow (click control)</span></th></tr>
+      <tr>
+        <td><button type="button" class="ctrl-name" data-flow-id="db-local">Local</button></td>
+        <td class="effect-cell">
+          <span class="menu-path">DB → Local</span><br>
+          Switches the app to the local SQL connection. Writes the hit counter back to the local database.
+          The status strip DB key updates to <code>Local</code>.
+        </td>
+      </tr>
+      <tr>
+        <td><button type="button" class="ctrl-name" data-flow-id="db-abshost">Absolute Hosting</button></td>
+        <td class="effect-cell">
+          <span class="menu-path">DB → Absolute Hosting</span><br>
+          Switches to the Absolute Hosting connection string. Loads the remote hit counter into <code>gData.HitCount</code>.
+          Typically requires VPN for production database access.
+        </td>
+      </tr>
+      <tr>
+        <td><button type="button" class="ctrl-name" data-flow-id="close">Close</button></td>
+        <td class="effect-cell">
+          <span class="menu-path">Close · production only</span><br>
+          Visible only when <code>env.IsProduction()</code>. Shuts down the launched browser process and stops the host application.
+        </td>
+      </tr>
+    </table>
+  </section>
+
+</main>
+
+<button id="toTop" aria-label="Scroll to top" title="Scroll to top">&uarr;</button>
+
+<script src="/Help-flows.js"></script>
+<script>
+(function () {
+  var toTop = document.getElementById('toTop');
+  function onScroll() {
+    if (window.scrollY > 200) toTop.classList.add('show');
+    else toTop.classList.remove('show');
+  }
+  toTop.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  var flowsData = {};
+  var effectsData = {};
+  var contentData = {};
+  var editMode = false;
+  var activeBtn = null;
+  var activeCell = null;
+  var activeFlowId = null;
+  var effectCache = new WeakMap();
+  var editingEl = null;
+  var editingKind = null;
+  var editOriginal = '';
+  var saveStatus = document.getElementById('saveStatus');
+  var editFlowsBtn = document.getElementById('editFlowsBtn');
+  var mergeFlowsBtn = document.getElementById('mergeFlowsBtn');
+  var statusTimer = null;
+
+  function esc(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function fmtStep(s, index) {
+    if (/^---/.test(s)) {
+      return '<li class="flow-branch" data-step-index="' + index + '">' + esc(s) + '</li>';
+    }
+    var sep = ' -> ';
+    var i = s.indexOf(sep);
+    var inner = i >= 0
+      ? '<code>' + esc(s.slice(0, i)) + '</code>' + sep + esc(s.slice(i + sep.length))
+      : '<code>' + esc(s) + '</code>';
+    return '<li class="flow-editable" data-step-index="' + index + '">' + inner + '</li>';
+  }
+
+  function renderFlowHtml(flowId) {
+    var steps = flowsData[flowId];
+    if (!steps) return '<p class="flow-missing">No flow data for <code>' + esc(flowId) + '</code>.</p>';
+    return '<ol class="flow-steps" data-flow-id="' + esc(flowId) + '">' + steps.map(fmtStep).join('') + '</ol>';
+  }
+
+  function setStatus(msg, kind) {
+    saveStatus.textContent = msg;
+    saveStatus.className = kind || '';
+    if (statusTimer) clearTimeout(statusTimer);
+    if (msg) statusTimer = setTimeout(function () { saveStatus.textContent = ''; saveStatus.className = ''; }, 3500);
+  }
+
+  function getCell(btn) {
+    var row = btn.closest('tr');
+    return row ? row.querySelector('.effect-cell') : null;
+  }
+
+  function flowIdForCell(cell) {
+    var row = cell.closest('tr');
+    if (!row) return null;
+    var btn = row.querySelector('.ctrl-name[data-flow-id]');
+    return btn ? btn.getAttribute('data-flow-id') : null;
+  }
+
+  function cacheEffect(cell) {
+    if (!effectCache.has(cell)) effectCache.set(cell, cell.innerHTML);
+  }
+
+  function initEditRegions() {
+    document.querySelectorAll('main section').forEach(function (section) {
+      var sid = section.id || 'section';
+      section.querySelectorAll(':scope > h2, :scope > h3').forEach(function (h, i) {
+        if (!h.getAttribute('data-edit-id')) h.setAttribute('data-edit-id', sid + '-' + h.tagName.toLowerCase() + '-' + i);
+        h.classList.add('page-editable');
+      });
+      section.querySelectorAll(':scope > p').forEach(function (p, i) {
+        if (!p.getAttribute('data-edit-id')) p.setAttribute('data-edit-id', sid + '-p-' + i);
+        p.classList.add('page-editable');
+      });
+      var tdIndex = 0;
+      section.querySelectorAll('td').forEach(function (td) {
+        if (td.classList.contains('effect-cell')) return;
+        if (td.querySelector('.ctrl-name')) return;
+        if (!td.getAttribute('data-edit-id')) {
+          td.setAttribute('data-edit-id', sid + '-td-' + (tdIndex++));
+        }
+        td.classList.add('page-editable');
+      });
+    });
+    document.querySelectorAll('.effect-cell').forEach(function (cell) {
+      cell.classList.add('page-editable');
+    });
+    var lede = document.querySelector('.lede');
+    if (lede) lede.classList.add('page-editable');
+  }
+
+  function applySavedContent(doc) {
+    flowsData = doc.flows || {};
+    effectsData = doc.effects || {};
+    contentData = doc.content || {};
+
+    // Seed flows from Help-flows.js when JSON has none
+    if (!Object.keys(flowsData).length && window.HELP_FLOWS_DATA) {
+      flowsData = JSON.parse(JSON.stringify(window.HELP_FLOWS_DATA));
+    }
+
+    Object.keys(effectsData).forEach(function (flowId) {
+      var btn = document.querySelector('.ctrl-name[data-flow-id="' + flowId + '"]');
+      if (!btn) return;
+      var cell = getCell(btn);
+      if (!cell) return;
+      cell.innerHTML = effectsData[flowId];
+      effectCache.set(cell, effectsData[flowId]);
+    });
+
+    Object.keys(contentData).forEach(function (editId) {
+      var el = document.querySelector('[data-edit-id="' + editId + '"]');
+      if (el) el.innerHTML = contentData[editId];
+    });
+  }
+
+  function flowCount(doc) {
+    return doc && doc.flows ? Object.keys(doc.flows).length : 0;
+  }
+
+  function loadFlowsFromJsText(js) {
+    var start = js.indexOf('var DATA = ');
+    var end = js.indexOf('window.HELP_FLOWS');
+    if (start < 0 || end < 0 || end <= start) return null;
+    var raw = js.slice(start + 'var DATA = '.length, end).replace(/;\s*$/, '').trim();
+    raw = raw.replace(/\s+$/, '');
+    try {
+      return JSON.parse(raw);
+    } catch (e) {
+      console.error('Help-flows.js DATA parse failed', e);
+      return null;
+    }
+  }
+
+  function ensureFlows(doc) {
+    if (flowCount(doc) > 0) return Promise.resolve(doc);
+    if (window.HELP_FLOWS_DATA && Object.keys(window.HELP_FLOWS_DATA).length) {
+      doc.flows = JSON.parse(JSON.stringify(window.HELP_FLOWS_DATA));
+      return Promise.resolve(doc);
+    }
+    return fetch('/Help-flows.js')
+      .then(function (r) {
+        if (!r.ok) throw new Error('JS ' + r.status);
+        return r.text();
+      })
+      .then(function (js) {
+        var fromJs = loadFlowsFromJsText(js);
+        if (fromJs && Object.keys(fromJs).length) doc.flows = fromJs;
+        return doc;
+      })
+      .catch(function (err) {
+        console.error(err);
+        return doc;
+      });
+  }
+
+  function loadDoc() {
+    return fetch('/api/help-flows')
+      .then(function (r) {
+        if (!r.ok) throw new Error('API ' + r.status);
+        return r.json();
+      })
+      .catch(function () {
+        return fetch('/Help-flows.json').then(function (r) {
+          if (!r.ok) throw new Error('JSON ' + r.status);
+          return r.json();
+        });
+      })
+      .then(function (doc) { return ensureFlows(doc || {}); })
+      .then(function (doc) {
+        applySavedContent(doc);
+        var n = flowCount(doc);
+        setStatus(n ? ('Loaded · ' + n + ' flows') : 'Loaded · no flows', n ? 'ok' : 'err');
+      })
+      .catch(function (err) {
+        // Fallback: use embedded Help-flows.js DATA only
+        if (window.HELP_FLOWS_DATA) {
+          applySavedContent({ flows: JSON.parse(JSON.stringify(window.HELP_FLOWS_DATA)), effects: {}, content: {} });
+          setStatus('Loaded · ' + Object.keys(window.HELP_FLOWS_DATA).length + ' flows (js)', 'ok');
+        } else {
+          setStatus('Load failed — run app', 'err');
+        }
+        console.error(err);
+      });
+  }
+
+  function apiPut(url, body) {
+    setStatus('Saving…', '');
+    return fetch(url, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      setStatus('Saved', 'ok');
+    }).catch(function (err) {
+      setStatus('Save failed', 'err');
+      console.error(err);
+    });
+  }
+
+  function stopEditing(commit) {
+    if (!editingEl) return;
+    var el = editingEl;
+    var kind = editingKind;
+    var original = editOriginal;
+    editingEl = null;
+    editingKind = null;
+    el.removeAttribute('contenteditable');
+    el.classList.remove('page-editing', 'flow-editing');
+    if (!commit) {
+      if (kind === 'flow-step') el.textContent = original;
+      else el.innerHTML = original;
+      return;
+    }
+
+    if (kind === 'flow-step' && activeFlowId) {
+      var idx = parseInt(el.getAttribute('data-step-index'), 10);
+      var text = el.textContent.trim();
+      if (!text) { el.textContent = original; return; }
+      flowsData[activeFlowId][idx] = text;
+      apiPut('/api/help-flows/flows/' + encodeURIComponent(activeFlowId), { steps: flowsData[activeFlowId] })
+        .then(function () {
+          if (activeCell) activeCell.innerHTML = renderFlowHtml(activeFlowId);
+        });
+      return;
+    }
+
+    if (kind === 'effect') {
+      var flowId = flowIdForCell(el);
+      if (!flowId) return;
+      var html = el.innerHTML;
+      effectsData[flowId] = html;
+      effectCache.set(el, html);
+      apiPut('/api/help-flows/effects/' + encodeURIComponent(flowId), { html: html });
+      return;
+    }
+
+    if (kind === 'content') {
+      var editId = el.getAttribute('data-edit-id');
+      if (!editId) return;
+      var frag = el.innerHTML;
+      contentData[editId] = frag;
+      apiPut('/api/help-flows/content/' + encodeURIComponent(editId), { html: frag });
+    }
+  }
+
+  function beginEditing(el, kind) {
+    if (!editMode || editingEl === el) return;
+    stopEditing(true);
+    editingEl = el;
+    editingKind = kind;
+    editOriginal = kind === 'flow-step' ? el.textContent : el.innerHTML;
+    el.setAttribute('contenteditable', 'true');
+    el.classList.add(kind === 'flow-step' ? 'flow-editing' : 'page-editing');
+    el.focus();
+
+    function onKeyDown(e) {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        stopEditing(false);
+      } else if (e.key === 'Enter' && kind === 'flow-step') {
+        e.preventDefault();
+        stopEditing(true);
+      }
+    }
+    function onBlur() {
+      if (editingEl === el) stopEditing(true);
+    }
+    el.addEventListener('keydown', onKeyDown);
+    el.addEventListener('blur', onBlur, { once: true });
+  }
+
+  function showEffect(btn, cell) {
+    if (!cell) return;
+    stopEditing(true);
+    cacheEffect(cell);
+    cell.innerHTML = effectCache.get(cell);
+    cell.classList.remove('flow-mode');
+    btn.classList.remove('active');
+  }
+
+  function showFlow(btn, cell) {
+    var id = btn.getAttribute('data-flow-id');
+    if (!cell) return;
+    stopEditing(true);
+    cacheEffect(cell);
+    activeFlowId = id;
+    cell.innerHTML = renderFlowHtml(id);
+    cell.classList.add('flow-mode');
+    btn.classList.add('active');
+  }
+
+  function resetActive() {
+    stopEditing(true);
+    if (activeBtn && activeCell) showEffect(activeBtn, activeCell);
+    activeBtn = null;
+    activeCell = null;
+    activeFlowId = null;
+  }
+
+  editFlowsBtn.addEventListener('click', function () {
+    editMode = !editMode;
+    document.body.classList.toggle('edit-mode-on', editMode);
+    editFlowsBtn.classList.toggle('active', editMode);
+    editFlowsBtn.textContent = editMode ? 'Editing page' : 'Edit page';
+    if (!editMode) stopEditing(true);
+    if (activeCell && activeFlowId) activeCell.innerHTML = renderFlowHtml(activeFlowId);
+  });
+
+  mergeFlowsBtn.addEventListener('click', function () {
+    stopEditing(true);
+    mergeFlowsBtn.disabled = true;
+    setStatus('Merging…', '');
+    fetch('/api/help-flows/merge', { method: 'POST' })
+      .then(function (r) {
+        return r.json().then(function (body) {
+          if (!r.ok) throw new Error((body && body.error) || ('HTTP ' + r.status));
+          return body;
+        });
+      })
+      .then(function (result) {
+        setStatus(
+          'Merged · ' + (result.effectsMerged || 0) + ' effects, ' +
+          (result.contentMerged || 0) + ' content, ' +
+          (result.flowsSynced || 0) + ' flows',
+          'ok'
+        );
+        // Reload baked sources so page matches disk
+        return loadDoc();
+      })
+      .catch(function (err) {
+        setStatus('Merge failed', 'err');
+        console.error(err);
+      })
+      .finally(function () {
+        mergeFlowsBtn.disabled = false;
+      });
+  });
+
+  document.addEventListener('click', function (e) {
+    if (!editMode) return;
+    if (e.target.closest('#editFlowsBtn, #mergeFlowsBtn, .ctrl-name, nav.toc a, #toTop')) return;
+
+    var flowLi = e.target.closest('.flow-steps li:not(.flow-branch)');
+    if (flowLi && activeCell && activeCell.contains(flowLi)) {
+      e.preventDefault();
+      e.stopPropagation();
+      beginEditing(flowLi, 'flow-step');
+      return;
+    }
+
+    var effectCell = e.target.closest('.effect-cell');
+    if (effectCell && !effectCell.classList.contains('flow-mode')) {
+      e.preventDefault();
+      e.stopPropagation();
+      beginEditing(effectCell, 'effect');
+      return;
+    }
+
+    var pageEl = e.target.closest('.page-editable[data-edit-id]');
+    if (pageEl && !pageEl.classList.contains('effect-cell')) {
+      e.preventDefault();
+      e.stopPropagation();
+      beginEditing(pageEl, 'content');
+    }
+  });
+
+  document.querySelectorAll('.ctrl-name').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var cell = getCell(btn);
+      if (!cell) return;
+      if (activeBtn === btn) { resetActive(); return; }
+      resetActive();
+      showFlow(btn, cell);
+      activeBtn = btn;
+      activeCell = cell;
+      var row = btn.closest('tr');
+      if (row) row.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !editingEl) resetActive();
+  });
+
+  /* ── Search ── */
+  var helpSearchInput = document.getElementById('helpSearch');
+  var helpSearchResults = document.getElementById('helpSearchResults');
+  var helpSearchStatus = document.getElementById('helpSearchStatus');
+  var helpSearchBox = document.getElementById('helpSearchBox');
+  var searchActiveIndex = -1;
+  var searchLastHits = [];
+  var searchHighlightStore = new WeakMap();
+  var searchHighlightedEls = new Set();
+
+  function searchNormalize(s) {
+    return (s || '').toLowerCase().replace(/[^\w\s/+.-]/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
+  function searchTokens(q) {
+    return searchNormalize(q).split(' ').filter(Boolean);
+  }
+
+  function searchRowLabel(row) {
+    var btn = row.querySelector('.ctrl-name');
+    if (btn) return btn.textContent.trim();
+    var td = row.querySelector('td');
+    return td ? td.textContent.trim() : '';
+  }
+
+  function searchRowEffect(row) {
+    var cell = row.querySelector('.effect-cell');
+    return cell ? cell.textContent.trim() : '';
+  }
+
+  function searchBuildIndex() {
+    var items = [];
+    document.querySelectorAll('main section').forEach(function (section) {
+      var h2 = section.querySelector(':scope > h2');
+      var sectionTitle = h2 ? h2.textContent.trim() : section.id;
+      section.querySelectorAll('tr').forEach(function (row) {
+        var btn = row.querySelector('.ctrl-name');
+        var control = searchRowLabel(row);
+        var effect = searchRowEffect(row);
+        var flowId = btn ? (btn.getAttribute('data-flow-id') || '') : '';
+        if (!control && !effect) return;
+        items.push({
+          row: row,
+          section: section,
+          sectionTitle: sectionTitle,
+          control: control,
+          effect: effect,
+          flowId: flowId,
+          haystack: searchNormalize(control + ' ' + effect + ' ' + flowId + ' ' + sectionTitle)
+        });
+      });
+    });
+    return items;
+  }
+
+  function searchScore(item, qNorm, tokens) {
+    if (!qNorm) return 0;
+    var score = 0;
+    var control = searchNormalize(item.control);
+    var flowId = searchNormalize(item.flowId);
+    var effect = searchNormalize(item.effect);
+    var section = searchNormalize(item.sectionTitle);
+
+    if (item.haystack.indexOf(qNorm) >= 0) score += 60;
+    if (flowId === qNorm) score += 80;
+    if (control === qNorm) score += 70;
+
+    for (var i = 0; i < tokens.length; i++) {
+      if (item.haystack.indexOf(tokens[i]) < 0) return 0;
+    }
+
+    tokens.forEach(function (t) {
+      if (control.indexOf(t) === 0) score += 24;
+      else if (control.indexOf(t) >= 0) score += 14;
+      if (flowId.indexOf(t) >= 0) score += 18;
+      if (section.indexOf(t) >= 0) score += 10;
+      if (effect.indexOf(t) >= 0) score += 6;
+    });
+    return score;
+  }
+
+  function searchHighlightHtml(text, tokens) {
+    if (!text || !tokens.length) return esc(text || '');
+    var norm = searchNormalize(text);
+    var spans = [];
+    tokens.forEach(function (t, ti) {
+      var idx = 0;
+      while (t && (idx = norm.indexOf(t, idx)) >= 0) {
+        spans.push({ start: idx, end: idx + t.length, ti: ti % 5 });
+        idx += t.length;
+      }
+    });
+    if (!spans.length) return esc(text);
+    spans.sort(function (a, b) { return a.start - b.start; });
+    var merged = [];
+    spans.forEach(function (s) {
+      var last = merged[merged.length - 1];
+      if (!last || s.start >= last.end) merged.push({ start: s.start, end: s.end, ti: s.ti });
+    });
+    var out = '';
+    var pos = 0;
+    merged.forEach(function (s) {
+      if (s.start > pos) out += esc(text.slice(pos, s.start));
+      out += '<mark class="search-hit-t' + s.ti + '">' + esc(text.slice(s.start, s.end)) + '</mark>';
+      pos = s.end;
+    });
+    if (pos < text.length) out += esc(text.slice(pos));
+    return out;
+  }
+
+  function searchClearPageHighlights() {
+    searchHighlightedEls.forEach(function (el) {
+      if (!el.isConnected) return;
+      var html = searchHighlightStore.get(el);
+      if (html == null) return;
+      el.innerHTML = html;
+      if (el.classList.contains('effect-cell')) effectCache.set(el, html);
+    });
+    searchHighlightedEls.clear();
+  }
+
+  function searchHighlightTextNodes(root, highlightTokens) {
+    if (!root || !highlightTokens.length) return;
+    if (editingEl && (root === editingEl || root.contains(editingEl))) return;
+    if (root.classList && root.classList.contains('flow-mode')) return;
+
+    if (!searchHighlightStore.has(root)) {
+      searchHighlightStore.set(root, root.innerHTML);
+      searchHighlightedEls.add(root);
+    } else {
+      root.innerHTML = searchHighlightStore.get(root);
+    }
+
+    var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    var nodes = [];
+    var n;
+    while ((n = walker.nextNode())) {
+      if (n.parentElement && n.parentElement.closest('mark[class*="search-hit"]')) continue;
+      if (n.nodeValue && n.nodeValue.trim()) nodes.push(n);
+    }
+
+    nodes.forEach(function (textNode) {
+      var text = textNode.nodeValue;
+      var lower = text.toLowerCase();
+      var spans = [];
+      highlightTokens.forEach(function (token, ti) {
+        var t = token.toLowerCase();
+        if (!t) return;
+        var idx = 0;
+        while ((idx = lower.indexOf(t, idx)) >= 0) {
+          spans.push({ start: idx, end: idx + t.length, ti: ti % 5 });
+          idx += t.length;
+        }
+      });
+      if (!spans.length) return;
+      spans.sort(function (a, b) { return a.start - b.start; });
+      var merged = [];
+      spans.forEach(function (s) {
+        var last = merged[merged.length - 1];
+        if (!last || s.start >= last.end) merged.push(s);
+      });
+
+      var frag = document.createDocumentFragment();
+      var pos = 0;
+      merged.forEach(function (s) {
+        if (s.start > pos) frag.appendChild(document.createTextNode(text.slice(pos, s.start)));
+        var mark = document.createElement('mark');
+        mark.className = 'search-hit-t' + s.ti;
+        mark.textContent = text.slice(s.start, s.end);
+        frag.appendChild(mark);
+        pos = s.end;
+      });
+      if (pos < text.length) frag.appendChild(document.createTextNode(text.slice(pos)));
+      textNode.parentNode.replaceChild(frag, textNode);
+    });
+  }
+
+  function searchApplyPageHighlights(highlightTokens) {
+    searchClearPageHighlights();
+    if (!highlightTokens.length) return;
+
+    document.querySelectorAll('main section:not(.search-section-empty)').forEach(function (section) {
+      section.querySelectorAll(':scope > h2, :scope > h3, :scope > p').forEach(function (el) {
+        searchHighlightTextNodes(el, highlightTokens);
+      });
+      section.querySelectorAll('tr:not(.search-no-match)').forEach(function (row) {
+        row.querySelectorAll('td').forEach(function (td) {
+          if (td.classList.contains('effect-cell')) {
+            if (!td.classList.contains('flow-mode')) searchHighlightTextNodes(td, highlightTokens);
+          } else if (!td.querySelector('.ctrl-name')) {
+            searchHighlightTextNodes(td, highlightTokens);
+          }
+        });
+      });
+    });
+  }
+
+  function searchSnippet(effect, tokens) {
+    var norm = searchNormalize(effect);
+    var hitAt = -1;
+    for (var i = 0; i < tokens.length; i++) {
+      hitAt = norm.indexOf(tokens[i]);
+      if (hitAt >= 0) break;
+    }
+    if (hitAt < 0) return effect.length > 100 ? effect.slice(0, 97) + '…' : effect;
+    var start = Math.max(0, hitAt - 30);
+    var end = Math.min(effect.length, hitAt + 70);
+    return (start > 0 ? '…' : '') + effect.slice(start, end) + (end < effect.length ? '…' : '');
+  }
+
+  function searchClearFilter() {
+    document.querySelectorAll('tr.search-no-match').forEach(function (r) { r.classList.remove('search-no-match'); });
+    document.querySelectorAll('section.search-section-empty').forEach(function (s) { s.classList.remove('search-section-empty'); });
+  }
+
+  function searchApplyFilter(hits) {
+    searchClearFilter();
+    if (!hits.length) return;
+    var hitRows = new Set(hits.map(function (h) { return h.row; }));
+    document.querySelectorAll('main section tr').forEach(function (row) {
+      if (!searchRowLabel(row) && !searchRowEffect(row)) return;
+      if (!hitRows.has(row)) row.classList.add('search-no-match');
+    });
+    document.querySelectorAll('main section').forEach(function (section) {
+      var visible = section.querySelectorAll('tr:not(.search-no-match)').length;
+      var hasRows = section.querySelectorAll('tr').length > 0;
+      if (hasRows && visible === 0) section.classList.add('search-section-empty');
+    });
+  }
+
+  function searchCloseDropdown() {
+    helpSearchResults.classList.remove('open');
+    helpSearchResults.innerHTML = '';
+    helpSearchInput.setAttribute('aria-expanded', 'false');
+    searchActiveIndex = -1;
+    searchLastHits = [];
+  }
+
+  function searchJumpTo(item) {
+    if (!item || !item.row) return;
+    resetActive();
+    if (helpSearchInput.value.trim()) searchRun();
+    item.row.classList.remove('search-flash');
+    void item.row.offsetWidth;
+    item.row.classList.add('search-flash');
+    item.row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(function () { item.row.classList.remove('search-flash'); }, 1500);
+  }
+
+  function searchRenderDropdown(hits, tokens) {
+    helpSearchResults.innerHTML = '';
+    searchActiveIndex = -1;
+    searchLastHits = hits;
+    if (!hits.length) {
+      helpSearchResults.classList.remove('open');
+      helpSearchInput.setAttribute('aria-expanded', 'false');
+      return;
+    }
+    hits.slice(0, 12).forEach(function (item, i) {
+      var li = document.createElement('li');
+      li.setAttribute('role', 'option');
+      li.setAttribute('data-index', String(i));
+      li.innerHTML =
+        '<span class="search-result-title">' + searchHighlightHtml(item.control, tokens) + '</span>' +
+        '<span class="search-result-meta">' + esc(item.sectionTitle) +
+        (item.flowId ? ' · ' + esc(item.flowId) : '') + '</span>' +
+        '<span class="search-result-snippet">' + searchHighlightHtml(searchSnippet(item.effect, tokens), tokens) + '</span>';
+      li.addEventListener('mousedown', function (e) {
+        e.preventDefault();
+        searchJumpTo(item);
+        searchCloseDropdown();
+      });
+      helpSearchResults.appendChild(li);
+    });
+    helpSearchResults.classList.add('open');
+    helpSearchInput.setAttribute('aria-expanded', 'true');
+  }
+
+  function searchSetActiveOption(idx) {
+    var opts = helpSearchResults.querySelectorAll('li');
+    opts.forEach(function (li, i) { li.classList.toggle('active', i === idx); });
+    searchActiveIndex = idx;
+    if (idx >= 0 && opts[idx]) opts[idx].scrollIntoView({ block: 'nearest' });
+  }
+
+  function searchRun() {
+    var q = helpSearchInput.value.trim();
+    var qNorm = searchNormalize(q);
+    if (!qNorm) {
+      searchClearFilter();
+      searchClearPageHighlights();
+      searchCloseDropdown();
+      helpSearchStatus.textContent = '';
+      return;
+    }
+    var highlightTokens = qNorm.split(' ').filter(Boolean);
+    var tokens = searchTokens(q);
+    var index = searchBuildIndex();
+    var hits = index
+      .map(function (item) {
+        return { item: item, score: searchScore(item, qNorm, tokens) };
+      })
+      .filter(function (x) { return x.score > 0; })
+      .sort(function (a, b) { return b.score - a.score; })
+      .map(function (x) { return x.item; });
+
+    if (qNorm.length >= 2) searchApplyFilter(hits);
+    else searchClearFilter();
+    searchApplyPageHighlights(highlightTokens);
+    searchRenderDropdown(hits, highlightTokens);
+    helpSearchStatus.textContent = hits.length ? hits.length + ' match' + (hits.length === 1 ? '' : 'es') : 'No matches';
+  }
+
+  helpSearchInput.addEventListener('input', searchRun);
+
+  helpSearchInput.addEventListener('keydown', function (e) {
+    var opts = helpSearchResults.querySelectorAll('li');
+    if (e.key === 'ArrowDown') {
+      if (!opts.length) return;
+      e.preventDefault();
+      searchSetActiveOption(searchActiveIndex < opts.length - 1 ? searchActiveIndex + 1 : 0);
+    } else if (e.key === 'ArrowUp') {
+      if (!opts.length) return;
+      e.preventDefault();
+      searchSetActiveOption(searchActiveIndex > 0 ? searchActiveIndex - 1 : opts.length - 1);
+    } else if (e.key === 'Enter') {
+      if (searchActiveIndex >= 0 && searchLastHits[searchActiveIndex]) {
+        e.preventDefault();
+        searchJumpTo(searchLastHits[searchActiveIndex]);
+        searchCloseDropdown();
+      } else if (searchLastHits[0]) {
+        e.preventDefault();
+        searchJumpTo(searchLastHits[0]);
+        searchCloseDropdown();
+      }
+    } else if (e.key === 'Escape') {
+      if (helpSearchInput.value) {
+        e.preventDefault();
+        helpSearchInput.value = '';
+        searchRun();
+      } else {
+        searchCloseDropdown();
+      }
+    }
+  });
+
+  document.addEventListener('click', function (e) {
+    if (!helpSearchBox.contains(e.target)) searchCloseDropdown();
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      helpSearchInput.focus();
+      helpSearchInput.select();
+    }
+  });
+
+  initEditRegions();
+  loadDoc().then(function () { searchRun(); });
+})();
+</script>
+</body>
+</html>
