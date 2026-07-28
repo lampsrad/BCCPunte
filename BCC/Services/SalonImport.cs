@@ -101,6 +101,11 @@ public class SalonImport
 
     private async Task<(Salon salon, Monthly monthly)> SalonData(string lastname, string firstname, SalonMaster smaster)
     {
+        lastname = lastname.ToLower() switch
+        {
+            "debeer" => "De Beer",
+            _ => lastname
+        };
         var master = await repo.GetEntityNTAsync<Master>(x => x.Lastname == lastname && x.Firstname == firstname);
         if (master == null)
             throw new Exception($"Master with name {lastname} {firstname} not found in DB");

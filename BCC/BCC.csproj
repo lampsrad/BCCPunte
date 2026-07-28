@@ -8,7 +8,7 @@
 
   <ItemGroup>
     <Content Remove="Pages\FileChoose.razor" />
-    <Content Remove="wwwroot\Help.html" />
+    <!-- Helpie.html is legacy; keep out of publish. Help.html must ship (Admin → Help). -->
     <Content Remove="wwwroot\Helpie.html" />
   </ItemGroup>
 
