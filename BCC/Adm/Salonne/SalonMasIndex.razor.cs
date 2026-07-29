@@ -32,8 +32,6 @@ public partial class SalonMasIndex
             await state.ShowMessageAsync("SALON IMPORT", $"{sm.SalonName} Already Imported", "ok");
             return;
         }
-
-        // Native Windows OpenFileDialog (local admin) — same pattern as ImportClub
         var paths = await WindowsFileDialogs.PickFilesAsync(
             title: $"SALON IMPORT — Select {sm.SalonName} CSV",
             filter: "CSV files (*.csv)|*.csv|All files (*.*)|*.*",
@@ -41,7 +39,6 @@ public partial class SalonMasIndex
             multiselect: false);
         if (paths == null || paths.Length == 0)
             return;
-
         string source = paths[0];
         string destName = Path.GetFileName(source);
         if (destName.IndexOf(salonname, StringComparison.OrdinalIgnoreCase) < 0)
@@ -49,14 +46,12 @@ public partial class SalonMasIndex
             await state.ShowMessageAsync("SALON IMPORT", $"File does not contain {salonname}", "ok");
             return;
         }
-
         string uploadPath = gData.ImportDirectory;
         if (Directory.Exists(uploadPath))
             Directory.Delete(uploadPath, true);
         Directory.CreateDirectory(uploadPath);
         string dest = Path.Combine(uploadPath, destName);
         await Task.Run(() => File.Copy(source, dest, overwrite: true));
-
         var mess = await si.ImportSalon(sm, salonname);
         await state.ShowMessageAsync("SALON IMPORT", string.Join(Environment.NewLine, mess), "ok");
     }
