@@ -21,6 +21,7 @@ public class SalonImport
 
     public async Task<IList<string>> ImportSalon(SalonMaster sm, string salonname)
     {
+        Messages = new List<string>();
         await Ds.LastDates();
         string file = Directory.GetFiles(gData.ImportDirectory, $"*{salonname}*.csv").FirstOrDefault();
 
