@@ -5,6 +5,9 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.VisualBasic.FileIO;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
+// WinForms / System.Drawing also define Image and Size — prefer ImageSharp here.
+using Image = SixLabors.ImageSharp.Image;
+using Size = SixLabors.ImageSharp.Size;
 using System.IO.Compression;
 using System.Net.Http.Headers;
 using System.Text;
@@ -350,9 +353,23 @@ public partial class Admin
                 await YearEnd();
                 return null;
             }
-            string fn = await state.ShowFileUpload("CLUB IMPORT", "Upload Score or Results", gData.ImportDirectory);
-            if (fn == null)
+            // Native Windows OpenFileDialog (local admin) — same pattern as images import
+            var paths = await WindowsFileDialogs.PickFilesAsync(
+                title: "CLUB IMPORT — Upload Score or Results",
+                filter: "CSV files (*.csv)|*.csv|All files (*.*)|*.*",
+                initialDirectory: gData.Downloads,
+                multiselect: false);
+            if (paths == null || paths.Length == 0)
                 return null;
+            string source = paths[0];
+            string uploadPath = gData.ImportDirectory;
+            if (Directory.Exists(uploadPath))
+                Directory.Delete(uploadPath, true);
+            Directory.CreateDirectory(uploadPath);
+            string destName = Path.GetFileName(source);
+            string dest = Path.Combine(uploadPath, destName);
+            await Task.Run(() => File.Copy(source, dest, overwrite: true));
+            string fn = Path.GetFileNameWithoutExtension(destName);
             IList<string> lst;
             if (fn.StartsWith("Scoresheet", StringComparison.OrdinalIgnoreCase))
                 lst = await ImportScores(fn);
@@ -730,11 +747,33 @@ public partial class Admin
     #endregion
 
     #region ImagesProcess
+    /// <summary>
+    /// Native Windows OpenFileDialog (local admin). Copies selected zips into ImportDirectory
+    /// and returns the year-month string used by the photo pipeline (e.g. "2026-07").
+    /// </summary>
     private async Task<string> FileUpload()
     {
-        Filename = await state.ShowFileUpload("ZIPPED PHOTOS", "Upload Zipped Photos from PhotoVault", gData.ImportDirectory);
-        if (Filename == null)
+        var paths = await WindowsFileDialogs.PickFilesAsync(
+            title: "ZIPPED PHOTOS — Upload Zipped Photos from PhotoVault",
+            filter: "Zip files (*.zip)|*.zip|All files (*.*)|*.*",
+            initialDirectory: gData.Downloads,
+            multiselect: true);
+        if (paths == null || paths.Length == 0)
             return null;
+        string uploadPath = gData.ImportDirectory;
+        if (Directory.Exists(uploadPath))
+            Directory.Delete(uploadPath, true);
+        Directory.CreateDirectory(uploadPath);
+        string ym = null;
+        foreach (var source in paths)
+        {
+            string parsed = WindowsFileDialogs.ExtractPhotoVaultName(source);
+            string destName = parsed + Path.GetExtension(source);
+            string dest = Path.Combine(uploadPath, destName);
+            await Task.Run(() => File.Copy(source, dest, overwrite: true));
+            ym = parsed.Split(' ')[0];
+        }
+        Filename = ym;
         return Filename;
     }
     private async Task<string> GenerateImagesAsync(string source, string destination, int width, int height)

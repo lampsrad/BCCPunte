@@ -24,32 +24,26 @@ public partial class SalonMasIndex
     private Task Delete(SalonMaster sm) => salonDelete.InvokeAsync(sm.ID);
     private Task Edit(SalonMaster sm) => salonEdit.InvokeAsync(sm.ID);
     private Task Show(SalonMaster sm) => salonShow.InvokeAsync(sm.ID);
-
     private async Task SalonImport(SalonMaster sm)
     {
         string salonname = Regex.Match(sm.Alias ?? sm.SalonName, @"^(\w+)").Value;
-
         if (sm.Salons.Any())
         {
             await state.ShowMessageAsync("SALON IMPORT", $"{sm.SalonName} Already Imported", "ok");
             return;
         }
-
         state.TitleD = "Choose CSV File";
         var fn = await state.ShowFileUpload("File Upload", $"Select {sm.SalonName} File", gData.ImportDirectory);
         if (fn == null)
             return;
-
         if (!fn.Contains(salonname.ToLower()))
         {
             await state.ShowMessageAsync("SALON IMPORT", $"File does not contain {salonname}", "ok");
             return;
         }
-
         var mess = await si.ImportSalon(sm, salonname);
         await state.ShowMessageAsync("SALON IMPORT", string.Join(Environment.NewLine, mess), "ok");
     }
-
     private void SortTable(string colName)
     {
         bool ascending = colName != activeSortColum || !isSortedAscending;
@@ -57,7 +51,6 @@ public partial class SalonMasIndex
         isSortedAscending = ascending;
         sortTable.InvokeAsync(new sortVM { colName = colName, ascending = ascending });
     }
-
     private string setSortIcon(string ico) =>
         activeSortColum != ico ? string.Empty : isSortedAscending ? "fa-sort-up" : "fa-sort-down";
 }
