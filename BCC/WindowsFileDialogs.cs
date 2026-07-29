@@ -1,4 +1,7 @@
+using System.Drawing;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using System.Windows.Forms;
 
 namespace BCC;
 
@@ -8,6 +11,32 @@ namespace BCC;
 /// </summary>
 public static class WindowsFileDialogs
 {
+    [DllImport("user32.dll")]
+    private static extern bool SetForegroundWindow(IntPtr hWnd);
+
+    /// <summary>
+    /// Invisible topmost owner so common dialogs appear in front of the browser / app window
+    /// instead of behind it (STA thread has no natural UI owner).
+    /// </summary>
+    private static Form CreateDialogOwner()
+    {
+        var owner = new Form
+        {
+            Text = string.Empty,
+            ShowInTaskbar = false,
+            FormBorderStyle = FormBorderStyle.None,
+            StartPosition = FormStartPosition.Manual,
+            Location = new Point(-32000, -32000),
+            Size = new Size(1, 1),
+            Opacity = 0,
+            TopMost = true
+        };
+        owner.Show();
+        owner.BringToFront();
+        SetForegroundWindow(owner.Handle);
+        return owner;
+    }
+
     /// <summary>
     /// Opens a native Windows OpenFileDialog on an STA thread.
     /// Returns selected full paths, or null if the user cancels.
@@ -23,7 +52,8 @@ public static class WindowsFileDialogs
             string[] selected = null;
             var thread = new Thread(() =>
             {
-                using var dialog = new System.Windows.Forms.OpenFileDialog
+                using var owner = CreateDialogOwner();
+                using var dialog = new OpenFileDialog
                 {
                     Title = title,
                     Filter = filter,
@@ -32,7 +62,7 @@ public static class WindowsFileDialogs
                 };
                 if (!string.IsNullOrWhiteSpace(initialDirectory) && Directory.Exists(initialDirectory))
                     dialog.InitialDirectory = initialDirectory;
-                if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                if (dialog.ShowDialog(owner) == DialogResult.OK)
                     selected = dialog.FileNames;
             });
             thread.SetApartmentState(ApartmentState.STA);
@@ -53,7 +83,8 @@ public static class WindowsFileDialogs
             string selected = null;
             var thread = new Thread(() =>
             {
-                using var dialog = new System.Windows.Forms.FolderBrowserDialog
+                using var owner = CreateDialogOwner();
+                using var dialog = new FolderBrowserDialog
                 {
                     Description = description,
                     UseDescriptionForTitle = true,
@@ -61,7 +92,7 @@ public static class WindowsFileDialogs
                 };
                 if (!string.IsNullOrWhiteSpace(initialPath) && Directory.Exists(initialPath))
                     dialog.SelectedPath = initialPath;
-                if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                if (dialog.ShowDialog(owner) == DialogResult.OK)
                     selected = dialog.SelectedPath;
             });
             thread.SetApartmentState(ApartmentState.STA);
