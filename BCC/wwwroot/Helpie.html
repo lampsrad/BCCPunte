@@ -453,7 +453,8 @@ if (!app.Environment.IsDevelopment())
         <tr><td>ShowProgress(title, show, initial)</td><td>Displays the global progress overlay</td></tr>
         <tr><td>UpdateProgress(val, title)</td><td>Clamped 0-100 update; used extensively by the image pipeline</td></tr>
         <tr><td>ShowMessageAsync / ShowConfirmAsync</td><td>Modal dialogs driven from any component via injected State</td></tr>
-        <tr><td>ShowFilePicker / ShowFileUpload</td><td>Opens the reusable FileChoose / FileUpload components</td></tr>
+        <tr><td>ShowFilePicker / ShowFileUpload</td><td>Opens the reusable FileChoose / FileUpload Blazor components (still used for some pickers)</td></tr>
+        <tr><td>WindowsFileDialogs.PickFilesAsync</td><td>Native Windows OpenFileDialog (STA) for local admin: Images Process zips, Import Club CSV, per-salon CSV</td></tr>
       </tbody>
     </table>
   </div>
@@ -697,7 +698,8 @@ cx.Database.ExecuteSqlRaw(sql, new SqlParameter("@filePath", fn));</code></pre>
       <li><strong>ProgressBar.razor</strong> — Subscribes to State.Progress, shows title + percentage bar.</li>
       <li><strong>DialogBox.razor</strong> — Multi-purpose: date picker, file chooser list, confirmation, generic message. Wires itself into State events on init.</li>
       <li><strong>MessageBox.razor</strong> — Simple alert/confirm surface.</li>
-      <li><strong>FileUpload.razor / FileUploadAbs.razor / FileChoose.razor</strong> — Reusable upload + destination picker (destination path passed via State).</li>
+      <li><strong>FileUpload.razor / FileUploadAbs.razor / FileChoose.razor</strong> — Reusable Blazor upload + destination picker (destination path passed via State). Local admin imports for club scores, salon results, and Photovault zips use <code>WindowsFileDialogs</code> instead.</li>
+      <li><strong>WindowsFileDialogs.cs</strong> — Native Windows <code>OpenFileDialog</code> / folder browser on an STA thread; used by Admin Images Process, Import Club, and <code>SalonMasIndex.SalonImport</code>.</li>
       <li><strong>StarLevelTable.razor</strong> — The detailed 19-column scoring grid with threshold highlighting (red background when GMp/Pp/Salp meet promotion targets).</li>
     </ul>
   </div>
@@ -750,7 +752,7 @@ cx.Database.ExecuteSqlRaw(sql, new SqlParameter("@filePath", fn));</code></pre>
     <ul>
       <li>SalonIndex / SalonCreate / SalonEdit — manage events (name, date, international flag)</li>
       <li>SalonMasIndex / SalonMasCreate / SalonMasEdit / SalonMasMain — assign members to salons, manual editing of acceptances/COMs/points/awards</li>
-      <li>SalonImport button on index calls <code>SalonImport.ImportSalon</code> which triggers the full promotion recalculation</li>
+      <li>Click salon name on index → <code>SalonMasIndex.SalonImport</code>: native Windows CSV picker (<code>WindowsFileDialogs.PickFilesAsync</code>), copy into Import, then <code>SalonImport.ImportSalon</code> (full promotion recalculation)</li>
     </ul>
   </div>
 
@@ -787,8 +789,8 @@ cx.Database.ExecuteSqlRaw(sql, new SqlParameter("@filePath", fn));</code></pre>
     <h2>18. Image Processing Pipeline — Overview</h2>
     <p>
       Triggered from <strong>Admin → Images Process</strong> (menu href <code>admin/images-import</code>).
-      Implemented entirely in <code>Adm/Club/Admin.razor.cs</code> region <code>ImagesProcess</code>, with the file dialog in
-      <code>Pages/FileUpload.razor</code> and paths from <code>gData.cs</code>.
+      Implemented entirely in <code>Adm/Club/Admin.razor.cs</code> region <code>ImagesProcess</code>, with zip selection via
+      <code>WindowsFileDialogs.PickFilesAsync</code> (native Windows dialog) and paths from <code>gData.cs</code>.
     </p>
     <p>
       Progress is driven by <code>IProgress&lt;ProgressInfo&gt;</code> bound to the Admin page <code>ProgressBar</code>
@@ -891,15 +893,15 @@ cx.Database.ExecuteSqlRaw(sql, new SqlParameter("@filePath", fn));</code></pre>
       </tbody>
     </table>
 
-    <h3>Stage 1 — Upload dialog &amp; unzip (<code>PhotosLocalUnzipAsync</code> → <code>FileUpload</code>)</h3>
-    <p><strong>Dialog</strong> via <code>state.ShowFileUpload("ZIPPED PHOTOS", "Upload Zipped Photos from PhotoVault", gData.ImportDirectory)</code> (<code>FileUpload.razor</code> in MainLayout).</p>
+    <h3>Stage 1 — Native zip pick &amp; unzip (<code>PhotosLocalUnzipAsync</code> → <code>FileUpload</code>)</h3>
+    <p><strong>Dialog</strong> via <code>WindowsFileDialogs.PickFilesAsync</code> (native Windows <code>OpenFileDialog</code> on an STA thread) from <code>Admin.FileUpload()</code> — title <code>ZIPPED PHOTOS — Upload Zipped Photos from PhotoVault</code>, filter <code>*.zip</code>, multi-select, initial directory <code>gData.Downloads</code>.</p>
     <ul>
-      <li>Clears and recreates the Import folder, then accepts multiple files (max 10, <strong>100 MB</strong> each in the uploader).</li>
-      <li><code>ExtractName</code> parses PhotoVault-style names with regex <code>photos-([a-z]+)_(\d{4})-([a-z]+)</code> (month EN/AF → <code>01</code>–<code>12</code>), producing a label like <code>2026-03 Set</code>.</li>
-      <li>Each file is saved as that label + original extension under Import. The returned month key is the year-month token only: <code>Ym = Filename.Split(' ')[0]</code> (e.g. <code>2026-03</code>). That becomes Admin’s <code>Filename</code> for all later folders and the export zip name.</li>
-      <li>Cancel closes the dialog with <code>null</code> → whole process stops.</li>
+      <li>Clears and recreates the Import folder, then copies each selected zip from the desktop path into Import.</li>
+      <li><code>WindowsFileDialogs.ExtractPhotoVaultName</code> parses PhotoVault-style names with regex <code>photos-([a-z]+)_(\d{4})-([a-z]+)</code> (month EN/AF → <code>01</code>–<code>12</code>), producing a label like <code>2026-03 Set</code>.</li>
+      <li>Each file is saved as that label + original extension under Import. The returned month key is the year-month token only: <code>Ym = parsed.Split(' ')[0]</code> (e.g. <code>2026-03</code>). That becomes Admin’s <code>Filename</code> for all later folders and the export zip name.</li>
+      <li>Cancel returns <code>null</code> → whole process stops.</li>
     </ul>
-    <p><strong>Unzip:</strong> <code>Directory.GetFiles(Import, "*.zip")</code> for <em>every</em> zip now in Import (folder was wiped then refilled by the uploader). Creates <code>D:\BKK\Inbox\Club\Photos\{Filename}\</code> and <code>ZipFile.ExtractToDirectory(..., overwriteFiles: true)</code> for each zip. Progress: <strong>UNZIPPING</strong>.</p>
+    <p><strong>Unzip:</strong> <code>Directory.GetFiles(Import, "*.zip")</code> for <em>every</em> zip now in Import (folder was wiped then refilled by the native picker). Creates <code>D:\BKK\Inbox\Club\Photos\{Filename}\</code> and <code>ZipFile.ExtractToDirectory(..., overwriteFiles: true)</code> for each zip. Progress: <strong>UNZIPPING</strong>.</p>
     <div class="tip">After this stage the month folder holds original high-res JPGs with PhotoVault filenames (the 7-digit id is usually embedded in the name).</div>
 
     <h3>Stage 2 — Copy &amp; rename (<code>PhotosCopyRenameAsync</code>)</h3>
@@ -1036,11 +1038,12 @@ Content-Type: multipart/form-data  (file = BKK-{yyyy-MM}.zip)</code></pre>
     ...
 };</code></pre>
 
-    <h4>2. ImportClub() – Admin.razor.cs:336 (Main Orchestrator)</h4>
-    <p><strong>Summary:</strong> The "Hoof Ingangsroete". Decides whether to do a normal import or special September/YearEnd handling. Shows the file upload dialog and routes to the correct importer based on filename prefix.</p>
+    <h4>2. ImportClub() – Admin.razor.cs (Main Orchestrator)</h4>
+    <p><strong>Summary:</strong> The "Hoof Ingangsroete". Decides whether to do a normal import or special September/YearEnd handling. Opens a <strong>native Windows file picker</strong>, copies the CSV into Import, then routes to the correct importer based on filename prefix.</p>
     <ul>
       <li>If <code>gData.lastDateClubImported.Month == 9</code> → calls <code>YearEnd()</code> and returns early (no CSV import in October for September data).</li>
-      <li>Otherwise calls <code>state.ShowFileUpload("CLUB IMPORT", ...)</code> to let the user pick a file from <code>wwwroot/Import/</code>.</li>
+      <li>Otherwise <code>WindowsFileDialogs.PickFilesAsync</code> (title <code>CLUB IMPORT — Upload Score or Results</code>, CSV filter, single select, starts in <code>gData.Downloads</code>).</li>
+      <li>Clears/recreates <code>gData.ImportDirectory</code>, copies the chosen file there, then uses the filename without extension.</li>
       <li>If filename starts with <strong>"Scoresheet"</strong> → <code>ImportScores(fn)</code></li>
       <li>If filename starts with <strong>"Results"</strong> → <code>ImportResults(fn)</code></li>
       <li>Otherwise throws "File Name is not correct".</li>
@@ -1147,7 +1150,7 @@ Content-Type: multipart/form-data  (file = BKK-{yyyy-MM}.zip)</code></pre>
     </ol>
 
     <h3>Salon Import Sequence</h3>
-    <p>SalonMaster record created → CSV uploaded → SalonImport.ImportSalon → per-member GetLastMonthly → aggregate Salon rows → update Salm/Salp/Saly → Promotion_Due</p>
+    <p>SalonMaster record created → click salon name → <code>WindowsFileDialogs.PickFilesAsync</code> (CSV from Downloads) → copy to Import → <code>SalonImport.ImportSalon</code> → per-member GetLastMonthly → aggregate Salon rows → update Salm/Salp/Saly → Promotion_Due</p>
   </div>
 
   <!-- 20. FILESYSTEM -->

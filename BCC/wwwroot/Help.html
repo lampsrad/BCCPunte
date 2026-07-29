@@ -618,7 +618,9 @@
         <td class="effect-cell">
           <span class="menu-path">Salons → Salons Current · <span class="route">/salonMasMain</span></span><br>
           Salon administration for the current period. Index of salon masters: Create, Edit, Show participants, Delete
-          (only if no child rows). Click salon name to import that event’s PSSA CSV (if not already imported).
+          (only if no child rows). Click salon name to import that event’s PSSA CSV (if not already imported): opens a
+          <strong>native Windows OpenFileDialog</strong> (CSV filter, starts in Downloads), copies into
+          <code>wwwroot/Import/</code>, then runs <code>SalonImport.ImportSalon</code>.
         </td>
       </tr>
       <tr>
@@ -665,15 +667,19 @@
         <td><button type="button" class="ctrl-name" data-flow-id="images-process">Images Process</button></td>
         <td class="effect-cell">
           <span class="menu-path">Admin → Images Process · <span class="route">/admin/images-import</span></span><br>
-          Full photo pipeline for the monthly club competition images (does not import scores). Unzip Photovault zips →
-          rename by 7-digit IntRef → generate 1365×768 previews → zip + copy to local ClubPhotos → upload zip to Absolute Hosting.
+          Full photo pipeline for the monthly club competition images (does not import scores).
+          Opens a <strong>native Windows OpenFileDialog</strong> for Photovault <code>.zip</code> files (multi-select, starts in Downloads),
+          copies into <code>wwwroot/Import/</code> with PhotoVault-parsed names → unzip → rename by 7-digit IntRef →
+          generate 1365×768 previews → zip + copy to local ClubPhotos → upload zip to Absolute Hosting.
         </td>
       </tr>
       <tr>
         <td><button type="button" class="ctrl-name" data-flow-id="import-club">Import Club</button></td>
         <td class="effect-cell">
           <span class="menu-path">Admin → Import Club · <span class="route">/admin/club-import</span></span><br>
-          Main monthly data import (“Hoof Ingangsroete”). Imports Scoresheet and/or Results CSVs from the Import folder
+          Main monthly data import (“Hoof Ingangsroete”). Opens a <strong>native Windows OpenFileDialog</strong>
+          (CSV filter, starts in Downloads), copies the chosen file into <code>wwwroot/Import/</code>, then imports
+          <code>Scoresheet*.csv</code> or <code>Results*.csv</code> by filename prefix
           (or year-end path when last import month is October). Creates/updates masters and photos, aggregates monthlies,
           stores dates, runs <code>Promotion_Due</code>. May pause for interactive photo-limit chooser (max 3 non-S + 2 S per member).
         </td>
@@ -682,8 +688,9 @@
         <td><button type="button" class="ctrl-name" data-flow-id="import-salon">Import Salon</button></td>
         <td class="effect-cell">
           <span class="menu-path">Admin → Import Salon · <span class="route">/salonMasMain</span></span><br>
-          Opens the salon admin shell (same as Salons Current). Import a single salon by clicking its name on the index
-          (CSV must contain the salon name token).
+          Opens the salon admin shell (same as Salons Current). Click a salon name on the index to import its PSSA CSV:
+          <strong>native Windows OpenFileDialog</strong> (CSV filter, starts in Downloads); filename must contain the salon
+          name token; file is copied to <code>wwwroot/Import/</code>, then <code>SalonImport.ImportSalon</code> runs.
         </td>
       </tr>
       <tr>
