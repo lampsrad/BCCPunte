@@ -101,19 +101,55 @@ public partial class SalonMasMain
         {
             var filename = await state.ShowFilePicker();
             if (filename == null)
+            {
+                salonMasShow = true;
                 return;
+            }
             var file = $"{gData.Downloads}{filename}";
             using (TextFieldParser p = new TextFieldParser(file))
             {
-                TextFieldParserInitialize(p);
+                p.TextFieldType = FieldType.Delimited;
+                p.SetDelimiters(",");
+                p.HasFieldsEnclosedInQuotes = true;
+                p.TrimWhiteSpace = true;
                 while (!p.EndOfData)
                 {
                     var ln = p.ReadFields();
+                    if (ln == null || ln.Length < 4)
+                        continue;
+                    // Data rows start with the salon number; skip title/header/blank rows
+                    if (!int.TryParse(ln[0], out _))
+                        continue;
+
+                    string club;
+                    string salonName;
+                    string dateStr;
+                    // Padded PSSA export: No,Club,,SalonName,,yyyy-MM-dd
+                    if (ln.Length >= 6 && string.IsNullOrWhiteSpace(ln[2]) && !string.IsNullOrWhiteSpace(ln[5]))
+                    {
+                        club = ln[1];
+                        salonName = ln[3];
+                        dateStr = ln[5];
+                    }
+                    else
+                    {
+                        // Compact layout: No,Club,SalonName,dd-MM-yyyy
+                        club = ln[1];
+                        salonName = ln[2];
+                        dateStr = ln[3];
+                    }
+
+                    if (string.IsNullOrWhiteSpace(salonName) || string.IsNullOrWhiteSpace(dateStr))
+                        continue;
+
+                    if (!TryParseSalonDate(dateStr, out DateOnly date))
+                        throw new FormatException($"Invalid date '{dateStr}' for salon '{salonName}'.");
+
                     var sm = new SalonMaster
                     {
-                        Club = ln[1],
-                        SalonName = ln[2],
-                        Date = DateOnly.ParseExact(ln[3], "dd-MM-yyyy", CultureInfo.InvariantCulture),
+                        Club = club,
+                        SalonName = salonName,
+                        Date = date,
                     };
                     sms.Add(sm);
                 }
@@ -127,11 +163,36 @@ public partial class SalonMasMain
                 }
             }
             int cc = await scope.SaveChangesDetachAsync();
+            salonMasShow = true;
         }
         catch (Exception ex)
         {
+            salonMasShow = true;
             throw new Exception(ex.Message);
         }
+    }
+
+    /// <summary>
+    /// Accepts PSSA calendar dates (yyyy-MM-dd) and older dd-MM-yyyy / slash variants.
+    /// </summary>
+    private static bool TryParseSalonDate(string dateStr, out DateOnly date)
+    {
+        string[] formats =
+        {
+            "yyyy-MM-dd",
+            "dd-MM-yyyy",
+            "d-M-yyyy",
+            "yyyy/MM/dd",
+            "dd/MM/yyyy",
+            "d/M/yyyy",
+        };
+        return DateOnly.TryParseExact(
+                   dateStr.Trim(),
+                   formats,
+                   CultureInfo.InvariantCulture,
+                   DateTimeStyles.None,
+                   out date)
+               || DateOnly.TryParse(dateStr, CultureInfo.InvariantCulture, DateTimeStyles.None, out date);
     }
     private async Task monthlyUpdate(Salon salon)
     {
@@ -241,14 +302,24 @@ public partial class SalonMasMain
         {
             await ImportSalonList();
         }
-        DateOnly datestart = DateOnly.Parse($"{gData.lastDateClubYear.Year}-07-01");
-        DateOnly dateend = DateOnly.Parse($"{gData.lastDateClubYear.Year + 1}-06-30");
-        if(Data=="prev")
+        // PSSA salon season is 1 July – 30 June. Anchor on last club import (working month),
+        // not clubYearStart (1 Nov) — e.g. club year 2025-11 with lastImport 2026-07 must show
+        // 2026-07..2027-06 (new calendar), not 2025-07..2026-06 (previous calendar).
+        DateOnly refDate = gData.lastDateClubImported != default
+            ? gData.lastDateClubImported
+            : gData.lastDateClubYear != default
+                ? gData.lastDateClubYear
+                : DateOnly.FromDateTime(DateTime.Today);
+        int seasonStartYear = refDate.Month >= 7 ? refDate.Year : refDate.Year - 1;
+        DateOnly datestart = new DateOnly(seasonStartYear, 7, 1);
+        DateOnly dateend = new DateOnly(seasonStartYear + 1, 6, 30);
+        if (Data == "prev")
         {
-            datestart=datestart.AddYears(-1);
-            dateend=dateend.AddYears(-1);
+            datestart = datestart.AddYears(-1);
+            dateend = dateend.AddYears(-1);
         }
-        salonMasters = await repo.GetEntitiesNTAsync<SalonMaster>(x => x.Date >= datestart && x.Date < dateend,x=>x.Date);
+        salonMasters = await repo.GetEntitiesNTAsync<SalonMaster>(
+            x => x.Date >= datestart && x.Date <= dateend, x => x.Date);
         Title = $"Salons from {datestart} to {dateend}";
     }
     private void SortTableSalons(sortVM vm)
