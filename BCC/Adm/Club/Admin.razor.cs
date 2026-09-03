@@ -280,8 +280,6 @@ public partial class Admin
     {
         Datum lastImport = await repo.Datum(x => x.ID == "lastImport");
         var latestdate = await repo.monthlyLastDateAsync();
-        if (latestdate.Month == 9)
-            latestdate = latestdate.AddMonths(1);
         lastImport.Date = latestdate;
         gData.lastDateClubImported = lastImport.Date;
         if (lastImport.Date.Month == 11)
@@ -544,7 +542,16 @@ public partial class Admin
     {
         await ds.LastDates();
         await ds.Promotion_Due();
-        await DatesStoreInDb();
+        // No club photo CSV in October. Salon imports may already have created October
+        // Monthlies — use that max date when present; otherwise advance Sept → Oct.
+        Datum lastImport = await repo.Datum(x => x.ID == "lastImport");
+        var latestdate = await repo.monthlyLastDateAsync();
+        DateOnly target = gData.lastDateClubImported.AddMonths(1);
+        if (latestdate > gData.lastDateClubImported)
+            target = latestdate;
+        lastImport.Date = target;
+        gData.lastDateClubImported = lastImport.Date;
+        await repo.UpdateSaveDetachAsync(lastImport);
         return "October month with no Imports, but Promotions succesfully done";
     }
     private async Task<IList<Photo>> PhotoQuantity(IList<Photo> Photos)

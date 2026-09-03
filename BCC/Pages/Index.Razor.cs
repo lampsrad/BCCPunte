@@ -13,26 +13,18 @@ namespace BCC.Pages
 
         private async Task LoadWinnersAsync()
         {
-            string photosRoot = gData.photosLocal;
-            if (!Directory.Exists(photosRoot))
-                return;
-            string tempDir = Directory.GetDirectories(photosRoot)
-                .Where(d => Directory.Exists(Path.Combine(d, "Temp")))
-                .OrderByDescending(d => d)
-                .FirstOrDefault();
-            if (tempDir == null)
-                return;
-            string monthFolder = Path.GetFileName(tempDir);
-            if (!DateOnly.TryParse(monthFolder + "-01", out DateOnly photoDate))
-                return;
+            DateOnly photoDate = gData.lastDateClubImported;
+            MonthTitle = photoDate.toMonthFull_Year();
             var photos = await repo.GetEntitiesNTAsync<Photo>(
                 x => x.Monthly.Date.Year == photoDate.Year
                   && x.Monthly.Date.Month == photoDate.Month
                   && (x.Winner == true || x.Club_Winner == true));
+            string monthFolder = photoDate.toYear_Month_Digits();
             string urlBase = $"/photos/{monthFolder}/Temp/";
             foreach (var p in photos)
-                p.Filename = p.IntRef.HasValue ? urlBase + p.IntRef + ".jpg" : string.Empty;
-            MonthTitle = photoDate.toMonthFull_Year();
+                p.Filename = p.IntRef.HasValue
+                    ? urlBase + p.IntRef + ".jpg"
+                    : string.Empty;
             Winners = photos.OrderBy(p => p.Star_Group).ThenBy(p => p.Category).ToList();
         }
         protected override async Task OnInitializedAsync()
