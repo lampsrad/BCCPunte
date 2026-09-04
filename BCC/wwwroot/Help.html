@@ -468,7 +468,6 @@
       <div class="toc-group-title">Admin</div>
       <ol>
         <li><a href="#admin-sec">Admin</a></li>
-        <li><a href="ImportClub.html">Import Club (code flow)</a></li>
       </ol>
     </div>
     <div class="toc-group">
@@ -678,11 +677,11 @@
         <td><button type="button" class="ctrl-name" data-flow-id="import-club">Import Club</button></td>
         <td class="effect-cell">
           <span class="menu-path">Admin → Import Club · <span class="route">/admin/club-import</span></span><br>
-          Main monthly data import (“Hoof Ingangsroete”). Opens a <strong>native Windows OpenFileDialog</strong>
-          (CSV filter, starts in Downloads), copies the chosen file into <code>wwwroot/Import/</code>, then imports
-          <code>Scoresheet*.csv</code> or <code>Results*.csv</code> by filename prefix
-          (or year-end path when last import month is September). Creates/updates masters and photos, aggregates monthlies,
-          stores dates, runs <code>Promotion_Due</code>. May pause for interactive photo-limit chooser (max 3 non-S + 2 S per member).
+          <code>club-import</code> in <code>Admin.razor.cs</code> (<code>#region ClubImport</code>), with monthlies and promotions in <code>DataService</code> — no <code>ClubImport</code> service.
+          Last import in September: <code>YearEnd</code> / <code>OctoberMonth</code> (no CSV). Else pick <code>Scoresheet*.csv</code> or <code>Results*.csv</code>
+          (new rows: masters, monthlies, photo-limit chooser, then points and <code>Promotion_Due</code>;
+          Scoresheet re-import fills scores, Results re-import stops).
+          Does not process images or salon files. <a class="section-jump" href="ImportClub.html">ImportClub.html</a>
         </td>
       </tr>
       <tr>
