@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Club Import code flow</title>
+<style>
+  :root {
+    --gold: #d4b106;
+    --ink: #e6e6e6;
+    --muted: #9a9a9a;
+    --bg: #121212;
+    --card: #1b1b1b;
+    --code-bg: #2a2a2a;
+    --code-fg: #e8d48b;
+    --line: #333;
+    --th: #0f0f0f;
+    --row: #242424;
+  }
+  color-scheme: dark;
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; background: var(--bg); }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", Calibri, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--ink);
+    background: var(--bg);
+  }
+  .wrap {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2rem 1.25rem 4rem;
+    background: var(--card);
+    min-height: 100vh;
+    box-shadow: 0 0 0 1px var(--line);
+  }
+  h1 {
+    font-size: 2rem;
+    font-weight: 650;
+    margin: 0 0 0.35rem;
+    letter-spacing: -0.02em;
+    color: #f2f2f2;
+  }
+  .subtitle {
+    color: var(--muted);
+    margin: 0 0 1.25rem;
+    padding-bottom: 0.85rem;
+    border-bottom: 3px solid var(--gold);
+    font-size: 0.95rem;
+  }
+  h2 {
+    font-size: 1.35rem;
+    margin: 2rem 0 0.6rem;
+    padding-bottom: 0.3rem;
+    border-bottom: 1px solid var(--line);
+    color: #f0f0f0;
+  }
+  h3 {
+    font-size: 1.1rem;
+    margin: 1.35rem 0 0.5rem;
+    color: #ececec;
+  }
+  p { margin: 0 0 0.75rem; }
+  ul, ol { margin: 0 0 0.85rem 1.25rem; padding: 0; }
+  li { margin: 0 0 0.3rem; }
+  a { color: var(--gold); }
+  a:hover { color: #f0d24a; }
+  code {
+    font-family: Consolas, "Cascadia Mono", "Courier New", monospace;
+    font-size: 0.88em;
+    background: var(--code-bg);
+    color: var(--code-fg);
+    padding: 0.05em 0.3em;
+    border-radius: 3px;
+  }
+  pre {
+    font-family: Consolas, "Cascadia Mono", "Courier New", monospace;
+    font-size: 0.82rem;
+    line-height: 1.4;
+    background: #141414;
+    color: #dcdcdc;
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--gold);
+    padding: 0.75rem 0.9rem;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin: 0.35rem 0 1rem;
+  }
+  .src {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin: 0.85rem 0 0;
+    font-family: Consolas, monospace;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.5rem 0 1.1rem;
+    font-size: 0.92rem;
+  }
+  th, td {
+    border: 1px solid #3a3a3a;
+    padding: 0.45rem 0.6rem;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: var(--th);
+    color: #f2f2f2;
+    font-weight: 600;
+  }
+  th code { background: transparent; color: var(--gold); padding: 0; }
+  td { background: #1e1e1e; }
+  tr:nth-child(even) td { background: var(--row); }
+  nav.toc {
+    background: #242018;
+    border: 1px solid #5c4d12;
+    padding: 0.85rem 1rem;
+    margin: 0 0 1.5rem;
+  }
+  nav.toc strong { display: block; margin-bottom: 0.4rem; color: var(--gold); }
+  nav.toc ol { margin: 0 0 0 1.1rem; }
+  nav.toc li { margin: 0.15rem 0; }
+  .flow { margin: 0.75rem 0 1.25rem; }
+  .box {
+    border: 1px solid #444;
+    background: #262626;
+    color: #e8e8e8;
+    padding: 0.45rem 0.7rem;
+    text-align: center;
+    border-radius: 4px;
+  }
+  .box.decision { background: #3a320e; border-color: var(--gold); font-weight: 600; color: #f3e6a0; }
+  .box.action { background: #1a2a3a; border-color: #4a7aa8; }
+  .box.end { background: #1a3320; border-color: #4a9a62; }
+  .arrow { text-align: center; color: #888; margin: 0.15rem 0; }
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+  .label {
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-style: italic;
+    margin-bottom: 0.25rem;
+  }
+  @media (max-width: 640px) {
+    .split { grid-template-columns: 1fr; }
+    .wrap { padding: 1.25rem 0.85rem 3rem; }
+  }
+  @media print {
+    @page { size: A4; margin: 16mm 14mm 18mm 14mm; }
+    html, body { background: #121212; font-size: 10.5pt; color: #e6e6e6; }
+    .wrap { max-width: none; box-shadow: none; padding: 0; background: #1b1b1b; }
+    nav.toc { break-after: avoid; }
+    pre, table, .box { break-inside: avoid; }
+    h2 { break-after: avoid; }
+    a { color: var(--gold); text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Club Import code flow</h1>
+<p class="subtitle">BCCPunte · Admin → Import Club · <code>/admin/club-import</code></p>
+
+<p>There is no <code>ClubImport</code> service class. Club import is the <code>club-import</code> admin route: UI in <code>Admin.razor</code>, logic in the <code>ClubImport</code> region of <code>Admin.razor.cs</code>, with monthly/date/promotion work in <code>DataService</code>. Images Process (<code>images-import</code>) is a separate path.</p>
+
+<nav class="toc" aria-label="Contents">
+  <strong>Contents</strong>
+  <ol>
+    <li><a href="#files">Files</a></li>
+    <li><a href="#trigger">Trigger</a></li>
+    <li><a href="#page-entry">Page entry</a></li>
+    <li><a href="#importclub">ImportClub() — two branches</a></li>
+    <li><a href="#csv-parse">Shared CSV parse</a></li>
+    <li><a href="#scores">New-import path (Scoresheet)</a></li>
+    <li><a href="#results">New-import path (Results)</a></li>
+    <li><a href="#monthly">Monthly lifecycle</a></li>
+    <li><a href="#points">Points and promotion</a></li>
+    <li><a href="#dates">Date stamp</a></li>
+    <li><a href="#photo-fields">Photo fields used only during import</a></li>
+    <li><a href="#flow">Flow (CSV month)</a></li>
+    <li><a href="#not-this">What this path does not do</a></li>
+  </ol>
+</nav>
+
+<h2 id="files">Files</h2>
+<table>
+  <thead>
+    <tr><th>Role</th><th>Path</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Route / chooser UI</td><td><code>BCC/Adm/Club/Admin.razor</code></td></tr>
+    <tr><td>Import logic</td><td><code>BCC/Adm/Club/Admin.razor.cs</code> (<code>#region ClubImport</code>)</td></tr>
+    <tr><td>Monthly lifecycle, promotions, cleanup</td><td><code>BCC/Services/DataService.cs</code></td></tr>
+    <tr><td>Menu link</td><td><code>BCC/Pages/Menu.razor</code></td></tr>
+    <tr><td>Native file picker</td><td><code>BCC/WindowsFileDialogs.cs</code></td></tr>
+    <tr><td>Confirm dialog (new Master)</td><td><code>BCC/Pages/MessageBox.razor</code> via <code>State.ShowConfirmAsync</code></td></tr>
+    <tr><td>Scoresheet column names</td><td><code>BCC/Models/ScoreHeaders.cs</code></td></tr>
+    <tr><td>Results column names</td><td><code>BCC/Models/ResultHeaders.cs</code></td></tr>
+    <tr><td>Last-import / year-start dates</td><td><code>BCC/Models/Datum.cs</code> table <code>Date</code></td></tr>
+    <tr><td>Staging folder</td><td><code>gData.ImportDirectory</code> → <code>wwwroot\Import\</code> (<code>BCC/gData.cs</code>)</td></tr>
+  </tbody>
+</table>
+<p><code>DataService</code> and <code>Repo</code> are registered scoped in <code>BCC/Program.cs</code>.</p>
+
+<h2 id="trigger">Trigger</h2>
+<p>Admin → <strong>Import Club</strong> navigates to <code>/admin/club-import</code>:</p>
+<p class="src">BCC/Pages/Menu.razor:61</p>
+<pre>&lt;li&gt;&lt;a href="admin/club-import" title="Scoresheet.csv or Results.csv file you select or YearEnd if last import month is September"&gt;Import Club&lt;/a&gt;&lt;/li&gt;</pre>
+
+<p><code>Admin.razor</code> binds that URL segment as <code>Data</code>:</p>
+<p class="src">BCC/Adm/Club/Admin.razor:1–2</p>
+<pre>@page "/admin/{Data}"
+@using BCC.Pages</pre>
+
+<p><code>lastDateClubImported</code> is already in memory from the home page, which reads the <code>Datum</code> row <code>lastImport</code>:</p>
+<p class="src">BCC/Pages/Index.Razor.cs:30–36</p>
+<pre>protected override async Task OnInitializedAsync()
+{
+    DateOnly date = await repo.lastDateAsync(x =&gt; x.ID == "lastImport");
+    gData.lastDateClubImported = date.toDateFirstDay();
+    date = await repo.lastDateAsync(x =&gt; x.ID == "clubYearStart");
+    gData.lastDateClubYear = date.toDateFirstDay();</pre>
+
+<h2 id="page-entry">Page entry</h2>
+<p>On first render, <code>OnInitialized</code> empties <code>wwwroot\Import\</code>:</p>
+<p class="src">BCC/Adm/Club/Admin.razor.cs:220–223</p>
+<pre>protected override void OnInitialized()
+{
+    DirectoryPrepare(gData.ImportDirectory);
+}</pre>
+
+<p>Then <code>OnParametersSetAsync</code> dispatches on <code>Data</code>:</p>
+<p class="src">BCC/Adm/Club/Admin.razor.cs:224–238</p>
+<pre>protected override async Task OnParametersSetAsync()
+{
+    Messages = new List&lt;string&gt;();
+    Title = "Admin Page";
+    StateHasChanged();
+    string com = Data switch
+    {
+        "backup" =&gt; Backup(),
+        "images-import" =&gt; await ImagesProcessAsync(),
+        "club-import" =&gt; await ImportClub(),
+        ...
+    };</pre>
+<p><code>ImportClub()</code> is the orchestrator (commented as the main entry).</p>
+
+<h2 id="importclub"><code>ImportClub()</code> — two branches</h2>
+<p class="src">BCC/Adm/Club/Admin.razor.cs:345–387</p>
+<pre>private async Task&lt;string&gt; ImportClub()
+{
+    try
+    {
+        if (gData.lastDateClubImported.Month == 9)
+        {
+            await YearEnd();
+            return null;
+        }
+        var paths = await WindowsFileDialogs.PickFilesAsync(
+            title: "CLUB IMPORT — Upload Score or Results",
+            filter: "CSV files (*.csv)|*.csv|All files (*.*)|*.*",
+            initialDirectory: gData.Downloads,
+            multiselect: false);
+        ...
+        if (fn.StartsWith("Scoresheet", ...))
+            lst = await ImportScores(fn);
+        else if (fn.StartsWith("Results", ...))
+            lst = await ImportResults(fn);
+        else
+            throw new Exception("File Name is not correct; ...");</pre>
+<p>Exceptions are caught, written to <code>Errors</code>, and shown as red list items on <code>Admin.razor</code>.</p>
+
+<h3>Branch A — last import month is September</h3>
+<p>No CSV. <code>YearEnd()</code> → <code>OctoberMonth()</code>:</p>
+<ol>
+  <li>Reload dates (<code>ds.LastDates()</code>).</li>
+  <li>Run promotions (<code>ds.Promotion_Due()</code>).</li>
+  <li>Advance <code>Datum.lastImport</code> to <code>lastDateClubImported + 1 month</code>, or to the latest Monthly date if salon import already created October rows.</li>
+</ol>
+<p class="src">BCC/Adm/Club/Admin.razor.cs:541–555</p>
+<pre>private async Task&lt;string&gt; OctoberMonth()
+{
+    await ds.LastDates();
+    await ds.Promotion_Due();
+    // No club photo CSV in October. Salon imports may already have created October
+    // Monthlies — use that max date when present; otherwise advance Sept → Oct.
+    ...
+    DateOnly target = gData.lastDateClubImported.AddMonths(1);
+    if (latestdate &gt; gData.lastDateClubImported)
+        target = latestdate;</pre>
+<p>This path does <strong>not</strong> call <code>DatesStoreInDb()</code>. It writes <code>lastImport</code> itself.</p>
+
+<h3>Branch B — pick a CSV</h3>
+<p>Native Windows <code>OpenFileDialog</code> on an STA thread (<code>WindowsFileDialogs.PickFilesAsync</code>, starts in <code>gData.Downloads</code>). Cancel returns immediately.</p>
+<p>The chosen file is copied into <code>gData.ImportDirectory</code> (<code>wwwroot\Import\</code>). Routing is <strong>filename prefix</strong>, not content:</p>
+<table>
+  <thead><tr><th>Filename starts with</th><th>Method</th></tr></thead>
+  <tbody>
+    <tr><td><code>Scoresheet</code></td><td><code>ImportScores</code></td></tr>
+    <tr><td><code>Results</code></td><td><code>ImportResults</code></td></tr>
+    <tr><td>anything else</td><td>exception</td></tr>
+  </tbody>
+</table>
+
+<h2 id="csv-parse">Shared CSV parse</h2>
+<p>Both importers:</p>
+<ol>
+  <li><code>Import(filename)</code> → <code>ds.LastDates()</code> then find <code>*{fn}*</code> under Import.</li>
+  <li><code>TextFieldParserInitialize</code> — first line lowercased, split on commas into <code>Headers</code>.</li>
+  <li><code>SetScoreIndices()</code> / <code>SetResultIndices()</code> — column indexes from <code>ScoreHeaders</code> / <code>ResultHeaders</code>.</li>
+  <li><code>HeadersCheckScores</code> — required columns, then a peek at the first data row for a 7-digit <code>IntRef</code>. If a <code>Photo</code> with that <code>IntRef</code> already exists in <code>lastDateClubImported.Year</code>, this is treated as a <strong>re-import</strong>.</li>
+</ol>
+<p>Required Scoresheet headers (<code>ScoreHeaders</code>): <code>category</code>, <code>memberid</code>, <code>lastname</code>, <code>firstname</code>, <code>club star rating</code>, <code>title</code>, <code>internal reference</code>, <code>email</code>, <code>honours</code>, <code>scoretotal</code>, <code>awards</code>.</p>
+<p>Required Results headers (<code>ResultHeaders</code>): <code>category name</code>, <code>award id</code>, <code>event photo id</code>, <code>photo title</code>, <code>lastname</code>, <code>firstname</code>, <code>club star rating</code>, <code>honours</code>.</p>
+<p class="src">BCC/Adm/Club/Admin.razor.cs:332–335</p>
+<pre>string ln = p.PeekChars(400).Replace("\"", string.Empty).Replace(",", ";");
+int ir = int.Parse(Regex.Match(ln, @";(\d{7});").Groups[1].Value);
+return await repo.AnyAsync&lt;Photo&gt;(x =&gt; x.IntRef == ir &amp;&amp; x.Monthly.Date.Year == gData.lastDateClubImported.Year);</pre>
+
+<p>Re-import behaviour is <strong>not</strong> the same for both files:</p>
+<ul>
+  <li><strong>Scoresheet already in DB</strong> → <code>UpdateScores</code>: fill <code>Photo.Score</code> on existing rows for <code>Monthly.Date &gt;= lastDateClubImported</code>. Throws if the first photo already has <code>Score &gt; 0</code>.</li>
+  <li><strong>Results already in DB</strong> → message <code>"Already Imported Scoresheet into DB"</code> and <strong>stop</strong>. No award merge.</li>
+</ul>
+<p>So a second pass that adds scores is Scoresheet-after-Results. Results-after-Scoresheet is rejected.</p>
+
+<h2 id="scores">New-import path (Scoresheet)</h2>
+<p class="src">BCC/Adm/Club/Admin.razor.cs:388–426 — <code>ImportScores(string filename)</code></p>
+<ol>
+  <li><strong><code>processLineScores</code></strong> — one <code>Photo</code> per CSV row:
+    <ul>
+      <li>Category, PVID (<code>memberid</code>), honours, email, title, <code>IntRef</code>, <code>Score</code>.</li>
+      <li><code>Club_Rating</code>: <code>Golden Honours</code>→6, <code>Galaxy</code>→7, else <code>int.Parse</code>.</li>
+      <li><code>Star_Group</code>: 1–2→1, 3→2, 4–5→3, else 4.</li>
+      <li>Awards string: <code>~\w+~</code> sets both Winner flags; a lone <code>~</code> with <code>IC</code> is club winner, otherwise overall winner.</li>
+      <li><code>Award</code> = first word character (<code>C</code>/<code>G</code>/<code>S</code>/<code>B</code>).</li>
+      <li>Category <code>"S"</code> stays <code>"S"</code>; otherwise <code>"N"</code>/<code>"P"</code> plus star group (<code>N3</code>, <code>P1</code>, …).</li>
+    </ul>
+  </li>
+  <li><strong>Group by <code>PVID</code></strong>. For each member:
+    <ul>
+      <li><code>GetMasterRow</code> — lookup <code>Master.IdVault == PVID</code>, or <code>Master.Name</code> if PVID is null. Missing master → confirm dialog (<code>State.ShowConfirmAsync</code> → <code>MessageBox.razor</code>). Yes → <code>AddNewMaster</code> (split name on last space, <code>repo.AddSaveAsync</code>).</li>
+      <li><code>ds.GetLastMonthly(master)</code> — attach <code>MonthlyID</code>.</li>
+    </ul>
+  </li>
+  <li><strong><code>PhotoQuantity</code></strong> — per <code>MonthlyID</code>: max <strong>3</strong> non-<code>S</code>, max <strong>2</strong> <code>S</code>. Over limit → inline chooser on <code>Admin.razor</code> (tick to delete). Cancel returns an empty list and still continues the later steps.</li>
+  <li>Save photos via <code>RepoScope.AddRange</code> + <code>SaveChangesDetachAsync</code>.</li>
+  <li>Shared close-out: <code>MonthlyUpdate</code> → <code>MonthlyCompute</code> → <code>ds.Promotion_Due</code> → <code>DatesStoreInDb</code> → <code>ds.CleanImportDirectory</code>.</li>
+</ol>
+<p>Success message: <code>"Successfully Imported {count} Records"</code>.</p>
+
+<h2 id="results">New-import path (Results)</h2>
+<p>Same shape, with these differences:</p>
+<ul>
+  <li><strong><code>processLineResults</code></strong> — no PVID, no score. <code>Award</code> <code>"com"</code> → <code>"C"</code>. Lastname <code>"DeBeer"</code> → <code>"De Beer"</code>. Category is first character of category name.</li>
+  <li>After parse, <strong>collapse duplicate <code>IntRef</code>s</strong>: keep the row whose <code>Award</code> length is 1; set <code>Club_Winner</code> if any sibling is <code>"CW"</code>; set <code>Winner</code> if any sibling is longer than 1 and not <code>"CW"</code>. Then drop every row with <code>Award.Length != 1</code>.</li>
+  <li><strong>Group by <code>Name</code></strong>, not PVID (Results CSV has no member id).</li>
+  <li>Same quantity check, save, and close-out. Success message is only added on the Scoresheet path.</li>
+</ul>
+
+<h2 id="monthly">Monthly lifecycle (<code>DataService.GetLastMonthly</code>)</h2>
+<p class="src">BCC/Services/DataService.cs:39–45</p>
+<pre>public async Task&lt;Monthly&gt; GetLastMonthly(Master master)
+{
+    Monthly monthlyLast = await repo.monthlyLastNTAsync(x =&gt; x.MasterID == master.ID);
+    monthlyLast = monthlyLast ?? await MonthlyNew(master);
+    monthlyLast = (monthlyLast.Date &lt;= gData.lastDateClubImported) ? await MonthlyCopy(master, monthlyLast) : monthlyLast;
+    await repo.UpdateSaveDetachAsync(monthlyLast);
+    return monthlyLast;
+}</pre>
+<ul>
+  <li>No history → <code>MonthlyNew</code> dated <code>lastDateClubImported + 1 month</code>.</li>
+  <li>Latest monthly is already <strong>on or before</strong> last club import → <code>MonthlyCopy</code>: new monthly for next month, copy year accumulators (<code>Mg/Gg/…</code>, <code>Pp</code>, <code>Py</code>, <code>VOy</code>, <code>Saly</code>). If the new date is November, or the old monthly is before <code>lastDateClubYear</code>, year fields are cleared.</li>
+  <li>Latest monthly is <strong>already after</strong> last import (typical after salon import created next month) → reuse that row. Club photos attach to it instead of creating another month.</li>
+</ul>
+<p>Club fiscal year starts <strong>1 November</strong> (<code>Extensions.toClubDate</code>).</p>
+
+<h2 id="points">Points and promotion after save</h2>
+<p><strong><code>MonthlyUpdate</code></strong> walks photos for the latest monthly date:</p>
+<ul>
+  <li>Category not <code>S</code> and not <code>PH</code>: <code>C</code>→<code>Mm</code>, <code>G</code>→<code>Gm</code>, <code>S</code>→<code>Sm</code>, <code>B</code>→<code>Bm</code> (counts).</li>
+  <li>Category <code>S</code>: <code>C</code>→<code>VOm+5</code>, <code>G+3</code>, <code>S+2</code>, <code>B+1</code>.</li>
+</ul>
+<p><strong><code>MonthlyCompute</code></strong> turns those counts into points (<code>AddNull</code> treats null as 0, stores null if the sum is 0):</p>
+<table>
+  <thead>
+    <tr><th>This month</th><th>Club points <code>Pm</code></th><th>Gold medals <code>GMp</code> path</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>Mm</code> (COM)</td><td>×5</td><td><code>Mg += Mm</code></td></tr>
+    <tr><td><code>Gm</code> (Gold)</td><td>×3</td><td><code>Gg += Gm</code></td></tr>
+    <tr><td><code>Sm</code> (Silver)</td><td>×2</td><td><code>Sg += Sm</code></td></tr>
+    <tr><td><code>Bm</code> (Bronze)</td><td>×1</td><td><code>Bg += Bm</code></td></tr>
+  </tbody>
+</table>
+<p>Then <code>GMp = Mg+Gg</code>, <code>Pp += Pm</code>, <code>GMy += Mm+Gm</code>, <code>Py += Pm</code>, <code>VOy += VOm</code>.</p>
+<p><strong><code>Promotion_Due</code></strong> flags <code>Monthly.Promotion</code> from these thresholds, then <strong><code>Promote</code></strong> bumps <code>RatingID</code> on Master and Monthly <strong>only if</strong> <code>Promotion == true</code> <strong>and</strong> <code>Pp != Pm</code> (a member whose only points are this month is not promoted yet). Accumulators <code>GMp</code>, <code>Pp</code>, <code>Mg</code>, <code>Gg</code>, <code>Sg</code>, <code>Bg</code> are cleared on promote.</p>
+<table>
+  <thead><tr><th><code>RatingID</code></th><th>Criteria</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td><code>GMp &gt;= 4</code>, <code>Pp &gt;= 20</code></td></tr>
+    <tr><td>2</td><td><code>GMp &gt;= 6</code>, <code>Pp &gt;= 35</code></td></tr>
+    <tr><td>3</td><td><code>GMp &gt;= 8</code>, <code>Pp &gt;= 50</code>, <code>Salp &gt;= 18</code></td></tr>
+    <tr><td>4</td><td><code>GMp &gt;= 12</code>, <code>Pp &gt;= 80</code>, <code>Salp &gt;= 50</code></td></tr>
+    <tr><td>5</td><td><code>Pp &gt;= 150</code>, <code>Salp &gt;= 200</code>, <code>Title == "APSSA"</code></td></tr>
+    <tr><td>6</td><td><code>Pp &gt;= 150</code>, <code>Salp &gt;= 400</code>, <code>Title == "FPSSA"</code></td></tr>
+  </tbody>
+</table>
+
+<h2 id="dates">Date stamp after a successful CSV import</h2>
+<p class="src">BCC/Adm/Club/Admin.razor.cs:279–291</p>
+<pre>public async Task DatesStoreInDb()
+{
+    Datum lastImport = await repo.Datum(x =&gt; x.ID == "lastImport");
+    var latestdate = await repo.monthlyLastDateAsync();
+    lastImport.Date = latestdate;
+    gData.lastDateClubImported = lastImport.Date;
+    if (lastImport.Date.Month == 11)
+    {
+        Datum newyear = await repo.Datum(x =&gt; x.ID == "clubYearStart");
+        newyear.Date = lastImport.Date;
+        gData.lastDateClubYear = newyear.Date;
+    }
+    await repo.UpdateSaveDetachAsync(lastImport);</pre>
+<p><code>lastImport</code> becomes the max Monthly date. Crossing into November also updates <code>clubYearStart</code>. Staging CSVs are then deleted by <code>ds.CleanImportDirectory()</code>.</p>
+
+<h2 id="photo-fields">Photo fields used only during import</h2>
+<p><code>PVID</code>, <code>Name</code>, <code>Email</code>, <code>Honours</code>, and <code>Flag</code> on <code>Photo</code> are <code>[NotMapped]</code> (<code>BCC/Models/Photo.cs</code>). They exist for this import (member lookup, chooser ticks), not as Photo table columns. Persisted fields include <code>MonthlyID</code>, <code>Club_Rating</code>, <code>Star_Group</code>, <code>Category</code>, <code>Title</code>, <code>IntRef</code>, <code>Score</code>, <code>Award</code>, <code>Winner</code>, <code>Club_Winner</code>.</p>
+
+<h2 id="flow">Flow (CSV month)</h2>
+<div class="flow">
+  <div class="box">Menu Admin → Import Club</div>
+  <div class="arrow">↓</div>
+  <div class="box"><code>/admin/club-import</code></div>
+  <div class="arrow">↓</div>
+  <div class="box">DirectoryPrepare Import folder</div>
+  <div class="arrow">↓</div>
+  <div class="box action">OnParametersSetAsync → ImportClub()</div>
+  <div class="arrow">↓</div>
+  <div class="box decision">lastDateClubImported.Month == 9 ?</div>
+  <div class="split">
+    <div>
+      <div class="label">yes</div>
+      <div class="box end">YearEnd → OctoberMonth<br>Promotion_Due + advance lastImport</div>
+    </div>
+    <div>
+      <div class="label">no</div>
+      <div class="box action">WindowsFileDialogs.PickFilesAsync (CSV)</div>
+    </div>
+  </div>
+  <div class="arrow">↓ (CSV chosen)</div>
+  <div class="box">Copy to wwwroot/Import</div>
+  <div class="arrow">↓</div>
+  <div class="box decision">filename prefix</div>
+  <div class="split">
+    <div>
+      <div class="label">Scoresheet*</div>
+      <div class="box">ImportScores</div>
+    </div>
+    <div>
+      <div class="label">Results*</div>
+      <div class="box">ImportResults</div>
+    </div>
+  </div>
+  <div class="arrow">↓</div>
+  <div class="box">HeadersCheckScores</div>
+  <div class="split">
+    <div>
+      <div class="label">already in year</div>
+      <div class="box">Scoresheet → UpdateScores only<br>Results → “Already Imported”</div>
+    </div>
+    <div>
+      <div class="label">new import</div>
+      <div class="box">parse lines → GetMasterRow<br>→ GetLastMonthly → PhotoQuantity</div>
+    </div>
+  </div>
+  <div class="arrow">↓ (new import)</div>
+  <div class="box action">RepoScope AddRange photos</div>
+  <div class="arrow">↓</div>
+  <div class="box">MonthlyUpdate → MonthlyCompute</div>
+  <div class="arrow">↓</div>
+  <div class="box">ds.Promotion_Due</div>
+  <div class="arrow">↓</div>
+  <div class="box">DatesStoreInDb</div>
+  <div class="arrow">↓</div>
+  <div class="box end">ds.CleanImportDirectory</div>
+</div>
+
+<h2 id="not-this">What this path does not do</h2>
+<ul>
+  <li>It does not unzip or resize competition images. That is <code>admin/images-import</code> → <code>ImagesProcessAsync</code>.</li>
+  <li>It does not import salon CSVs. That is <code>SalonImport</code> from salon admin.</li>
+  <li><code>Helpie.html</code> section 18.2 describes this flow but is stale in places (line numbers; <code>PhotoQuantity</code> is an interactive chooser, not “keep first 3/2”; <code>OctoberMonth</code> does not call <code>DatesStoreInDb</code>; Results-after-Scoresheet is rejected by <code>HeadersCheckScores</code>).</li>
+</ul>
+
+</div>
+</body>
+</html>
