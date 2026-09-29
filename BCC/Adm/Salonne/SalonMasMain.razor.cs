@@ -120,7 +120,6 @@ public partial class SalonMasMain
                     // Data rows start with the salon number; skip title/header/blank rows
                     if (!int.TryParse(ln[0], out _))
                         continue;
-
                     string club;
                     string salonName;
                     string dateStr;
@@ -138,13 +137,10 @@ public partial class SalonMasMain
                         salonName = ln[2];
                         dateStr = ln[3];
                     }
-
                     if (string.IsNullOrWhiteSpace(salonName) || string.IsNullOrWhiteSpace(dateStr))
                         continue;
-
                     if (!TryParseSalonDate(dateStr, out DateOnly date))
                         throw new FormatException($"Invalid date '{dateStr}' for salon '{salonName}'.");
-
                     var sm = new SalonMaster
                     {
                         Club = club,

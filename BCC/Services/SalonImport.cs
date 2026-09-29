@@ -33,6 +33,13 @@ public class SalonImport
             int fnIdx   = Headers.IndexOf(SalonHeaders.Firstname);
             int lnIdx   = Headers.IndexOf(SalonHeaders.Lastname);
             int awIdx   = Headers.IndexOf(SalonHeaders.AwardDescription);
+            if (awIdx < 0)
+                awIdx = Headers.IndexOf(SalonHeaders.Award);
+            if (awIdx < 0)
+            {
+                Messages.Add($"Award column not found in {file}. Expected 'Award Description' or 'Award'.");
+                return Messages;
+            }
 
             while (!p.EndOfData)
             {
@@ -84,7 +91,6 @@ public class SalonImport
             Firstname = data[fnIdx],
             Lastname  = data[lnIdx]
         };
-
         string awardVal = data[awIdx].ToLower();
         var med = Regex.Match(awardVal, "fiap[^\n]+|pssa[^\n]+|club[^\n]+");
         if (med.Success)
@@ -96,7 +102,6 @@ public class SalonImport
             sal.Com = 1;
         if (Regex.IsMatch(awardVal, "acc[^\n]+"))
             sal.Acceptance = 1;
-
         return sal;
     }
 
