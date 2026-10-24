@@ -83,7 +83,6 @@ public class SalonImport
             Firstname = data[fnIdx],
             Lastname  = data[lnIdx]
         };
-
         string awardVal = data[awIdx].ToLower();
         var med = Regex.Match(awardVal, "fiap[^\n]+|pssa[^\n]+|club[^\n]+");
         if (med.Success)
@@ -95,7 +94,6 @@ public class SalonImport
             sal.Com = 1;
         if (Regex.IsMatch(awardVal, "acc[^\n]+"))
             sal.Acceptance = 1;
-
         return sal;
     }
 

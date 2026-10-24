@@ -8,7 +8,7 @@ public class gData
     public static string Api { get; set; } = "https://oef.bkk.co.za/";
     //public static string Api { get; set; } = "http://localhost:5125/";
 
-    public static string backupPath { get; set; }= "C:\\Users\\Lamps\\OneDrive\\Database\\SQL16\\Backup\\BCC\\";
+    public static string backupPath { get; set; }= "D:\\Database\\SQL16\\Backup\\BCC\\";
     public static string sqlStagingPath { get; } = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
         "BCC", "SqlBackup");

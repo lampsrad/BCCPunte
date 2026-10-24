@@ -241,14 +241,12 @@ public partial class SalonMasMain
         {
             await ImportSalonList();
         }
-        DateOnly datestart = DateOnly.Parse($"{gData.lastDateClubYear.Year}-07-01");
-        DateOnly dateend = DateOnly.Parse($"{gData.lastDateClubYear.Year + 1}-06-30");
-        if(Data=="prev")
-        {
-            datestart=datestart.AddYears(-1);
-            dateend=dateend.AddYears(-1);
-        }
-        salonMasters = await repo.GetEntitiesNTAsync<SalonMaster>(x => x.Date >= datestart && x.Date < dateend,x=>x.Date);
+        int year = DateTime.Today.Year;
+        if (Data == "prev")
+            year--;
+        DateOnly datestart = new DateOnly(year, 7, 1);
+        DateOnly dateend = new DateOnly(year + 1, 6, 30);
+        salonMasters = await repo.GetEntitiesNTAsync<SalonMaster>(x => x.Date >= datestart && x.Date <= dateend, x => x.Date);
         Title = $"Salons from {datestart} to {dateend}";
     }
     private void SortTableSalons(sortVM vm)
