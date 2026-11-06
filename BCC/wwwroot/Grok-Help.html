@@ -390,7 +390,7 @@ builder.Services.AddScoped&lt;SalonImport&gt;();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
-    gData.StartBrowser(url);   // launches full-screen Chrome
+    app.Lifetime.ApplicationStarted.Register(() =&gt; gData.StartBrowser(url)); // after Kestrel is listening
 }</code></pre>
 
     <p><strong>Key Points:</strong></p>

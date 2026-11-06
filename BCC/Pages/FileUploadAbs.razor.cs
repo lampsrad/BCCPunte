@@ -42,15 +42,15 @@ namespace BCC.Pages
         }
         private async Task UploadToHosting(IBrowserFile file)
         {
-            var handler = gData.CreateUploadClientHandler();
-            using HttpClient client = new HttpClient(handler);
-            string token = await Login(client);
-            using var content = new MultipartFormDataContent();
-            var fileContent = new StreamContent(file.OpenReadStream(maxAllowedSize: 120 * 1024 * 1024)); // 120 MB
-            content.Add(fileContent, "file", file.Name);
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             try
             {
+                var handler = gData.CreateUploadClientHandler();
+                using HttpClient client = new HttpClient(handler);
+                string token = await Login(client);
+                using var content = new MultipartFormDataContent();
+                var fileContent = new StreamContent(file.OpenReadStream(maxAllowedSize: 120 * 1024 * 1024)); // 120 MB
+                content.Add(fileContent, "file", file.Name);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
                 HttpResponseMessage response = null;
                 if (file.Name.EndsWith(".html", StringComparison.OrdinalIgnoreCase))
                     response = await client.PostAsync($"{gData.Api}FU/html", content);

@@ -1,11 +1,13 @@
 ﻿using System.Diagnostics;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
 
 namespace BCC;
 
 public class gData
 {
-    //public static string Api { get; set; } = "https://bkk.co.za/";
-    public static string Api { get; set; } = "https://oef.bkk.co.za/";
+    public static string Api { get; set; } = "https://bkk.co.za/";
+    //public static string Api { get; set; } = "https://oef.bkk.co.za/";
     //public static string Api { get; set; } = "http://localhost:5125/";
 
     public static string backupPath { get; set; }= "D:\\Database\\SQL16\\Backup\\BCC\\";
@@ -73,6 +75,20 @@ public class gData
         if (Api.Contains("localhost", StringComparison.OrdinalIgnoreCase))
         {
             handler.ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+        }
+        else if (Api.Contains("oef.bkk.co.za", StringComparison.OrdinalIgnoreCase))
+        {
+            // Practice-host Let's Encrypt certificate expired 2026-09-08. Ignore expiry only.
+            handler.ServerCertificateCustomValidationCallback = (_, _, chain, errors) =>
+            {
+                if (errors == SslPolicyErrors.None)
+                    return true;
+                if (errors != SslPolicyErrors.RemoteCertificateChainErrors || chain == null)
+                    return false;
+                return chain.ChainStatus.Length > 0
+                    && chain.ChainStatus.All(status =>
+                        status.Status is X509ChainStatusFlags.NoError or X509ChainStatusFlags.NotTimeValid);
+            };
         }
         return handler;
     }

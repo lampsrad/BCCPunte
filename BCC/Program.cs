@@ -31,7 +31,8 @@ if (!app.Environment.IsDevelopment())
     string url = app.Configuration["Kestrel:Endpoints:Http:Url"];
     //url = $"--start-fullscreen {url}";
     url = $"--start {url}";
-    gData.StartBrowser(url);
+    // Kestrel is not listening until app.Run(). Opening Chrome earlier leaves "This site can't be reached" up for the whole startup.
+    app.Lifetime.ApplicationStarted.Register(() => gData.StartBrowser(url));
 }
 
 app.UseHttpsRedirection();
