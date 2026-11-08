@@ -3,8 +3,6 @@ using BCC.Pages;
 using BCC.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.VisualBasic.FileIO;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Processing;
 using System.IO.Compression;
 using System.Net.Http.Headers;
 using System.Text;
@@ -741,26 +739,6 @@ public partial class Admin
             return null;
         return Filename;
     }
-    private async Task<string> GenerateImagesAsync(string source, string destination, int width, int height)
-    {
-        try
-        {
-            using (var image = await Image.LoadAsync(source))
-            {
-                image.Mutate(x => x.Resize(new ResizeOptions
-                {
-                    Mode = ResizeMode.Max,
-                    Size = new Size(width, height)
-                }));
-                await image.SaveAsync(destination);
-            }
-        }
-        catch (Exception ex)
-        {
-            throw new Exception($"Failed to generate thumbnail for {source}: {ex.Message}", ex);
-        }
-        return destination;
-    }
     private async Task<string> ImagesProcessAsync()//START OF IMAGES PROCESS
     {
         Messages.Clear();
@@ -777,7 +755,7 @@ public partial class Admin
             Messages.Add(Info.CurrentStage); StateHasChanged();
             await PhotosCopyRenameAsync(progress, Filename);
             Messages.Add(Info.CurrentStage); StateHasChanged();
-            await PhotosGeneratePreviewsAsync(progress, Filename, 1365, 768);
+            await PhotosGeneratePreviewsAsync(progress, Filename);
             Messages.Add(Info.CurrentStage); StateHasChanged();
             await PhotosZipAsync(progress);
             Messages.Add("UPLOAD TO ABS HOST"); StateHasChanged();
@@ -912,15 +890,13 @@ public partial class Admin
         await Task.WhenAll(copyTasks);
     }
     /// <summary>
-    /// Resizes all .jpg files from Temp\ to photosLocal\WEB\, generating web previews at the given width/height
+    /// Copies all .jpg files from Temp\ to photosLocal\WEB\ without resizing
     /// </summary>
     /// <param name="progress"></param>
     /// <param name="fn"></param>
-    /// <param name="width"></param>
-    /// <param name="height"></param>
     /// <param name="degreeOfParallelism"></param>
     /// <returns></returns>
-    public async Task PhotosGeneratePreviewsAsync(IProgress<ProgressInfo> progress, string fn, int width, int height, int degreeOfParallelism = 0)
+    public async Task PhotosGeneratePreviewsAsync(IProgress<ProgressInfo> progress, string fn, int degreeOfParallelism = 0)
     {
         string sourceDir = $"{gData.photosLocal}{fn}\\Temp\\";
         string destDir = $"{gData.photosLocal}WEB\\";
@@ -932,38 +908,39 @@ public partial class Admin
         var options = new ParallelOptions { MaxDegreeOfParallelism = parallelism };
         progress.Report(new ProgressInfo
         {
-            CurrentStage = "GENERATING PREVIEWS",
+            CurrentStage = "COPYING TO WEB",
             Total = totalImages,
             Current = 0,
-            Message = $"Starting preview generation for {totalImages} images...",
+            Message = $"Copying {totalImages} images...",
             Percentage = 0
         });
-        await Parallel.ForEachAsync(imagePaths, options, async (source, cancellationToken) =>
+        await Parallel.ForEachAsync(imagePaths, options, (source, _) =>
         {
             try
             {
                 string destination = $"{destDir}{Path.GetFileName(source)}";
-                await GenerateImagesAsync(source, destination, width, height);
+                File.Copy(source, destination, overwrite: true);
             }
             catch (Exception ex)
             {
-                throw new Exception($"Failed to process {source}: {ex.Message}", ex);
+                throw new Exception($"Failed to copy {source}: {ex.Message}", ex);
             }
             var newCount = Interlocked.Increment(ref processedCount);
             int percent = (int)Math.Round((newCount * 100.0) / totalImages);
             progress.Report(new ProgressInfo
             {
-                CurrentStage = "GENERATING PREVIEWS",
+                CurrentStage = "COPYING TO WEB",
                 Total = totalImages,
                 Current = newCount,
-                Message = $"Generated preview {newCount} of {totalImages}",
+                Message = $"Copied {newCount} of {totalImages}",
                 Percentage = percent
             });
+            return ValueTask.CompletedTask;
         });
     }
     /// <summary>
-    /// Zips all web previews from photosLocal\WEB\ into \\Downloads\BKK\\ZippedExport\BKK-{Filename}.zip, then copies each file to the local website path
-    /// </summary>>
+    /// Zips all photos from photosLocal\WEB\ into \\Downloads\BKK\\ZippedExport\BKK-{Filename}.zip, then copies each file to the local website path
+    /// </summary>
     public async Task<string> PhotosZipAsync(IProgress<ProgressInfo> progress)
     {
         string sourceDir = $"{gData.photosLocal}WEB\\";
@@ -981,7 +958,7 @@ public partial class Admin
             CurrentStage = "PHOTOS ZIP",
             Total = total,
             Current = 0,
-            Message = $"Zipping {total} previews...",
+            Message = $"Zipping {total} photos...",
             Percentage = 0
         });
         if (File.Exists(zipPath))

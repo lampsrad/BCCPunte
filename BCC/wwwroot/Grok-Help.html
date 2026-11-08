@@ -357,7 +357,6 @@
       <tbody>
         <tr><td>Framework</td><td>ASP.NET Core 10 / 9, Blazor Server, Kestrel on port 5125</td></tr>
         <tr><td>ORM</td><td>EF Core 10 + Microsoft.Data.SqlClient (3 connection strings)</td></tr>
-        <tr><td>Image Processing</td><td>SixLabors.ImageSharp 3.1.12 (resize + autorotate + save as JPEG)</td></tr>
         <tr><td>Document Conversion</td><td>OpenXmlPowerTools 4.5.3.2 (HtmlConverter + WordprocessingDocument)</td></tr>
         <tr><td>CSV Parsing</td><td>Microsoft.VisualBasic.FileIO.TextFieldParser (handles quoted fields, ; or , delimiters)</td></tr>
         <tr><td>Deployment</td><td>Self-contained exe, auto-launches Chrome in Release mode</td></tr>
@@ -414,7 +413,7 @@ if (!app.Environment.IsDevelopment())
         <tr><td>ClubName</td><td>"Bloemfontein"</td></tr>
         <tr><td>dbName</td><td>"BCC"</td></tr>
         <tr><td>photosLocal</td><td>D:\BKK\Inbox\Club\Photos\ (source of monthly competition images)</td></tr>
-        <tr><td>clubPhotos</td><td>wwwroot\ClubPhotos\ (published resized images)</td></tr>
+        <tr><td>clubPhotos</td><td>wwwroot\ClubPhotos\ (published photos)</td></tr>
         <tr><td>WordFiles</td><td>D:\VS\VS Active\BCCPunte\BCC\Wordfiles\</td></tr>
         <tr><td>HtmlPath</td><td>wwwroot\Html\ (converted public documentation)</td></tr>
         <tr><td>ImportDirectory</td><td>wwwroot\Import\ (staging for all CSV + ZIP uploads)</td></tr>
@@ -729,7 +728,7 @@ cx.Database.ExecuteSqlRaw(sql, new SqlParameter("@filePath", fn));</code></pre>
       <li><strong>FileUpload</strong> — user selects ZIP(s) via dialog → saved to Import folder</li>
       <li><strong>PhotosLocalUnzipAsync</strong> — extracts into <code>D:\BKK\Inbox\Club\Photos\{month}\</code></li>
       <li><strong>PhotosCopyRenameAsync</strong> — extracts 7-digit IntRef via regex, copies to <code>Temp\#######.jpg</code></li>
-      <li><strong>PhotosGeneratePreviewsAsync</strong> — parallel ImageSharp resize to 1365×768 → <code>WEB\</code> folder</li>
+      <li><strong>PhotosGeneratePreviewsAsync</strong> — parallel copy of the renamed JPGs into the <code>WEB\</code> folder. No resize.</li>
       <li><strong>PhotosZipAsync</strong> — creates distribution zip + copies to local ClubPhotos and source website folders</li>
       <li><strong>Login</strong> — obtains JWT Bearer token from live site</li>
       <li><strong>UploadToHosting</strong> — POSTs the zip to <code>/FU/zip</code> on production (max 120 MB)</li>
@@ -740,7 +739,6 @@ cx.Database.ExecuteSqlRaw(sql, new SqlParameter("@filePath", fn));</code></pre>
       <li><code>Excel()</code> + <code>CsvWrite</code> — archives full Monthly snapshot for a month into dated CSV under D:\BKK\ARCHIVES\...</li>
       <li><code>DeleteMonth()</code> — transactional delete of Photos + Monthlies + Salons + SalonMasters for the previous month (used for re-imports)</li>
       <li><code>Backup()</code> / <code>Restore()</code> — thin wrappers around Repo.SqlBackupAsync / SqlRestoreAsync + file picker</li>
-      <li><code>GenerateImagesAsync</code> — standalone ImageSharp resize utility</li>
     </ul>
   </div>
 
@@ -847,26 +845,13 @@ cx.Database.ExecuteSqlRaw(sql, new SqlParameter("@filePath", fn));</code></pre>
     </ul>
     <div class="warn">If many files are skipped here, it almost always means the monthly Photo records were not yet imported, or the ZIPs contain images from a different month.</div>
 
-    <h4>Stage 4: Generate Web Previews (PhotosGeneratePreviewsAsync + GenerateImagesAsync)</h4>
-    <p>Location: <code>Admin.razor.cs:861</code> and <code>689</code></p>
+    <h4>Stage 4: Copy to WEB (PhotosGeneratePreviewsAsync)</h4>
+    <p>Location: <code>Admin.razor.cs</code> region <code>ImagesProcess</code></p>
     <ul>
       <li>Source: <code>...\{Filename}\Temp\</code></li>
       <li>Destination: <code>D:\BKK\Inbox\Club\Photos\WEB\</code></li>
-      <li>Uses <strong>SixLabors.ImageSharp</strong> to process every image:</li>
-    </ul>
-    <pre><code>using (var image = await Image.LoadAsync(source))
-{
-    image.Mutate(x => x.Resize(new ResizeOptions
-    {
-        Mode = ResizeMode.Max,
-        Size = new Size(1365, 768)
-    }));
-    await image.SaveAsync(destination);
-}</code></pre>
-    <ul>
-      <li>Target size is hardcoded to <strong>1365 × 768</strong> pixels</li>
-      <li>ResizeMode.Max = maintains aspect ratio, fits inside the box</li>
-      <li>Extremely parallel: uses <code>Environment.ProcessorCount</code> (usually 8–16 threads)</li>
+      <li>Copies each renamed JPG with <code>File.Copy</code>. Files are not resized.</li>
+      <li>Parallel: uses <code>Environment.ProcessorCount</code></li>
       <li>Progress is reported after every single image</li>
     </ul>
 
@@ -875,7 +860,7 @@ cx.Database.ExecuteSqlRaw(sql, new SqlParameter("@filePath", fn));</code></pre>
     <p>This stage does several important things at once:</p>
     <ol>
       <li>Creates a ZIP of everything in <code>D:\BKK\Inbox\Club\Photos\WEB\</code> → <code>C:\Users\lammie\Downloads\BKK\ZippedExport\BKK-{Filename}.zip</code></li>
-      <li>Copies every generated preview into the running app's own static folder:<br>
+      <li>Copies every photo into the running app's own static folder:<br>
           <code>wwwroot\ClubPhotos\{Filename}\</code> (so the local site immediately sees the new photos)</li>
       <li>Also copies the same files to the "source of truth" local website folder:<br>
           <code>D:\VS\VS Active\BCCBlazor\BCC\wwwroot\ClubPhotos\{Filename}\</code> (used when publishing the whole site)</li>
@@ -903,7 +888,7 @@ Body: { "username": "...", "password": "..." }</code></pre>
     <h3>Final State After Successful Run</h3>
     <ul>
       <li>Original high-res photos remain in <code>D:\BKK\Inbox\Club\Photos\{Filename}\</code></li>
-      <li>Web-optimized 1365×768 images exist in:
+      <li>Full-size copies of the renamed JPGs exist in:
         <ul>
           <li>Local running app: <code>wwwroot/ClubPhotos/{Filename}/</code></li>
           <li>Source website folder (for future publishes)</li>
@@ -921,7 +906,7 @@ Body: { "username": "...", "password": "..." }</code></pre>
         <tr><td>Many files skipped in Stage 3</td><td>Monthly data not yet imported</td><td>Import the scores/results CSV first</td></tr>
         <tr><td>Wrong month folder created</td><td>Filename chosen incorrectly in upload dialog</td><td>Be very deliberate when naming the upload</td></tr>
         <tr><td>Upload fails with 401</td><td>Auth credentials wrong or expired token</td><td>Check appsettings.json "Auth" section</td></tr>
-        <tr><td>Images look distorted</td><td>ResizeMode.Max with very wide or tall originals</td><td>Current behavior is intentional (fit inside box)</td></tr>
+        <tr><td>Upload refused as too large</td><td>Full-size photos make the zip bigger than 120 MB</td><td>Split the month or upload the zip manually</td></tr>
         <tr><td>Process hangs on large months</td><td>Very high image count + slow disk</td><td>Be patient – it is heavily parallelized</td></tr>
       </tbody>
     </table>

@@ -219,9 +219,9 @@ D:\BKK\Inbox\Club\Photos\{yyyy-MM}\*.jpg          (originals, any filename)
         │ copy + rename to 7-digit ID
         ▼
 D:\BKK\Inbox\Club\Photos\{yyyy-MM}\Temp\#######.jpg
-        │ resize (max 1365×768, aspect kept)
+        │ copy (no resize)
         ▼
-D:\BKK\Inbox\Club\Photos\WEB\#######.jpg          (web previews)
+D:\BKK\Inbox\Club\Photos\WEB\#######.jpg          (full-size copies)
         │ zip ──────────────►  {Downloads}\ZippedExport\BKK-{yyyy-MM}.zip ──► POST {Api}FU/zip
         │ copy + delete
         ▼
@@ -239,7 +239,7 @@ D:\BKK\Inbox\Club\Photos\WEB\#######.jpg          (web previews)
 });
 Filename = await PhotosLocalUnzipAsync(progress);   // null ⇒ user cancelled ⇒ abort, no error
 await PhotosCopyRenameAsync(progress, Filename);
-await PhotosGeneratePreviewsAsync(progress, Filename, 1365, 768);
+await PhotosGeneratePreviewsAsync(progress, Filename);
 await PhotosZipAsync(progress);
 await UploadToHosting(progress, $"{gData.Downloads}ZippedExport\\BKK-{Filename}.zip");</code></pre>
     <ul>
@@ -304,24 +304,15 @@ await UploadToHosting(progress, $"{gData.Downloads}ZippedExport\\BKK-{Filename}.
             "Found 0 files" and the pipeline would continue with nothing.</li>
     </ul>
 
-    <h3>Stage 3 — <code>PhotosGeneratePreviewsAsync(IProgress&lt;ProgressInfo&gt;, string fn, int width, int height, int degreeOfParallelism = 0)</code></h3>
-    <p class="sig">source: {photosLocal}{fn}\Temp\ → dest: {photosLocal}WEB\ &nbsp;•&nbsp; called with 1365×768</p>
+    <h3>Stage 3 — <code>PhotosGeneratePreviewsAsync(IProgress&lt;ProgressInfo&gt;, string fn, int degreeOfParallelism = 0)</code></h3>
+    <p class="sig">source: {photosLocal}{fn}\Temp\ → dest: {photosLocal}WEB\ &nbsp;•&nbsp; full-size copy, no resize</p>
     <ul>
-        <li>CPU-bound image work is parallelised with <code>Parallel.ForEachAsync</code>;
+        <li>Copies are parallelised with <code>Parallel.ForEachAsync</code>;
             <code>MaxDegreeOfParallelism</code> defaults to <code>Environment.ProcessorCount</code> (the optional parameter lets a caller
             throttle it, but the pipeline call leaves it at 0 ⇒ CPU count).</li>
-        <li>Each file goes through <code>GenerateImagesAsync(source, destination, width, height)</code>:
-<pre><code>using var image = await Image.LoadAsync(source);          // SixLabors.ImageSharp
-image.Mutate(x =&gt; x.Resize(new ResizeOptions
-{
-    Mode = ResizeMode.Max,                                  // fit inside 1365×768, keep aspect
-    Size = new Size(width, height)
-}));
-await image.SaveAsync(destination);                         // format inferred from .jpg extension</code></pre>
-            <code>ResizeMode.Max</code> never crops and never upsizes the proportions wrongly: a 6000×4000 landscape becomes
-            1152×768 (height-bound); a portrait 3000×4500 becomes 512×768. The original full-resolution file in
-            <code>Temp\</code>/month folder is untouched — only the web copy is reduced.</li>
-        <li><strong>Error semantics differ from stage 2:</strong> here a single bad image (corrupt file, unsupported format)
+        <li>Each file is copied with <code>File.Copy(source, destination, overwrite: true)</code>. The original in
+            <code>Temp\</code> is left in place. Nothing is decoded or resized.</li>
+        <li><strong>Error semantics differ from stage 2:</strong> here a single failed copy
             <em>throws</em>, <code>Parallel.ForEachAsync</code> cancels its remaining work, and the exception bubbles up through
             <code>ImagesProcessAsync</code> — the run stops. Stage 2 tolerates bad files; stage 3 does not.</li>
         <li><code>WEB\</code> is a <em>shared</em> folder (not per-month). It is normally empty at this point because stage 4 of the
@@ -335,7 +326,7 @@ await image.SaveAsync(destination);                         // format inferred f
         <li>Computes its four paths from <code>Filename</code>:
             <table>
                 <tr><th>Variable</th><th>Value</th><th>Role</th></tr>
-                <tr><td><code>sourceDir</code></td><td><code>{photosLocal}WEB\</code></td><td>previews from stage 3</td></tr>
+                <tr><td><code>sourceDir</code></td><td><code>{photosLocal}WEB\</code></td><td>copies from stage 3</td></tr>
                 <tr><td><code>zipPath</code></td><td><code>{Downloads}ZippedExport\BKK-{Filename}.zip</code></td><td>upload artifact for stage 5</td></tr>
                 <tr><td><code>rootdest</code></td><td><code>wwwroot\ClubPhotos\{Filename}\</code> (relative)</td><td>created in the <em>running app's</em> folder</td></tr>
                 <tr><td><code>localWebDest</code></td><td><code>{LocalWebsitePath}wwwroot\ClubPhotos\{Filename}\</code></td><td>= <code>D:\VS\VS Active\BCCBlazor\BCC\wwwroot\ClubPhotos\{Filename}\</code></td></tr>
@@ -343,7 +334,7 @@ await image.SaveAsync(destination);                         // format inferred f
         </li>
         <li>Deletes any existing <code>BKK-{Filename}.zip</code>, then <code>ZipFile.CreateFromDirectory(sourceDir, zipPath)</code> on a
             background task — the zip is created <em>before</em> the copy loop, so it always contains the complete WEB set.</li>
-        <li>Then loops the previews one by one: <code>File.Copy</code> to <code>localWebDest</code> (overwrite) followed immediately by
+        <li>Then loops the photos one by one: <code>File.Copy</code> to <code>localWebDest</code> (overwrite) followed immediately by
             <code>File.Delete</code> of the WEB copy — so a fully successful stage leaves <code>WEB\</code> empty, which is what makes the
             shared folder safe for the next month's run.</li>
     </ol>
@@ -360,7 +351,7 @@ await image.SaveAsync(destination);                         // format inferred f
     <ol>
         <li><strong>Pre-flight checks</strong> (each fails soft — a ❌ line in <code>Messages</code>, return, no exception):
             must end in <code>.zip</code>, must exist on disk, must be ≤ <strong>120&nbsp;MB</strong>
-            (<code>fileInfo.Length &gt; 120L * 1024 * 1024</code>). 120&nbsp;MB is the matching server-side limit — if a month's previews
+            (<code>fileInfo.Length &gt; 120L * 1024 * 1024</code>). 120&nbsp;MB is the matching server-side limit — if a month's full-size photos
             exceed it the upload is refused locally and you would need to split the month or upload manually.</li>
         <li><strong>HTTP setup:</strong> <code>gData.CreateUploadClientHandler()</code> returns a plain <code>HttpClientHandler</code> in
             production; only when <code>gData.Api</code> contains "localhost" does it accept self-signed certificates (dev convenience).
@@ -383,7 +374,7 @@ await image.SaveAsync(destination);                         // format inferred f
         <tr><th>Stage</th><th>Single bad file</th><th>Whole-stage failure</th><th>Safe to re-run?</th></tr>
         <tr><td>1. Unzip</td><td>n/a</td><td>Exception ends run (e.g. corrupt zip)</td><td>Yes — <code>overwriteFiles: true</code></td></tr>
         <tr><td>2. Copy/Rename</td><td>Logged to Errors, skipped</td><td>Only if directory enumeration fails</td><td>Yes — copy with overwrite</td></tr>
-        <tr><td>3. Previews</td><td><strong>Throws — ends the run</strong></td><td>Exception ends run</td><td>Yes — but check WEB\ for leftovers first</td></tr>
+        <tr><td>3. Copy to WEB</td><td><strong>Throws — ends the run</strong></td><td>Exception ends run</td><td>Yes — but check WEB\ for leftovers first</td></tr>
         <tr><td>4. Zip + publish</td><td>Exception ends run</td><td>Exception ends run</td><td>Yes — old zip deleted first; copies overwrite</td></tr>
         <tr><td>5. Upload</td><td>n/a</td><td>❌ message (soft) — except login failure, which throws</td><td>Yes — server overwrites the month zip</td></tr>
     </table>
@@ -396,7 +387,6 @@ await image.SaveAsync(destination);                         // format inferred f
     <h3>Dependencies &amp; configuration touched by this feature</h3>
     <table>
         <tr><th>Dependency</th><th>Where used</th></tr>
-        <tr><td><strong>SixLabors.ImageSharp</strong></td><td><code>GenerateImagesAsync</code> — load, <code>Mutate/Resize(ResizeMode.Max)</code>, save.</td></tr>
         <tr><td><code>System.IO.Compression.ZipFile</code></td><td>Extract (stage 1) and create (stage 4).</td></tr>
         <tr><td><code>State.ShowFileUpload</code> + <span class="file">FileUpload</span> component</td><td>The zip-selection dialog; writes into <code>wwwroot\Import\</code>.</td></tr>
         <tr><td><code>ProgressBar</code> / <code>ProgressInfo</code></td><td>Stage-by-stage progress UI (<code>CurrentStage, Current, Total, Percentage, Message</code>).</td></tr>
@@ -406,7 +396,7 @@ await image.SaveAsync(destination);                         // format inferred f
 
     <div class="note">
         The menu tooltip on <strong>Admin → Images Process</strong> summarises the same six steps: unzip → copy/rename to 7-digit ID →
-        generate 1365×768 → copy to LocalWebsite → zip to Downloads\ZippedExport → upload to AbsoluteHost API.
+        copy full-size files to WEB → copy to LocalWebsite → zip to Downloads\ZippedExport → upload to AbsoluteHost API.
     </div>
 </section>
 
@@ -747,7 +737,7 @@ ALTER DATABASE [BCC] SET MULTI_USER;</code></pre>
         <tr><td><code>Api</code></td><td><code>https://bkk.co.za/</code> — upload/login API base.</td></tr>
         <tr><td><code>backupPath</code></td><td><code>C:\Users\Lamps\OneDrive\Database\SQL16\Backup\BCC\</code> — .bak files.</td></tr>
         <tr><td><code>ImportDirectory</code></td><td><code>wwwroot\Import\</code> — staging area, wiped before/after imports.</td></tr>
-        <tr><td><code>photosLocal</code></td><td><code>D:\BKK\Inbox\Club\Photos\</code> — unzip/rename/resize work area.</td></tr>
+        <tr><td><code>photosLocal</code></td><td><code>D:\BKK\Inbox\Club\Photos\</code> — unzip/rename/copy work area.</td></tr>
         <tr><td><code>clubPhotos</code> / <code>LocalWebsitePath</code></td><td><code>wwwroot\ClubPhotos\</code> under <code>D:\VS\VS Active\BCCBlazor\BCC\</code> — local website publish target.</td></tr>
         <tr><td><code>Downloads</code></td><td><code>...\Downloads\BKK\</code> (per machine: XPS vs others) — zip export + restore source.</td></tr>
         <tr><td><code>lastDateClubImported</code> / <code>lastDateClubYear</code></td><td>In-memory copies of the <code>Datum</code> dates; drive all import/rollup logic. Club year starts <strong>1 November</strong>.</td></tr>
