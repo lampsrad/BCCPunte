@@ -1,0 +1,7 @@
+{
+  "flows": {},
+  "effects": {
+    "honours": "\n          \u003Cspan class=\u0022menu-path\u0022\u003EHonours \u2192 Honours \u00B7 \u003Cspan class=\u0022route\u0022\u003E/honours\u003C/span\u003E\u003C/span\u003E\u003Cbr\u003E\n          Adjust a member\u2019s PSSA / club honours title. Page loads masters that have an IdVault, focuses the dropdown.\n          Choose member (shows previous title), type new title (e.g. APSSA, FPSSA), \u003Cstrong\u003ESubmit\u003C/strong\u003E appends it to\n          \u003Ccode\u003EMaster.Title\u003C/code\u003E (uppercased). If title is APSSA or FPSSA and points thresholds are met, promotes the member\n          (5\u2605 \u002B Pp\u2265150 \u002B Salp\u2265200 \u002B APSSA \u2192 Golden Honours; 6\u2605 \u002B Pp\u2265150 \u002B Salp\u2265400 \u002B FPSSA \u2192 Galaxy), clears promotion\n          accumulators, saves Master \u002B Monthly, navigates home. \u003Cstrong\u003ECancel\u003C/strong\u003E returns home without saving.\n        "
+  },
+  "content": {}
+}

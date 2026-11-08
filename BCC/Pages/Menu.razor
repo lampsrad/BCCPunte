@@ -58,7 +58,7 @@
             <a class=men href="#">Admin</a>
             <ul class=sub>
                 <li><a href="admin/images-import" title="1. Unzip Photos from Selected .zips(3) to 'D:\BKK\Inbox\Club\Photos\Date\'.&#13;&#10;2. Copy and Rename from 1.=> D:\BKK\Inbox\Club\Photos\Date\\Temp\#######.jpg. &#13;&#10;3. Copy from 2. => 'D:\BKK\Inbox\Club\Photos\WEB\#######.jpg. &#13;&#10;4. Copy from 3. to LocalWebsite\wwwroot\ClubPhotos\Date\#######.jpg. &#13;&#10;5. Zip from 3. => ..\Downloads\ZippedExport\ &#13;&#10;6. Upload 5 => AbsoluteHost API to \wwwroot\Import\yyyy.mm.zip">Images Process</a></li>
-                <li><a href="admin/club-import" title="Scoresheet.csv or Results.csv file you select or YearEnd if Month is October">Import Club</a></li>
+                <li><a href="admin/club-import" title="Scoresheet.csv or Results.csv file you select or YearEnd if last import month is September">Import Club</a></li>
                 <li><a href="salonMasMain">Import Salon</a></li>
                 <li><a href="worddoc" title="Converts a chosen Microsoft Word doc to html and save it to wwwroot/Html/">Word</a></li>
                 <li><a href="/upload-to-abs" title="Upload .html files or .zip files(images) to Absoluite Hosting">Upload to AbsHosting</a></li>
@@ -66,8 +66,12 @@
                 <li><a href="admin/restore">Restore DB</a></li>
                 <li><a href="admin/excel" title="Export Monthlies to D:\\BKK\\ARCHIVES\\Ou punte rekords\Year\">Excel</a></li>
                 <li><a href="admin/deletemonth" title="Delete Last Month from Db but leave Images intact">Delete Month</a></li>
-                <li><a href="/Grok-Help.html" target="_blank" title="Complete technical deep-dive of the entire BCCPunte codebase">Grog-Help</a></li>
-                <li><a href="/Claude-help.html" target="_blank" title="Comprehensive help on the Admin submenus and their underlying methods">Claude-Help</a></li>
+                <li class="menu-item-help">
+                    <a class="menu-item-help-main" href="/Help.html" target="_blank" rel="noopener" title="Every menubar item — description and code flow">Help</a>
+                    <div class="menu--flyout" role="menu">
+                        <div class="menu--flyout-link" role="menuitem" @onclick="Help_Merge" @onclick:stopPropagation title="Merge Help-flows.json edits into Help.html and sync Help-flows.js">Help_Merge</div>
+                    </div>
+                </li>
             </ul>
         </li>
 

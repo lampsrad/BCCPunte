@@ -78,15 +78,16 @@
                                 <td>@sal.Award</td>
                             </tr>
                         }
-                          <tr style="font-weight:bold">
-                        <td>Totals</td>
-                        <td></td>
-                        <td>@Salonne.Sum(x=>x.Com)</td>
-                        <td>@Salonne.Sum(x=>x.Acceptance)</td>
-                        <td></td>
-                        <td></td>
-                        <td>@Salonne.Where(x=>x.Award != null).Count()</td>
-                    </tr>
+                        var awardTotal = Salonne.Count(x => !string.IsNullOrWhiteSpace(x.Award));
+                        <tr style="font-weight:bold">
+                            <td>Totals</td>
+                            <td></td>
+                            <td>@Salonne.Sum(x=>x.Com)</td>
+                            <td>@Salonne.Sum(x=>x.Acceptance)</td>
+                            <td></td>
+                            <td></td>
+                            <td>@(awardTotal > 0 ? awardTotal.ToString() : string.Empty)</td>
+                        </tr>
                     }
                 </tbody>
             </table><br />

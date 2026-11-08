@@ -121,7 +121,8 @@
 
     private void Ok()
     {
+        var str = tcs;
         Default();
-        tcs?.SetResult("Ok");
+        str?.SetResult("Ok");
     }
 }

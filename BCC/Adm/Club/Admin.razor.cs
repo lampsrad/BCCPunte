@@ -275,8 +275,6 @@ public partial class Admin
     {
         Datum lastImport = await repo.Datum(x => x.ID == "lastImport");
         var latestdate = await repo.monthlyLastDateAsync();
-        if (latestdate.Month == 9)
-            latestdate = latestdate.AddMonths(1);
         lastImport.Date = latestdate;
         gData.lastDateClubImported = lastImport.Date;
         if (lastImport.Date.Month == 11)
@@ -348,9 +346,23 @@ public partial class Admin
                 await YearEnd();
                 return null;
             }
-            string fn = await state.ShowFileUpload("CLUB IMPORT", "Upload Score or Results", gData.ImportDirectory);
-            if (fn == null)
+            // Native Windows OpenFileDialog (local admin) — same pattern as images import
+            var paths = await WindowsFileDialogs.PickFilesAsync(
+                title: "CLUB IMPORT — Upload Score or Results",
+                filter: "CSV files (*.csv)|*.csv|All files (*.*)|*.*",
+                initialDirectory: gData.Downloads,
+                multiselect: false);
+            if (paths == null || paths.Length == 0)
                 return null;
+            string source = paths[0];
+            string uploadPath = gData.ImportDirectory;
+            if (Directory.Exists(uploadPath))
+                Directory.Delete(uploadPath, true);
+            Directory.CreateDirectory(uploadPath);
+            string destName = Path.GetFileName(source);
+            string dest = Path.Combine(uploadPath, destName);
+            await Task.Run(() => File.Copy(source, dest, overwrite: true));
+            string fn = Path.GetFileNameWithoutExtension(destName);
             IList<string> lst;
             if (fn.StartsWith("Scoresheet", StringComparison.OrdinalIgnoreCase))
                 lst = await ImportScores(fn);
@@ -525,7 +537,16 @@ public partial class Admin
     {
         await ds.LastDates();
         await ds.Promotion_Due();
-        await DatesStoreInDb();
+        // No club photo CSV in October. Salon imports may already have created October
+        // Monthlies — use that max date when present; otherwise advance Sept → Oct.
+        Datum lastImport = await repo.Datum(x => x.ID == "lastImport");
+        var latestdate = await repo.monthlyLastDateAsync();
+        DateOnly target = gData.lastDateClubImported.AddMonths(1);
+        if (latestdate > gData.lastDateClubImported)
+            target = latestdate;
+        lastImport.Date = target;
+        gData.lastDateClubImported = lastImport.Date;
+        await repo.UpdateSaveDetachAsync(lastImport);
         return "October month with no Imports, but Promotions succesfully done";
     }
     private async Task<IList<Photo>> PhotoQuantity(IList<Photo> Photos)
@@ -729,14 +750,32 @@ public partial class Admin
 
     #region ImagesProcess
     /// <summary>
-    /// FileChooser to select multiple .zips; Copy these to wwwroot/Import/
+    /// Native Windows OpenFileDialog (local admin). Copies selected zips into ImportDirectory
+    /// and returns the year-month string used by the photo pipeline (e.g. "2026-07").
     /// </summary>
-    /// <returns></returns>
     private async Task<string> FileUpload()
     {
-        Filename = await state.ShowFileUpload("ZIPPED PHOTOS", "Upload Zipped Photos from PhotoVault", gData.ImportDirectory);
-        if (Filename == null)
+        var paths = await WindowsFileDialogs.PickFilesAsync(
+            title: "ZIPPED PHOTOS — Upload Zipped Photos from PhotoVault",
+            filter: "Zip files (*.zip)|*.zip|All files (*.*)|*.*",
+            initialDirectory: gData.Downloads,
+            multiselect: true);
+        if (paths == null || paths.Length == 0)
             return null;
+        string uploadPath = gData.ImportDirectory;
+        if (Directory.Exists(uploadPath))
+            Directory.Delete(uploadPath, true);
+        Directory.CreateDirectory(uploadPath);
+        string ym = null;
+        foreach (var source in paths)
+        {
+            string parsed = WindowsFileDialogs.ExtractPhotoVaultName(source);
+            string destName = parsed + Path.GetExtension(source);
+            string dest = Path.Combine(uploadPath, destName);
+            await Task.Run(() => File.Copy(source, dest, overwrite: true));
+            ym = parsed.Split(' ')[0];
+        }
+        Filename = ym;
         return Filename;
     }
     private async Task<string> ImagesProcessAsync()//START OF IMAGES PROCESS
@@ -753,12 +792,18 @@ public partial class Admin
             if (Filename == null)
                 return null;
             Messages.Add(Info.CurrentStage); StateHasChanged();
+            //Copies from D:\BKK\Inbox\Club\Photos\\YYYY-MM\ to Same\Temp\ and renames to #######.jpg
             await PhotosCopyRenameAsync(progress, Filename);
             Messages.Add(Info.CurrentStage); StateHasChanged();
+            //Copy from D:\BKK\Inbox\Club\Photos\\YYYY-MM\Temp\ to D:\BKK\Inbox\Club\Photos\WEB\
             await PhotosGeneratePreviewsAsync(progress, Filename);
             Messages.Add(Info.CurrentStage); StateHasChanged();
+            //Zip files from D:\BKK\Inbox\Club\Photos\WEB\ to C:\Users\lamps\Downloads\BKK\ZippedExport\BKK-2026-07.zip as example
+            //Copy files from D:\BKK\Inbox\Club\Photos\WEB\ to D:\VS\VS Active\BCC\BCC\wwwroot\ClubPhotos\YYYY-MM\
+            //Deletes all files in  D:\BKK\Inbox\Club\Photos\WEB\
             await PhotosZipAsync(progress);
             Messages.Add("UPLOAD TO ABS HOST"); StateHasChanged();
+            //Login to API. Uploads the zipped file in C:\Users\lamps\Downloads\BKK\ZippedExport\BKK-2026-07.zip to API  FU/zip
             await UploadToHosting(progress, $"{gData.Downloads}ZippedExport\\BKK-{Filename}.zip");
             Messages.Add(Info.CurrentStage); StateHasChanged();
             return null;
@@ -793,11 +838,6 @@ public partial class Admin
             throw new Exception("Login succeeded but no token was returned.");
         return loginResult.Token;
     }
-    /// <summary>
-    /// Calls FileUpload; Unzip to D:\\BKK\\Inbox\\Club\\Photos\\Date\\
-    /// </summary>
-    /// <param name="progress"></param>
-    /// <returns></returns>
     public async Task<string> PhotosLocalUnzipAsync(IProgress<ProgressInfo> progress)
     {
         await FileUpload();
@@ -833,12 +873,6 @@ public partial class Admin
         }
         return Filename;
     }
-    /// <summary>
-    /// Copies all .jpg files from photosLocal\{fn}\ to a Temp\ subfolder, renaming each to its embedded 7-digit ID
-    /// </summary>
-    /// <param name="progress"></param>
-    /// <param name="fn"></param>
-    /// <returns></returns>
     public async Task PhotosCopyRenameAsync(IProgress<ProgressInfo> progress, string fn)
     {
         int processed = 0;
@@ -964,6 +998,7 @@ public partial class Admin
         if (File.Exists(zipPath))
             File.Delete(zipPath);
         await Task.Run(() => ZipFile.CreateFromDirectory(sourceDir, zipPath));
+
         for (int i = 0; i < filesToCopy.Length; i++)
         {
             string file = filesToCopy[i];
@@ -986,9 +1021,6 @@ public partial class Admin
         }
         return $"Successfully zipped {total} photos to {zipPath}";
     }
-    /// <summary>
-    /// Authenticates and uploads the zipped photo file to the remote hosting server via HTTP multipart POST (max 120 MB)
-    /// </summary>
     private async Task<string> UploadToHosting(IProgress<ProgressInfo> progress, string filePath)
     {
         string fileName = Path.GetFileName(filePath);

@@ -1,16 +1,27 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <!-- WinForms OpenFileDialog requires a Windows TFM (not plain net10.0). -->
+    <TargetFramework>net10.0-windows</TargetFramework>
     <Nullable>disable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UseWindowsForms>true</UseWindowsForms>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
 
+  <!-- Avoid WinForms types colliding with Blazor (e.g. MouseEventArgs). -->
   <ItemGroup>
-    <Content Remove="Pages\FileChoose.razor" />
+    <Using Remove="System.Windows.Forms" />
   </ItemGroup>
 
   <ItemGroup>
+    <Content Remove="Pages\FileChoose.razor" />
+    <!-- Helpie.html is legacy; keep out of publish. Help.html must ship (Admin → Help). -->
+    <Content Remove="wwwroot\Helpie.html" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="HtmlAgilityPack" Version="1.12.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.14" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.14" />
     <PackageReference Include="OpenXmlPowerTools" Version="4.5.3.2" />

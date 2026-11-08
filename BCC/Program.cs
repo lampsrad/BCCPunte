@@ -5,6 +5,7 @@ using BKK.Services;
 using Microsoft.Extensions.FileProviders;
 
 
+
 gData.connectionKey = Environment.MachineName switch
 {
     "XPS" or "ROG" => "Local",
@@ -22,6 +23,7 @@ builder.Services.AddSingleton<State>();
 builder.Services.AddScoped<Repo>();
 builder.Services.AddScoped<DataService>();
 builder.Services.AddScoped<SalonImport>();
+builder.Services.AddSingleton<HelpMergeService>();
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())

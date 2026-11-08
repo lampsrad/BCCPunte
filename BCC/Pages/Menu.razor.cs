@@ -1,4 +1,5 @@
 ﻿using BCC.Models;
+using BCC.Services;
 using Microsoft.AspNetCore.Components;
 
 namespace BCC.Pages;
@@ -9,6 +10,7 @@ public partial class Menu : IDisposable
     [Inject] IWebHostEnvironment env { get; set; }
     [Inject] IHostApplicationLifetime lifetime { get; set; }
     [Inject] Repo repo { get; set; }
+    [Inject] HelpMergeService helpMerge { get; set; } = default!;
     List<string> menuItems { get; set; } = new List<string>();
 
 
@@ -112,5 +114,20 @@ public partial class Menu : IDisposable
         lifetime.StopApplication();
     }
 
-
+    private async Task Help_Merge()
+    {
+        try
+        {
+            var result = await helpMerge.MergeAsync();
+            await state.ShowMessageAsync(
+                "HELP MERGE",
+                $"Merged {result.EffectsMerged} effect(s), {result.ContentMerged} content block(s), synced {result.FlowsSynced} flow(s) into Help.html / Help-flows.js.",
+                "ok");
+        }
+        catch (Exception ex)
+        {
+            await state.ShowMessageAsync("HELP MERGE FAILED", ex.Message, "ok");
+        }
+    }
 }
+

@@ -3,6 +3,7 @@ public class SalonHeaders
 {
     public static string CategoryName { get; set; } = "categoryname";
     public static string AwardDescription{ get; set; } = "awarddescription";
+    public static string Award{ get; set; } = "award";
     public static string PhotoTitle{ get; set; } = "phototitle";
     public static string Lastname{ get; set; } = "lastname";
     public static string Firstname{ get; set; } = "firstname";

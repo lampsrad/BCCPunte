@@ -1,5 +1,4 @@
-﻿@using System.Text.RegularExpressions
-@implements IDisposable
+﻿@implements IDisposable
 
 <style>
     .custom-modal {
@@ -67,35 +66,7 @@
     {
         state.FileUpload -= FileGet;
     }
-    public string ExtractName(string filename)
-    {
-        filename = filename.ToLower();
-        var match = Regex.Match(filename, @"photos-([a-z]+)_(\d{4})-([a-z]+)");
-        if (match.Success)
-        {
-            string monthName = match.Groups[1].Value;
-            string year = match.Groups[2].Value;
-            string category = match.Groups[3].Value;
-            string month = monthName switch
-            {
-                "january" or "januarie" => "01",
-                "february" or "februarie" => "02",
-                "march" or "maart" => "03",
-                "april" => "04",
-                "may" or "mei" => "05",
-                "june" or "junie" => "06",
-                "july" or "julie" => "07",
-                "august" or "augustus" => "08",
-                "september" => "09",
-                "october" or "oktober" => "10",
-                "november" => "11",
-                "december" or "desember" => "12",
-                _ => null
-            };
-            return $"{year}-{month} {category.toCap()}";
-        }
-        return Path.GetFileNameWithoutExtension(filename);
-    }
+    public string ExtractName(string filename) => WindowsFileDialogs.ExtractPhotoVaultName(filename);
     private Task<string> FileGet(string title, string message, string uploadpath)
     {
         Title = title;

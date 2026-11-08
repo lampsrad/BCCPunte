@@ -21,6 +21,7 @@ public class SalonImport
 
     public async Task<IList<string>> ImportSalon(SalonMaster sm, string salonname)
     {
+        Messages = new List<string>();
         await Ds.LastDates();
         string file = Directory.GetFiles(gData.ImportDirectory, $"*{salonname}*.csv").FirstOrDefault();
 
@@ -32,6 +33,13 @@ public class SalonImport
             int fnIdx   = Headers.IndexOf(SalonHeaders.Firstname);
             int lnIdx   = Headers.IndexOf(SalonHeaders.Lastname);
             int awIdx   = Headers.IndexOf(SalonHeaders.AwardDescription);
+            if (awIdx < 0)
+                awIdx = Headers.IndexOf(SalonHeaders.Award);
+            if (awIdx < 0)
+            {
+                Messages.Add($"Award column not found in {file}. Expected 'Award Description' or 'Award'.");
+                return Messages;
+            }
 
             while (!p.EndOfData)
             {
@@ -99,6 +107,11 @@ public class SalonImport
 
     private async Task<(Salon salon, Monthly monthly)> SalonData(string lastname, string firstname, SalonMaster smaster)
     {
+        lastname = lastname.ToLower() switch
+        {
+            "debeer" => "De Beer",
+            _ => lastname
+        };
         var master = await repo.GetEntityNTAsync<Master>(x => x.Lastname == lastname && x.Firstname == firstname);
         if (master == null)
             throw new Exception($"Master with name {lastname} {firstname} not found in DB");
