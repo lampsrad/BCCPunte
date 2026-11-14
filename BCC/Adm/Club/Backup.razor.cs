@@ -30,8 +30,10 @@ public partial class Backup
     }
     protected override void OnInitialized()
     {
-        var files = Directory.GetFiles($"{gData.backupPath}", "*.bak");
-        foreach (string file in files)
+        string folder = Data == "Restore" ? gData.backupOneDrivePath : gData.backupPath;
+        if (!Directory.Exists(folder))
+            return;
+        foreach (string file in Directory.GetFiles(folder, "*.bak"))
         {
             var m1 = Regex.Match(file, @"\w+\.\w+$");
             Files.Add(m1.Value);

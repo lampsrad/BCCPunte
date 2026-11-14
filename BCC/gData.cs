@@ -11,6 +11,7 @@ public class gData
     //public static string Api { get; set; } = "http://localhost:5125/";
 
     public static string backupPath { get; set; }= "D:\\Database\\SQL16\\Backup\\BCC\\";
+    public static string backupOneDrivePath { get; } = Path.Combine(OneDriveRoot(), "Database", "SQL16", "Backup", "BCC");
     public static string sqlStagingPath { get; } = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
         "BCC", "SqlBackup");
@@ -20,7 +21,8 @@ public class gData
     public static string Exports { get; set; } = "D:\\VS\\Exports\\";
     public static string machineName { get; set; }
     public static string dbName { get; set; } = "BCC";
-    public static string ServerName { get; set; } = "SQL16";
+    //public static string ServerName { get; set; } = "SQL16";
+    public static string ServerName { get; set; } = "SQL";
     public static string FtpServer { get; set; } = "ftp.bkk.co.za";
     public static string FtpUsername { get; set; } = "bkkcoza";
     public static string FtpPassword { get; set; } = "ftxIOo]J376L!4";
@@ -36,6 +38,13 @@ public class gData
     public static Process process { get; set; }
     public static string Downloads { get; set; } = Environment.MachineName=="XPS"?  "C:\\Users\\lammie\\Downloads\\BKK\\" : "C:\\Users\\lamps\\Downloads\\BKK\\";
 
+    static string OneDriveRoot()
+    {
+        string root = Environment.GetEnvironmentVariable("OneDrive");
+        if (string.IsNullOrWhiteSpace(root))
+            root = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "OneDrive");
+        return root;
+    }
     public static void EnsureSqlStagingPath()
     {
         Directory.CreateDirectory(sqlStagingPath);

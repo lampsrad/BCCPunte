@@ -140,6 +140,8 @@ public partial class Admin
         {
             await repo.SqlBackupAsync(file);
             Messages.Add("Success in Backingup DB");
+            Messages.Add(Path.Combine(gData.backupPath, file));
+            Messages.Add(Path.Combine(gData.backupOneDrivePath, file));
         }
         catch (Exception ex)
         {
@@ -157,6 +159,8 @@ public partial class Admin
         {
             await repo.SqlRestoreAsync(file);
             Messages.Add("Success in Restoring DB");
+            Messages.Add(Path.Combine(gData.backupOneDrivePath, file));
+            Messages.Add(Path.Combine(gData.backupPath, file));
         }
         catch (Exception ex)
         {
@@ -238,7 +242,12 @@ public partial class Admin
         string source = $"{gData.Downloads}bcc.bak";
         string dest = $"{gData.backupPath}bcc.bak";
         if (File.Exists(source))
+        {
+            Directory.CreateDirectory(gData.backupPath);
             File.Move(source, dest, true);
+            Directory.CreateDirectory(gData.backupOneDrivePath);
+            File.Copy(dest, Path.Combine(gData.backupOneDrivePath, "bcc.bak"), true);
+        }
         Title = "Restore";
         filePick = true;
         return "OK";

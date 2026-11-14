@@ -202,9 +202,11 @@ public class Repo
         File.Copy(stagePath, destPath, true);
 
         try { File.Delete(stagePath); } catch { }
+        CopyBackupToOneDrive(destPath, gData.backupOneDrivePath);
     }
     public async Task SqlRestoreAsync(string fileName)
     {
+        CopyFromOneDrive(Path.Combine(gData.backupPath, fileName), gData.backupOneDrivePath);
         gData.EnsureSqlStagingPath();
         string sourcePath = Path.Combine(gData.backupPath, fileName);
         if (!File.Exists(sourcePath))
@@ -220,6 +222,38 @@ public class Repo
         await cx.Database.ExecuteSqlRawAsync(sqlMultiUser);
 
         try { File.Delete(stagePath); } catch { }
+    }
+    static void CopyBackupToOneDrive(string localFile, string oneDriveFolder)
+    {
+        string destination = Path.Combine(oneDriveFolder, Path.GetFileName(localFile));
+        try
+        {
+            Directory.CreateDirectory(oneDriveFolder);
+            File.Copy(localFile, destination, true);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException(
+                $"SQL backup succeeded at {localFile}.{Environment.NewLine}Copy to OneDrive failed for {destination}.{Environment.NewLine}{ex.Message}", ex);
+        }
+    }
+    static void CopyFromOneDrive(string localFile, string oneDriveFolder)
+    {
+        if (string.IsNullOrWhiteSpace(oneDriveFolder))
+            throw new InvalidOperationException("OneDrive backup folder is not set.");
+        string source = Path.Combine(oneDriveFolder, Path.GetFileName(localFile));
+        if (!File.Exists(source))
+            throw new FileNotFoundException($"Backup file '{Path.GetFileName(localFile)}' was not found in {oneDriveFolder}.");
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(localFile));
+            File.Copy(source, localFile, true);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException(
+                $"Could not copy {source} to {localFile}. Restore was not started.{Environment.NewLine}{ex.Message}", ex);
+        }
     }
     internal static IQueryable<T> BuildQuery<T>(IQueryable<T> query) where T : class
     {
